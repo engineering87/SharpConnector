@@ -51,5 +51,10 @@ If you want to add new connectors, please follow these three rules:
 ### Licensee
 SharpConnector source code is available under MIT License, see license in the source.
 
+### External references
+SharpConnector uses the following externals references:
+* **StackExchange.Redis** see license [here](https://github.com/StackExchange/StackExchange.Redis/blob/main/LICENSE)
+* **MongoDB.Driver** see license [here](https://github.com/mongodb/mongo-csharp-driver/blob/master/License.txt)
+
 ### Contact
 Please contact at francesco.delre.87[at]gmail.com for any details.
