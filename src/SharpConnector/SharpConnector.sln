@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30621.155
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpConnector", "SharpConnector.csproj", "{04B2A952-D494-45B5-8819-EB0C38975CCD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpConnector.Test", "..\SharpConnector.Test\SharpConnector.Test.csproj", "{F5953500-0FA2-4520-8E52-AB7E67293F09}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{04B2A952-D494-45B5-8819-EB0C38975CCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04B2A952-D494-45B5-8819-EB0C38975CCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04B2A952-D494-45B5-8819-EB0C38975CCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04B2A952-D494-45B5-8819-EB0C38975CCD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5953500-0FA2-4520-8E52-AB7E67293F09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5953500-0FA2-4520-8E52-AB7E67293F09}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5953500-0FA2-4520-8E52-AB7E67293F09}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5953500-0FA2-4520-8E52-AB7E67293F09}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B1FAFACF-244E-4686-9AC0-190607FC3A9F}
+	EndGlobalSection
+EndGlobal
