@@ -1,76 +1,67 @@
 ﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Microsoft.Extensions.Configuration;
-using SharpConnector.Configuration;
+using SharpConnector.Interfaces;
 using SharpConnector.Operations;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SharpConnector
 {
-    public sealed class SharpConnectorClient<T>
+    public sealed class SharpConnectorClient<T> : IShaerpConnectorClient<T>
     {
-        private readonly IOperations<T> _operations;
+        private IOperations<T> _operations;
 
         /// <summary>
         /// Create e new SharpConnectorClient instance.
         /// </summary>
         /// <param name="connectorTypes">The connector type.</param>
-        public SharpConnectorClient(ConnectorTypes connectorTypes)
+        public SharpConnectorClient()
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(System.IO.Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
             var configuration = builder.Build();
-            var section = configuration.GetSection("ConnectorConfig");
-            if (section == null)
-            {
-                throw new KeyNotFoundException("Environment variable for SharpConnector was not found.");
-            }
 
-            var connectorConfig = new ConfigFactory().GetConfigurationStrategy(section, connectorTypes);
-            _operations = new OperationsFactory<T>().GetOperationsStrategy(connectorTypes, connectorConfig);
+            InitOperations(configuration);
         }
 
         /// <summary>
         /// Create e new SharpConnectorClient instance.
         /// </summary>
-        /// <param name="connectorTypes">The connector type.</param>
         /// <param name="builder">The configuration builder.</param>
-        public SharpConnectorClient(ConnectorTypes connectorTypes, IConfigurationBuilder builder)
+        public SharpConnectorClient(IConfigurationBuilder builder)
         {
             var configuration = builder.Build();
-            var section = configuration.GetSection("ConnectorConfig");
-            if (section == null)
-            {
-                throw new KeyNotFoundException("Environment variable for SharpConnector was not found.");
-            }
 
-            var connectorConfig = new ConfigFactory().GetConfigurationStrategy(section, connectorTypes);
-            _operations = new OperationsFactory<T>().GetOperationsStrategy(connectorTypes, connectorConfig);
+            InitOperations(configuration);
         }
 
         /// <summary>
         /// Create e new SharpConnectorClient instance.
         /// </summary>
-        /// <param name="connectorTypes">The connector type.</param>
         /// <param name="jsonConfigFileName">The config file name.</param>
-        public SharpConnectorClient(ConnectorTypes connectorTypes, string jsonConfigFileName)
+        public SharpConnectorClient(string jsonConfigFileName)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(System.IO.Directory.GetCurrentDirectory())
                 .AddJsonFile(jsonConfigFileName, optional: true, reloadOnChange: true);
 
             var configuration = builder.Build();
-            var section = configuration.GetSection("ConnectorConfig");
+
+            InitOperations(configuration);
+        }
+
+        private void InitOperations(IConfigurationRoot configurationSection)
+        {
+            var section = configurationSection.GetSection("ConnectorConfig");
             if (section == null)
             {
                 throw new KeyNotFoundException("Environment variable for SharpConnector was not found.");
             }
 
-            var connectorConfig = new ConfigFactory().GetConfigurationStrategy(section, connectorTypes);
-            _operations = new OperationsFactory<T>().GetOperationsStrategy(connectorTypes, connectorConfig);
+            _operations = new OperationsFactory<T>(section).GetStrategy();
         }
 
         /// <summary>
