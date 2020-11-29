@@ -4,11 +4,12 @@ using System;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using SharpConnector.Configuration;
+using SharpConnector.Enums;
 using SharpConnector.Interfaces;
 
 namespace SharpConnector.Operations
 {
-    public class OperationsFactory<T>
+    public class OperationsFactory<T> : AOperationFactory
     {
         private readonly IConfigurationSection section;
 
@@ -26,20 +27,20 @@ namespace SharpConnector.Operations
         {
             var dbType = section.GetChildren().FirstOrDefault(s => s.Key == "Instance")?.Value;
 
-            if (!Enum.TryParse(dbType, true, out ConnectorTypes connectorTypes))
+            if (!Enum.TryParse(dbType, true, out ConnectorTypeEnums connectorTypes))
                 throw new Exception("Instance not found");
 
-            var connectorConfig = (ConnectorConfig)section.GetSection("ConnectorConfig");
+            var connectorConfig = GetConfigurationStrategy(section, connectorTypes);
             IOperations<T> strategy = null;
             switch (connectorTypes)
             {
-                case ConnectorTypes.Redis:
+                case ConnectorTypeEnums.Redis:
                     {
                         var redisConfig = connectorConfig as RedisConfig;
                         strategy = new RedisOperations<T>(redisConfig);
                         break;
                     }
-                case ConnectorTypes.MongoDb:
+                case ConnectorTypeEnums.MongoDb:
                     {
                         var mongoDbConfig = connectorConfig as MongoDbConfig;
                         strategy = new MongoDbOperations<T>(mongoDbConfig);
@@ -51,5 +52,7 @@ namespace SharpConnector.Operations
 
             return strategy;
         }
+
+       
     }
 }

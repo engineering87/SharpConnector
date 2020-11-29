@@ -59,7 +59,7 @@ namespace SharpConnector.Test
             var insert = _sharpConnectorClient.Insert(key, "payload");
             Assert.IsTrue(insert);
             var obj = _sharpConnectorClient.Get(key);
-            Assert.AreEqual(obj, "payload");
+            Assert.AreEqual(obj, "modPayload");
             var delete = _sharpConnectorClient.Delete(key);
             Assert.IsTrue(delete);
             obj = _sharpConnectorClient.Get(key);
