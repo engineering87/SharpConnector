@@ -2,14 +2,14 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SharpConnector.Operations;
+using SharpConnector.Interfaces;
 
 namespace SharpConnector.Test
 {
     [TestClass]
     public class MongoDbTests
     {
-        private readonly SharpConnectorClient<string> _sharpConnectorClient;
+        private readonly IShaerpConnectorClient<string> _sharpConnectorClient;
 
         public MongoDbTests()
         {
@@ -17,7 +17,7 @@ namespace SharpConnector.Test
                 .SetBasePath(System.IO.Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.mongodb.json", optional: true, reloadOnChange: true);
 
-            _sharpConnectorClient = new SharpConnectorClient<string>(ConnectorTypes.MongoDb, builder);
+            _sharpConnectorClient = new SharpConnectorClient<string>(builder);
         }
 
         [TestMethod]
@@ -59,7 +59,7 @@ namespace SharpConnector.Test
             var insert = _sharpConnectorClient.Insert(key, "payload");
             Assert.IsTrue(insert);
             var obj = _sharpConnectorClient.Get(key);
-            Assert.AreEqual(obj, "payload");
+            Assert.AreEqual(obj, "modPayload");
             var delete = _sharpConnectorClient.Delete(key);
             Assert.IsTrue(delete);
             obj = _sharpConnectorClient.Get(key);

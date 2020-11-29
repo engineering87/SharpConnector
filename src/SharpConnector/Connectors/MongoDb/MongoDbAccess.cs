@@ -8,8 +8,7 @@ namespace SharpConnector.Connectors.MongoDb
 {
     public class MongoDbAccess
     {
-        private readonly IMongoCollection<ConnectorEntity> _collection;
-        public IMongoCollection<ConnectorEntity> GetCollection() => _collection;
+        public IMongoCollection<ConnectorEntity> Collection { get; private set; }
 
         /// <summary>
         /// Create a new MongoDbAccess instance.
@@ -21,7 +20,7 @@ namespace SharpConnector.Connectors.MongoDb
             var collectionName = mongoDbConfig.CollectionName;
             var client = new MongoClient(mongoDbConfig.ConnectionString);
             var db = client.GetDatabase(databaseName);
-            _collection = db.GetCollection<ConnectorEntity>(collectionName);
+            Collection = db.GetCollection<ConnectorEntity>(collectionName);
         }
     }
 }

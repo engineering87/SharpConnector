@@ -15,7 +15,7 @@ namespace SharpConnector.Connectors.Redis
         /// Create a new RedisAccess instance.
         /// </summary>
         /// <param name="connectorConfig"></param>
-        public RedisAccess(ConnectorConfig connectorConfig)
+        public RedisAccess(RedisConfig connectorConfig)
         {
             var conn = ConfigurationOptions.Parse(connectorConfig.ConnectionString);
             conn.AllowAdmin = true;
@@ -24,9 +24,8 @@ namespace SharpConnector.Connectors.Redis
 
         public void Dispose()
         {
-            if (_connection == null || !_connection.IsValueCreated) return;
-            _connection.Value.Close();
-            _connection.Value.Dispose();
+            _connection?.Value?.Close();
+            _connection?.Value?.Dispose();
         }
     }
 }
