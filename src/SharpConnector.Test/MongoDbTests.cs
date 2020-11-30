@@ -9,7 +9,7 @@ namespace SharpConnector.Test
     [TestClass]
     public class MongoDbTests
     {
-        private readonly IShaerpConnectorClient<string> _sharpConnectorClient;
+        private readonly ISharpConnectorClient<string> _sharpConnectorClient;
 
         public MongoDbTests()
         {

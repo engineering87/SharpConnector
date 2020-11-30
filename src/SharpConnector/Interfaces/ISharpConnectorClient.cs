@@ -4,7 +4,11 @@ using System.Threading.Tasks;
 
 namespace SharpConnector.Interfaces
 {
-    public interface IShaerpConnectorClient<T>
+    /// <summary>
+    /// The SharpConnectorClient operations interface.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public interface ISharpConnectorClient<T>
     {
         T Get(string key);
         Task<T> GetAsync(string key);

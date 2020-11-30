@@ -8,12 +8,12 @@ namespace SharpConnector.Connectors.MongoDb
 {
     public class MongoDbAccess
     {
-        public IMongoCollection<ConnectorEntity> Collection { get; private set; }
+        public IMongoCollection<ConnectorEntity> Collection { get; }
 
         /// <summary>
         /// Create a new MongoDbAccess instance.
         /// </summary>
-        /// <param name="mongoDbConfig"></param>
+        /// <param name="mongoDbConfig">The MongoDb configuration.</param>
         public MongoDbAccess(MongoDbConfig mongoDbConfig)
         {
             var databaseName = mongoDbConfig.DatabaseName;

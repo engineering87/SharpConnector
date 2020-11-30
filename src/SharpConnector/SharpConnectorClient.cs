@@ -8,14 +8,13 @@ using System.Threading.Tasks;
 
 namespace SharpConnector
 {
-    public sealed class SharpConnectorClient<T> : IShaerpConnectorClient<T>
+    public sealed class SharpConnectorClient<T> : ISharpConnectorClient<T>
     {
         private IOperations<T> _operations;
 
         /// <summary>
         /// Create e new SharpConnectorClient instance.
         /// </summary>
-        /// <param name="connectorTypes">The connector type.</param>
         public SharpConnectorClient()
         {
             var builder = new ConfigurationBuilder()
@@ -53,12 +52,16 @@ namespace SharpConnector
             InitOperations(configuration);
         }
 
-        private void InitOperations(IConfigurationRoot configurationSection)
+        /// <summary>
+        /// Init the Operations instance related to the connector type and config.
+        /// </summary>
+        /// <param name="configurationSection"></param>
+        private void InitOperations(IConfiguration configurationSection)
         {
             var section = configurationSection.GetSection("ConnectorConfig");
             if (section == null)
             {
-                throw new KeyNotFoundException("Environment variable for SharpConnector was not found.");
+                throw new KeyNotFoundException("ConnectorConfig for SharpConnector was not found.");
             }
 
             _operations = new OperationsFactory<T>(section).GetStrategy();

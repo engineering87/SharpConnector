@@ -14,7 +14,7 @@ namespace SharpConnector.Connectors.Redis
         /// <summary>
         /// Create a new RedisAccess instance.
         /// </summary>
-        /// <param name="connectorConfig"></param>
+        /// <param name="connectorConfig">The Redis configuration.</param>
         public RedisAccess(RedisConfig connectorConfig)
         {
             var conn = ConfigurationOptions.Parse(connectorConfig.ConnectionString);

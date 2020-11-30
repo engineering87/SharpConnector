@@ -12,23 +12,24 @@ namespace SharpConnector.Configuration
     /// </summary>
     public class MongoDbConfig : IConnectorConfig
     {
-        public string DatabaseName { get; private set; }
-        public string CollectionName { get; private set; }
+        public string ConnectionString { get; }
+        public string DatabaseName { get; }
+        public string CollectionName { get; }
         public int DatabaseNumber { get; private set; }
-        public string ConnectionString { get; private set; }
 
-        public MongoDbConfig(IConfigurationSection section)
+        public MongoDbConfig(IConfiguration section)
         {
             var sectionChildren = section.GetChildren();
+            var configurationSections = sectionChildren.ToList();
 
-            var sectionChildrenDatabasename = sectionChildren.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.databasename.ToString());
-            DatabaseName = sectionChildrenDatabasename?.Value;
-
-            var sectionChildrenCollectionname = sectionChildren.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.collectionname.ToString());
-            CollectionName = sectionChildrenCollectionname?.Value;
-
-            var sectionChildrenConnectionString = sectionChildren.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.connectionstring.ToString());
+            var sectionChildrenConnectionString = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.connectionstring.ToString());
             ConnectionString = sectionChildrenConnectionString?.Value;
+
+            var sectionChildrenDatabaseName = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.databasename.ToString());
+            DatabaseName = sectionChildrenDatabaseName?.Value;
+
+            var sectionChildrenCollectionName = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.collectionname.ToString());
+            CollectionName = sectionChildrenCollectionName?.Value;
         }
     }
 }

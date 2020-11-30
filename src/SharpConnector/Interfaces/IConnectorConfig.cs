@@ -2,6 +2,9 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 namespace SharpConnector.Interfaces
 {
+    /// <summary>
+    /// Configuration interface.
+    /// </summary>
     public interface IConnectorConfig
     {
         int DatabaseNumber { get; }

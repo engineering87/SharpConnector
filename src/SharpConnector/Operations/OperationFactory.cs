@@ -7,7 +7,10 @@ using SharpConnector.Interfaces;
 
 namespace SharpConnector.Operations
 {
-    public abstract class AOperationFactory
+    /// <summary>
+    /// The Operation factory abstract class.
+    /// </summary>
+    public abstract class OperationFactory
     {
         public virtual IConnectorConfig GetConfigurationStrategy(IConfigurationSection section, ConnectorTypeEnums connectorTypes)
         {

@@ -12,21 +12,22 @@ namespace SharpConnector.Configuration
     /// </summary>
     public class RedisConfig : IConnectorConfig
     {
-        public int DatabaseNumber { get; private set; }
-        public string ConnectionString { get; private set; }
+        public string ConnectionString { get; }
+        public int DatabaseNumber { get; } // 0 default
         public string DatabaseName { get; private set; }
         public string CollectionName { get; private set; }
 
-        public RedisConfig(IConfigurationSection section)
+        public RedisConfig(IConfiguration section)
         {
             var sectionChildren = section.GetChildren();
+            var configurationSections = sectionChildren.ToList();
 
-            var sectionChildrenDbNumber = sectionChildren.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.databasenumber.ToString());
-            int.TryParse(sectionChildrenDbNumber?.Value, out int dbNumber);
-            DatabaseNumber = dbNumber;
-            
-            var sectionChildrenConnectionString = sectionChildren.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.connectionstring.ToString());
+            var sectionChildrenConnectionString = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.connectionstring.ToString());
             ConnectionString = sectionChildrenConnectionString?.Value;
+
+            var sectionChildrenDbNumber = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.databasenumber.ToString());
+            int.TryParse(sectionChildrenDbNumber?.Value, out var dbNumber);
+            DatabaseNumber = dbNumber;
         }
     }
 }
