@@ -3,6 +3,7 @@
 <img src="https://github.com/engineering87/SharpConnector/blob/main/sharpconnector_logo.jpg" width="300">
 
 SharpConnector is a general purpose multiple connector to NoSQL database. It simplifies the integration with the NoSql database by unifying the operations in a single interface without the need to develop specific logic for each connector. SharpConnector is a **.NET Standard** library.
+Each NoSQL database has its own peculiarities, some are document-oriented, others are of the key-value type, SharpConnector tries to unify the access interfaces in order to simplify the developments.
 
 ### How it works
 SharpConnector provides access to **CRUD** operations to NoSql databases with *<Key, Value>*, abstracting the interface from the implementation. **Insert, Get, Delete, Update** operations are currently exposed to the following databases:
@@ -40,7 +41,7 @@ If you want to add new connectors, please follow these three rules:
 
 1) Each new connector must implement the **IOperations** interface.
 2) For each new connector the relevant **UnitTest** class must be present.
-3) Any libraries used must be licensed under the MIT license.
+3) Any third party libraries added in the code must be compatible with the MIT license, and the license must also be made explicit in the code.
 
 **Getting started with Git and GitHub**
 
