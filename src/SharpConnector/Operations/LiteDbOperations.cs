@@ -1,24 +1,24 @@
 ﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
+using SharpConnector.Connectors.LiteDb;
 using System;
 using System.Threading.Tasks;
 using SharpConnector.Configuration;
-using SharpConnector.Connectors.Redis;
 using SharpConnector.Entities;
 
 namespace SharpConnector.Operations
 {
-    public class RedisOperations<T> : Operations<T>
+    public class LiteDbOperations<T> : Operations<T>
     {
-        private readonly RedisWrapper _redisWrapper;
+        private readonly LiteDbWrapper _liteDbWrapper;
 
         /// <summary>
-        /// Create a new RedisOperations instance.
+        /// Create a new LiteDbOperations instance.
         /// </summary>
-        /// <param name="redisConfig">The Redis connector config.</param>
-        public RedisOperations(RedisConfig redisConfig)
+        /// <param name="liteDbConfig">The LiteDb connector config.</param>
+        public LiteDbOperations(LiteDbConfig liteDbConfig)
         {
-            _redisWrapper = new RedisWrapper(redisConfig);
+            _liteDbWrapper = new LiteDbWrapper(liteDbConfig);
         }
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override T Get(string key)
         {
-            var connectorEntity = _redisWrapper.Get(key);
+            var connectorEntity = _liteDbWrapper.Get(key);
             if (connectorEntity != null)
                 return (T)Convert.ChangeType(connectorEntity.Payload, typeof(T));
             return default;
@@ -41,7 +41,7 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override Task<T> GetAsync(string key)
         {
-            var connectorEntity = _redisWrapper.GetAsync(key);
+            var connectorEntity = _liteDbWrapper.GetAsync(key);
             if (connectorEntity != null)
                 return (Task<T>)Convert.ChangeType(connectorEntity.Result.Payload, typeof(Task<T>));
             return default;
@@ -55,8 +55,8 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override bool Insert(string key, T value)
         {
-            var connectorEntity = new ConnectorEntity(key, value, null);
-            return _redisWrapper.Insert(connectorEntity);
+            var connectorEntity = new LiteDbConnectorEntity(key, value, null);
+            return _liteDbWrapper.Insert(connectorEntity);
         }
 
         /// <summary>
@@ -68,8 +68,8 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override bool Insert(string key, T value, TimeSpan expiration)
         {
-            var connectorEntity = new ConnectorEntity(key, value, expiration);
-            return _redisWrapper.Insert(connectorEntity);
+            var connectorEntity = new LiteDbConnectorEntity(key, value, expiration);
+            return _liteDbWrapper.Insert(connectorEntity);
         }
 
         /// <summary>
@@ -80,8 +80,8 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override Task<bool> InsertAsync(string key, T value)
         {
-            var connectorEntity = new ConnectorEntity(key, value, null);
-            return _redisWrapper.InsertAsync(connectorEntity);
+            var connectorEntity = new LiteDbConnectorEntity(key, value, null);
+            return _liteDbWrapper.InsertAsync(connectorEntity);
         }
 
         /// <summary>
@@ -93,8 +93,8 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
         {
-            var connectorEntity = new ConnectorEntity(key, value, expiration);
-            return _redisWrapper.InsertAsync(connectorEntity);
+            var connectorEntity = new LiteDbConnectorEntity(key, value, expiration);
+            return _liteDbWrapper.InsertAsync(connectorEntity);
         }
 
         /// <summary>
@@ -104,7 +104,7 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override bool Delete(string key)
         {
-            return _redisWrapper.Delete(key);
+            return _liteDbWrapper.Delete(key);
         }
 
         /// <summary>
@@ -114,7 +114,7 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override Task<bool> DeleteAsync(string key)
         {
-            return _redisWrapper.DeleteAsync(key);
+            return _liteDbWrapper.DeleteAsync(key);
         }
 
         /// <summary>
@@ -125,8 +125,8 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override bool Update(string key, T value)
         {
-            var connectorEntity = new ConnectorEntity(key, value, null);
-            return _redisWrapper.Update(connectorEntity);
+            var connectorEntity = new LiteDbConnectorEntity(key, value, null);
+            return _liteDbWrapper.Update(connectorEntity);
         }
 
         /// <summary>
@@ -137,8 +137,8 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override Task<bool> UpdateAsync(string key, T value)
         {
-            var connectorEntity = new ConnectorEntity(key, value, null);
-            return _redisWrapper.UpdateAsync(connectorEntity);
+            var connectorEntity = new LiteDbConnectorEntity(key, value, null);
+            return _liteDbWrapper.UpdateAsync(connectorEntity);
         }
     }
 }

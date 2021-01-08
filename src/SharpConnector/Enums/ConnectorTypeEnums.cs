@@ -8,6 +8,8 @@ namespace SharpConnector.Enums
     public enum ConnectorTypeEnums
     {
         Redis,
-        MongoDb
+        MongoDb,
+        LiteDb,
+        Memcached
     }
 }

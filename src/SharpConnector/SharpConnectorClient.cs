@@ -1,5 +1,7 @@
 ﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
+
+using System;
 using Microsoft.Extensions.Configuration;
 using SharpConnector.Interfaces;
 using SharpConnector.Operations;
@@ -103,10 +105,34 @@ namespace SharpConnector
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to set.</param>
+        /// <param name="expiration">The expiration of the key.</param>
+        /// <returns></returns>
+        public bool Insert(string key, T value, TimeSpan expiration)
+        {
+            return _operations.Insert(key, value, expiration);
+        }
+
+        /// <summary>
+        /// Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
+        /// </summary>
+        /// <param name="key">The key of the object.</param>
+        /// <param name="value">The value to set.</param>
         /// <returns></returns>
         public Task<bool> InsertAsync(string key, T value)
         {
             return _operations.InsertAsync(key, value);
+        }
+
+        /// <summary>
+        /// Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
+        /// </summary>
+        /// <param name="key">The key of the object.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="expiration">The expiration of the key.</param>
+        /// <returns></returns>
+        public Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
+        {
+            return _operations.InsertAsync(key, value, expiration);
         }
 
         /// <summary>

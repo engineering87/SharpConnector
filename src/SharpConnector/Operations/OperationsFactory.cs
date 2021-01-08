@@ -42,6 +42,16 @@ namespace SharpConnector.Operations
                         var mongoDbConfig = connectorConfig as MongoDbConfig;
                         return new MongoDbOperations<T>(mongoDbConfig);
                     }
+                case ConnectorTypeEnums.LiteDb:
+                    {
+                        var liteDbConfig = connectorConfig as LiteDbConfig;
+                        return new LiteDbOperations<T>(liteDbConfig);
+                    }
+                case ConnectorTypeEnums.Memcached:
+                    {
+                        var memcachedConfig = connectorConfig as MemcachedConfig;
+                        return new MemcachedOperations<T>(memcachedConfig);
+                    }
                 default:
                     throw new ArgumentOutOfRangeException();
             }

@@ -3,22 +3,21 @@
 using System;
 using System.Threading.Tasks;
 using SharpConnector.Configuration;
-using SharpConnector.Connectors.Redis;
+using SharpConnector.Connectors.Memcached;
 using SharpConnector.Entities;
 
 namespace SharpConnector.Operations
 {
-    public class RedisOperations<T> : Operations<T>
+    public class MemcachedOperations<T> : Operations<T>
     {
-        private readonly RedisWrapper _redisWrapper;
+        private readonly MemcachedWrapper _memcachedWrapper;
 
         /// <summary>
-        /// Create a new RedisOperations instance.
+        /// Create a new MemcachedOperations instance.
         /// </summary>
-        /// <param name="redisConfig">The Redis connector config.</param>
-        public RedisOperations(RedisConfig redisConfig)
+        public MemcachedOperations(MemcachedConfig memcachedConfig)
         {
-            _redisWrapper = new RedisWrapper(redisConfig);
+            _memcachedWrapper = new MemcachedWrapper(memcachedConfig);
         }
 
         /// <summary>
@@ -28,7 +27,7 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override T Get(string key)
         {
-            var connectorEntity = _redisWrapper.Get(key);
+            var connectorEntity = _memcachedWrapper.Get(key);
             if (connectorEntity != null)
                 return (T)Convert.ChangeType(connectorEntity.Payload, typeof(T));
             return default;
@@ -41,7 +40,7 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override Task<T> GetAsync(string key)
         {
-            var connectorEntity = _redisWrapper.GetAsync(key);
+            var connectorEntity = _memcachedWrapper.GetAsync(key);
             if (connectorEntity != null)
                 return (Task<T>)Convert.ChangeType(connectorEntity.Result.Payload, typeof(Task<T>));
             return default;
@@ -56,7 +55,7 @@ namespace SharpConnector.Operations
         public override bool Insert(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return _redisWrapper.Insert(connectorEntity);
+            return _memcachedWrapper.Insert(connectorEntity);
         }
 
         /// <summary>
@@ -69,7 +68,7 @@ namespace SharpConnector.Operations
         public override bool Insert(string key, T value, TimeSpan expiration)
         {
             var connectorEntity = new ConnectorEntity(key, value, expiration);
-            return _redisWrapper.Insert(connectorEntity);
+            return _memcachedWrapper.Insert(connectorEntity);
         }
 
         /// <summary>
@@ -81,7 +80,7 @@ namespace SharpConnector.Operations
         public override Task<bool> InsertAsync(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return _redisWrapper.InsertAsync(connectorEntity);
+            return _memcachedWrapper.InsertAsync(connectorEntity);
         }
 
         /// <summary>
@@ -94,7 +93,7 @@ namespace SharpConnector.Operations
         public override Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
         {
             var connectorEntity = new ConnectorEntity(key, value, expiration);
-            return _redisWrapper.InsertAsync(connectorEntity);
+            return _memcachedWrapper.InsertAsync(connectorEntity);
         }
 
         /// <summary>
@@ -104,7 +103,7 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override bool Delete(string key)
         {
-            return _redisWrapper.Delete(key);
+            return _memcachedWrapper.Delete(key);
         }
 
         /// <summary>
@@ -114,7 +113,7 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override Task<bool> DeleteAsync(string key)
         {
-            return _redisWrapper.DeleteAsync(key);
+            return _memcachedWrapper.DeleteAsync(key);
         }
 
         /// <summary>
@@ -126,7 +125,7 @@ namespace SharpConnector.Operations
         public override bool Update(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return _redisWrapper.Update(connectorEntity);
+            return _memcachedWrapper.Update(connectorEntity);
         }
 
         /// <summary>
@@ -138,7 +137,7 @@ namespace SharpConnector.Operations
         public override Task<bool> UpdateAsync(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return _redisWrapper.UpdateAsync(connectorEntity);
+            return _memcachedWrapper.UpdateAsync(connectorEntity);
         }
     }
 }

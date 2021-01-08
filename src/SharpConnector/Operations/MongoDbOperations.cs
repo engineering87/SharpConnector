@@ -64,10 +64,36 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
+        /// <param name="expiration">The expiration of the key.</param>
+        /// <returns></returns>
+        public override bool Insert(string key, T value, TimeSpan expiration)
+        {
+            var connectorEntity = new ConnectorEntity(key, value, expiration);
+            return _mongoDbWrapper.Insert(connectorEntity);
+        }
+
+        /// <summary>
+        /// Set the Key to hold the value.
+        /// </summary>
+        /// <param name="key">The key of the object.</param>
+        /// <param name="value">The value to store.</param>
         /// <returns></returns>
         public override Task<bool> InsertAsync(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
+            return _mongoDbWrapper.InsertAsync(connectorEntity);
+        }
+
+        /// <summary>
+        /// Set the Key to hold the value.
+        /// </summary>
+        /// <param name="key">The key of the object.</param>
+        /// <param name="value">The value to store.</param>
+        /// <param name="expiration">The expiration of the key.</param>
+        /// <returns></returns>
+        public override Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
+        {
+            var connectorEntity = new ConnectorEntity(key, value, expiration);
             return _mongoDbWrapper.InsertAsync(connectorEntity);
         }
 

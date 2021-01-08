@@ -1,5 +1,7 @@
 ﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
+
+using System;
 using System.Threading.Tasks;
 
 namespace SharpConnector.Interfaces
@@ -13,7 +15,9 @@ namespace SharpConnector.Interfaces
         T Get(string key);
         Task<T> GetAsync(string key);
         bool Insert(string key, T value);
+        bool Insert(string key, T value, TimeSpan expiration);
         Task<bool> InsertAsync(string key, T value);
+        Task<bool> InsertAsync(string key, T value, TimeSpan expiration);
         bool Delete(string key);
         Task<bool> DeleteAsync(string key);
         bool Update(string key, T value);

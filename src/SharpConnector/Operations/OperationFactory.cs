@@ -18,6 +18,8 @@ namespace SharpConnector.Operations
             {
                 ConnectorTypeEnums.Redis => new RedisConfig(section),
                 ConnectorTypeEnums.MongoDb => new MongoDbConfig(section),
+                ConnectorTypeEnums.LiteDb => new LiteDbConfig(section),
+                ConnectorTypeEnums.Memcached => new MemcachedConfig(section),
                 _ => section.Get<IConnectorConfig>()
             };
         }
