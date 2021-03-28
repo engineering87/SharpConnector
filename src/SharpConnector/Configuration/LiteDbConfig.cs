@@ -8,16 +8,16 @@ using System.Linq;
 namespace SharpConnector.Configuration
 {
     /// <summary>
-    /// MongoDb configuration class.
+    /// LiteDbConfig configuration class.
     /// </summary>
-    public class MongoDbConfig : IConnectorConfig
+    public class LiteDbConfig : IConnectorConfig
     {
         public string ConnectionString { get; }
         public string DatabaseName { get; }
-        public string CollectionName { get; }
+        public string CollectionName { get; private set; }
         public int DatabaseNumber { get; private set; }
 
-        public MongoDbConfig(IConfiguration section)
+        public LiteDbConfig(IConfiguration section)
         {
             var sectionChildren = section.GetChildren();
             var configurationSections = sectionChildren.ToList();
@@ -27,9 +27,6 @@ namespace SharpConnector.Configuration
 
             var sectionChildrenDatabaseName = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.databasename.ToString());
             DatabaseName = sectionChildrenDatabaseName?.Value;
-
-            var sectionChildrenCollectionName = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.collectionname.ToString());
-            CollectionName = sectionChildrenCollectionName?.Value;
         }
     }
 }

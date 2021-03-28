@@ -1,6 +1,7 @@
 ﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.Redis;
@@ -47,6 +48,11 @@ namespace SharpConnector.Operations
             return default;
         }
 
+        public override IEnumerable<T> GetAll()
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Set the Key to hold the value.
         /// </summary>
@@ -64,10 +70,36 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
+        /// <param name="expiration">The expiration of the key.</param>
+        /// <returns></returns>
+        public override bool Insert(string key, T value, TimeSpan expiration)
+        {
+            var connectorEntity = new ConnectorEntity(key, value, expiration);
+            return _redisWrapper.Insert(connectorEntity);
+        }
+
+        /// <summary>
+        /// Set the Key to hold the value.
+        /// </summary>
+        /// <param name="key">The key of the object.</param>
+        /// <param name="value">The value to store.</param>
         /// <returns></returns>
         public override Task<bool> InsertAsync(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
+            return _redisWrapper.InsertAsync(connectorEntity);
+        }
+
+        /// <summary>
+        /// Set the Key to hold the value.
+        /// </summary>
+        /// <param name="key">The key of the object.</param>
+        /// <param name="value">The value to store.</param>
+        /// <param name="expiration">The expiration of the key.</param>
+        /// <returns></returns>
+        public override Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
+        {
+            var connectorEntity = new ConnectorEntity(key, value, expiration);
             return _redisWrapper.InsertAsync(connectorEntity);
         }
 

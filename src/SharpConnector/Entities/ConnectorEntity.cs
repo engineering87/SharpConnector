@@ -76,7 +76,7 @@ namespace SharpConnector.Entities
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            if (obj == null || !(obj is ConnectorEntity p))
+            if (!(obj is ConnectorEntity p))
                 return false;
 
             return Payload.GetHashCode() == p.GetHashCode();

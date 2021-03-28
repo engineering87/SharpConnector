@@ -2,14 +2,14 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SharpConnector.Operations;
+using SharpConnector.Interfaces;
 
 namespace SharpConnector.Test
 {
     [TestClass]
     public class RedisTests
     {
-        private readonly SharpConnectorClient<string> _sharpConnectorClient;
+        private readonly ISharpConnectorClient<string> _sharpConnectorClient;
 
         public RedisTests()
         {
@@ -17,7 +17,7 @@ namespace SharpConnector.Test
                 .SetBasePath(System.IO.Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.redis.json", optional: true, reloadOnChange: true);
 
-            _sharpConnectorClient = new SharpConnectorClient<string>(ConnectorTypes.Redis, builder);
+            _sharpConnectorClient = new SharpConnectorClient<string>(builder);
         }
 
         [TestMethod]

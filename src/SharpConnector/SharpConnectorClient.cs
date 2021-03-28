@@ -1,76 +1,71 @@
 ﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
+using System;
 using Microsoft.Extensions.Configuration;
-using SharpConnector.Configuration;
+using SharpConnector.Interfaces;
 using SharpConnector.Operations;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SharpConnector
 {
-    public sealed class SharpConnectorClient<T>
+    public sealed class SharpConnectorClient<T> : ISharpConnectorClient<T>
     {
-        private readonly IOperations<T> _operations;
+        private IOperations<T> _operations;
 
         /// <summary>
         /// Create e new SharpConnectorClient instance.
         /// </summary>
-        /// <param name="connectorTypes">The connector type.</param>
-        public SharpConnectorClient(ConnectorTypes connectorTypes)
+        public SharpConnectorClient()
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(System.IO.Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
             var configuration = builder.Build();
-            var section = configuration.GetSection("ConnectorConfig");
-            if (section == null)
-            {
-                throw new KeyNotFoundException("Environment variable for SharpConnector was not found.");
-            }
 
-            var connectorConfig = new ConfigFactory().GetConfigurationStrategy(section, connectorTypes);
-            _operations = new OperationsFactory<T>().GetOperationsStrategy(connectorTypes, connectorConfig);
+            InitOperations(configuration);
         }
 
         /// <summary>
         /// Create e new SharpConnectorClient instance.
         /// </summary>
-        /// <param name="connectorTypes">The connector type.</param>
         /// <param name="builder">The configuration builder.</param>
-        public SharpConnectorClient(ConnectorTypes connectorTypes, IConfigurationBuilder builder)
+        public SharpConnectorClient(IConfigurationBuilder builder)
         {
             var configuration = builder.Build();
-            var section = configuration.GetSection("ConnectorConfig");
-            if (section == null)
-            {
-                throw new KeyNotFoundException("Environment variable for SharpConnector was not found.");
-            }
 
-            var connectorConfig = new ConfigFactory().GetConfigurationStrategy(section, connectorTypes);
-            _operations = new OperationsFactory<T>().GetOperationsStrategy(connectorTypes, connectorConfig);
+            InitOperations(configuration);
         }
 
         /// <summary>
         /// Create e new SharpConnectorClient instance.
         /// </summary>
-        /// <param name="connectorTypes">The connector type.</param>
         /// <param name="jsonConfigFileName">The config file name.</param>
-        public SharpConnectorClient(ConnectorTypes connectorTypes, string jsonConfigFileName)
+        public SharpConnectorClient(string jsonConfigFileName)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(System.IO.Directory.GetCurrentDirectory())
                 .AddJsonFile(jsonConfigFileName, optional: true, reloadOnChange: true);
 
             var configuration = builder.Build();
-            var section = configuration.GetSection("ConnectorConfig");
+
+            InitOperations(configuration);
+        }
+
+        /// <summary>
+        /// Init the Operations instance related to the connector type and config.
+        /// </summary>
+        /// <param name="configurationSection"></param>
+        private void InitOperations(IConfiguration configurationSection)
+        {
+            var section = configurationSection.GetSection("ConnectorConfig");
             if (section == null)
             {
-                throw new KeyNotFoundException("Environment variable for SharpConnector was not found.");
+                throw new KeyNotFoundException("ConnectorConfig for SharpConnector was not found.");
             }
 
-            var connectorConfig = new ConfigFactory().GetConfigurationStrategy(section, connectorTypes);
-            _operations = new OperationsFactory<T>().GetOperationsStrategy(connectorTypes, connectorConfig);
+            _operations = new OperationsFactory<T>(section).GetStrategy();
         }
 
         /// <summary>
@@ -93,6 +88,11 @@ namespace SharpConnector
             return _operations.GetAsync(key);
         }
 
+        public IEnumerable<T> GetAll()
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
         /// </summary>
@@ -109,10 +109,34 @@ namespace SharpConnector
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to set.</param>
+        /// <param name="expiration">The expiration of the key.</param>
+        /// <returns></returns>
+        public bool Insert(string key, T value, TimeSpan expiration)
+        {
+            return _operations.Insert(key, value, expiration);
+        }
+
+        /// <summary>
+        /// Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
+        /// </summary>
+        /// <param name="key">The key of the object.</param>
+        /// <param name="value">The value to set.</param>
         /// <returns></returns>
         public Task<bool> InsertAsync(string key, T value)
         {
             return _operations.InsertAsync(key, value);
+        }
+
+        /// <summary>
+        /// Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
+        /// </summary>
+        /// <param name="key">The key of the object.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="expiration">The expiration of the key.</param>
+        /// <returns></returns>
+        public Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
+        {
+            return _operations.InsertAsync(key, value, expiration);
         }
 
         /// <summary>

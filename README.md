@@ -3,33 +3,36 @@
 <img src="https://github.com/engineering87/SharpConnector/blob/main/sharpconnector_logo.jpg" width="300">
 
 SharpConnector is a general purpose multiple connector to NoSQL database. It simplifies the integration with the NoSql database by unifying the operations in a single interface without the need to develop specific logic for each connector. SharpConnector is a **.NET Standard** library.
-Each NoSQL database has its own peculiarities, some are document-oriented, others are of the key-value type, SharpConnector tries to unify the access interfaces in order to simplify the developments.
+Each NoSQL database has its own peculiarities, some are document-oriented, others are of the key-value type,SharpConnector tries to unify the access interfaces in order to simplify the developments.
 
 ### How it works
 SharpConnector provides access to **CRUD** operations to NoSql databases with *<Key, Value>*, abstracting the interface from the implementation. **Insert, Get, Delete, Update** operations are currently exposed to the following databases:
 
 * **Redis**
-* **MongoDb**
+* **MongoDB**
+* **LiteDB**
+* **EnyimMemcached**
 
 other connectors and operations are under development.
 
 ### How to use it
-To use SharpConnector simply configure the *connectionString* to the desired connector.
+To use SharpConnector simply configure the *connectionString* to the desired connector and the *instance* type.
 Add the *ConnectorConfig* node configuration within the *appsettings.json* file, here is the example for Redis connector:
 
 ```json
 {
   "ConnectorConfig": {
+    "Instance": "Redis",
     "DatabaseNumber": 0,
     "ConnectionString": "redisServer:6380,password=password,ssl=True,abortConnect=False"
   }
 }
 ```
 
-and instantiate a new client specifying the type of data (for example string) and the type of connector:
+and instantiate a new client specifying the type of data (for example string):
 
 ```csharp
-SharpConnectorClient<string> client = new SharpConnectorClient<string>(ConnectorTypes.Redis)
+SharpConnectorClient<string> client = new SharpConnectorClient<string>()
 ```
 
 SharpConnector works with any object that is serializable.
@@ -57,6 +60,16 @@ SharpConnector source code is available under MIT License, see license in the so
 SharpConnector uses the following externals references:
 * **StackExchange.Redis** see license [here](https://github.com/StackExchange/StackExchange.Redis/blob/main/LICENSE)
 * **MongoDB.Driver** see license [here](https://github.com/mongodb/mongo-csharp-driver/blob/master/License.txt)
+* **LiteDB** see license [here](https://github.com/mbdavid/LiteDB/blob/master/LICENSE)
+* **EnyimMemcached** see license [here](https://github.com/enyim/EnyimMemcached/blob/develop/LICENSE)
+
+### Contact
+Please contact at francesco.delre.87[at]gmail.com for any details.
+
+* **StackExchange.Redis** see license [here](https://github.com/StackExchange/StackExchange.Redis/blob/main/LICENSE)
+* **MongoDB.Driver** see license [here](https://github.com/mongodb/mongo-csharp-driver/blob/master/License.txt)
+* **LiteDB** see license [here](https://github.com/mbdavid/LiteDB/blob/master/LICENSE)
+* **EnyimMemcached** see license [here](https://github.com/enyim/EnyimMemcached/blob/develop/LICENSE)
 
 ### Contact
 Please contact at francesco.delre.87[at]gmail.com for any details.

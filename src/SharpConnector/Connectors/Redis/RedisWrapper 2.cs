@@ -1,8 +1,5 @@
 ﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
-
-using System.Collections.Generic;
-using System.Linq;
 using Newtonsoft.Json;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
@@ -48,22 +45,6 @@ namespace SharpConnector.Connectors.Redis
             var database = _redisAccess.GetConnection().GetDatabase(databaseNumber);
             var value = database.StringGetAsync(key);
             return value.Result.HasValue ? JsonConvert.DeserializeObject<Task<ConnectorEntity>>(value.Result) : default;
-        }
-
-        public IEnumerable<ConnectorEntity> GetAll(int databaseNumber = 0)
-        {
-            var result = new List<ConnectorEntity>();
-            var database = _redisAccess.GetConnection().GetDatabase(databaseNumber);
-            var endpoints = _redisAccess.GetConnection().GetEndPoints(true);
-            foreach (var endpoint in endpoints)
-            {
-                var server = _redisAccess.GetConnection().GetServer(endpoint);
-                var keys = server.Keys(databaseNumber);
-                result.AddRange(keys.Select(
-                    key => new ConnectorEntity(key, database.StringGet(key)))
-                );
-            }
-            return result;
         }
 
         /// <summary>

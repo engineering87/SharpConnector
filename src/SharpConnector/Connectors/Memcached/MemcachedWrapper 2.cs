@@ -1,23 +1,21 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
-// This code is licensed under MIT license (see LICENSE.txt for details)
-using MongoDB.Driver;
+﻿using Newtonsoft.Json;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
 using System.Threading.Tasks;
 
-namespace SharpConnector.Connectors.MongoDb
+namespace SharpConnector.Connectors.Memcached
 {
-    public class MongoDbWrapper
+    public class MemcachedWrapper
     {
-        private readonly MongoDbAccess _mongoDbAccess;
+        private readonly MemcachedAccess _memcachedAccess;
 
         /// <summary>
-        /// Create a new MongoDbWrapper instance.
+        /// Create a new MemcachedWrapper instance.
         /// </summary>
-        /// <param name="mongoDbConfig">The MongoDb connector config.</param>
-        public MongoDbWrapper(MongoDbConfig mongoDbConfig)
+        /// <param name="memcachedConfig">The Memcached connector config.</param>
+        public MemcachedWrapper(MemcachedConfig memcachedConfig)
         {
-            _mongoDbAccess = new MongoDbAccess(mongoDbConfig);
+            _memcachedAccess = new MemcachedAccess(memcachedConfig);
         }
 
         /// <summary>
@@ -27,8 +25,7 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public ConnectorEntity Get(string key)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", key);
-            return _mongoDbAccess.Collection.Find(filter).FirstOrDefault();
+            return _memcachedAccess.MemcachedClient.Get<ConnectorEntity>(key);
         }
 
         /// <summary>
@@ -38,8 +35,8 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public Task<ConnectorEntity> GetAsync(string key)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", key);
-            return _mongoDbAccess.Collection.Find(filter).FirstOrDefaultAsync();
+            var result = _memcachedAccess.MemcachedClient.GetAsync<ConnectorEntity>(key);
+            return Task.FromResult(result.Result?.Value);
         }
 
         /// <summary>
@@ -49,9 +46,10 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public bool Insert(ConnectorEntity connectorEntity)
         {
-            Delete(connectorEntity.Key);
-            _mongoDbAccess.Collection.InsertOne(connectorEntity);
-            return true;
+            var seconds = connectorEntity.Expiration?.Seconds ?? 0;
+            return _memcachedAccess.MemcachedClient.Add(connectorEntity.Key,
+                JsonConvert.SerializeObject(connectorEntity),
+                seconds);
         }
 
         /// <summary>
@@ -61,9 +59,10 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public Task<bool> InsertAsync(ConnectorEntity connectorEntity)
         {
-            DeleteAsync(connectorEntity.Key);
-            var insert = _mongoDbAccess.Collection.InsertOneAsync(connectorEntity);
-            return Task.FromResult(insert.IsCompletedSuccessfully);
+            var seconds = connectorEntity.Expiration?.Seconds ?? 0;
+            return _memcachedAccess.MemcachedClient.AddAsync(connectorEntity.Key,
+                JsonConvert.SerializeObject(connectorEntity),
+                seconds);
         }
 
         /// <summary>
@@ -73,8 +72,7 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public bool Delete(string key)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", key);
-            return _mongoDbAccess.Collection.DeleteOne(filter).IsAcknowledged;
+            return _memcachedAccess.MemcachedClient.Remove(key);
         }
 
         /// <summary>
@@ -84,9 +82,7 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public Task<bool> DeleteAsync(string key)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", key);
-            var delete = _mongoDbAccess.Collection.DeleteOneAsync(filter);
-            return Task.FromResult(delete.IsCompletedSuccessfully);
+            return _memcachedAccess.MemcachedClient.RemoveAsync(key);
         }
 
         /// <summary>
@@ -96,9 +92,10 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public bool Update(ConnectorEntity connectorEntity)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", connectorEntity.Key);
-            var update = Builders<ConnectorEntity>.Update.Set("Payload", connectorEntity.Payload);
-            return _mongoDbAccess.Collection.UpdateOne(filter, update).IsAcknowledged;
+            var seconds = connectorEntity.Expiration?.Seconds ?? 0;
+            return _memcachedAccess.MemcachedClient.Replace(connectorEntity.Key,
+                JsonConvert.SerializeObject(connectorEntity),
+                seconds);
         }
 
         /// <summary>
@@ -108,9 +105,10 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public Task<bool> UpdateAsync(ConnectorEntity connectorEntity)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", connectorEntity.Key);
-            var update = Builders<ConnectorEntity>.Update.Set("Payload", connectorEntity.Payload);
-            return Task.FromResult(_mongoDbAccess.Collection.UpdateOneAsync(filter, update).IsCompletedSuccessfully);
+            var seconds = connectorEntity.Expiration?.Seconds ?? 0;
+            return _memcachedAccess.MemcachedClient.ReplaceAsync(connectorEntity.Key,
+                JsonConvert.SerializeObject(connectorEntity),
+                seconds);
         }
     }
 }
