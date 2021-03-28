@@ -84,7 +84,7 @@ namespace SharpConnector.Connectors.LiteDb
         /// <returns></returns>
         public Task<bool> DeleteAsync(string key)
         {
-            // LiteDb library does not implement asynchronous operations yet
+            // LiteDb library does not implement asynchronous operations
             var delete = Delete(key);
             return Task.FromResult(delete);
         }
@@ -96,7 +96,7 @@ namespace SharpConnector.Connectors.LiteDb
         /// <returns></returns>
         public bool Update(LiteDbConnectorEntity connectorEntity)
         {
-            // TODO switch to single access with UpdateMany
+            // TODO single access with UpdateMany
             _liteDbAccess.Collection.DeleteMany(Query.EQ("Key", new BsonValue(connectorEntity.Key)));
             return Insert(connectorEntity);
         }
@@ -108,7 +108,7 @@ namespace SharpConnector.Connectors.LiteDb
         /// <returns></returns>
         public Task<bool> UpdateAsync(LiteDbConnectorEntity connectorEntity)
         {
-            // LiteDb library does not implement asynchronous operations yet
+            // LiteDb library does not implement asynchronous operations
             var update = Update(connectorEntity);
             return Task.FromResult(update);
         }

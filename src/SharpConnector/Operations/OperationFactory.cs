@@ -12,6 +12,12 @@ namespace SharpConnector.Operations
     /// </summary>
     public abstract class OperationFactory
     {
+        /// <summary>
+        /// Get the configuration strategy for the connector type.
+        /// </summary>
+        /// <param name="section">The configuration section.</param>
+        /// <param name="connectorTypes">The connector type.</param>
+        /// <returns></returns>
         public virtual IConnectorConfig GetConfigurationStrategy(IConfigurationSection section, ConnectorTypeEnums connectorTypes)
         {
             return connectorTypes switch

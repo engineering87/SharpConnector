@@ -27,7 +27,7 @@ namespace SharpConnector.Operations
             var dbType = _section.GetChildren().FirstOrDefault(s => s.Key.ToLower() == "instance")?.Value;
 
             if (!Enum.TryParse(dbType, true, out ConnectorTypeEnums connectorTypes))
-                throw new Exception("Instance for SharpConnector was not found.");
+                throw new Exception("Instance section for SharpConnector was not found.");
 
             var connectorConfig = GetConfigurationStrategy(_section, connectorTypes);
             switch (connectorTypes)

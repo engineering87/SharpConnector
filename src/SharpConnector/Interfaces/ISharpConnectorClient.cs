@@ -1,7 +1,7 @@
 ﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
-
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SharpConnector.Interfaces
@@ -9,11 +9,12 @@ namespace SharpConnector.Interfaces
     /// <summary>
     /// The SharpConnectorClient operations interface.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">The payload type.</typeparam>
     public interface ISharpConnectorClient<T>
     {
         T Get(string key);
         Task<T> GetAsync(string key);
+        IEnumerable<T> GetAll();
         bool Insert(string key, T value);
         bool Insert(string key, T value, TimeSpan expiration);
         Task<bool> InsertAsync(string key, T value);

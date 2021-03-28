@@ -1,6 +1,7 @@
 ﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.MongoDb;
@@ -45,6 +46,11 @@ namespace SharpConnector.Operations
             if (connectorEntity != null)
                 return (Task<T>)Convert.ChangeType(connectorEntity.Result.Payload, typeof(Task<T>));
             return default;
+        }
+
+        public override IEnumerable<T> GetAll()
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
