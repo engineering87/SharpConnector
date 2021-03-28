@@ -65,3 +65,11 @@ SharpConnector uses the following externals references:
 
 ### Contact
 Please contact at francesco.delre.87[at]gmail.com for any details.
+
+* **StackExchange.Redis** see license [here](https://github.com/StackExchange/StackExchange.Redis/blob/main/LICENSE)
+* **MongoDB.Driver** see license [here](https://github.com/mongodb/mongo-csharp-driver/blob/master/License.txt)
+* **LiteDB** see license [here](https://github.com/mbdavid/LiteDB/blob/master/LICENSE)
+* **EnyimMemcached** see license [here](https://github.com/enyim/EnyimMemcached/blob/develop/LICENSE)
+
+### Contact
+Please contact at francesco.delre.87[at]gmail.com for any details.
