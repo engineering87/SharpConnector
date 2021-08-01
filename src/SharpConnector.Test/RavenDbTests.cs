@@ -1,4 +1,4 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+﻿// (c) 2021 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -7,15 +7,15 @@ using SharpConnector.Interfaces;
 namespace SharpConnector.Test
 {
     [TestClass]
-    public class MongoDbTests
+    public class RavenDbTests
     {
         private readonly ISharpConnectorClient<string> _sharpConnectorClient;
 
-        public MongoDbTests()
+        public RavenDbTests()
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(System.IO.Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.mongodb.json", optional: true, reloadOnChange: true);
+                .AddJsonFile("appsettings.ravendb.json", optional: true, reloadOnChange: true);
 
             _sharpConnectorClient = new SharpConnectorClient<string>(builder);
         }
@@ -27,7 +27,7 @@ namespace SharpConnector.Test
             var result = _sharpConnectorClient.Insert(key, "payload");
             Assert.IsTrue(result);
         }
-        
+
         [TestMethod]
         public void Get()
         {

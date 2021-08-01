@@ -12,6 +12,7 @@ SharpConnector provides access to **CRUD** operations to NoSql databases with *<
 * **MongoDB**
 * **LiteDB**
 * **EnyimMemcached**
+* **RavenDB**
 
 other connectors and operations are under development.
 
@@ -62,6 +63,7 @@ SharpConnector uses the following externals references:
 * **MongoDB.Driver** see license [here](https://github.com/mongodb/mongo-csharp-driver/blob/master/License.txt)
 * **LiteDB** see license [here](https://github.com/mbdavid/LiteDB/blob/master/LICENSE)
 * **EnyimMemcached** see license [here](https://github.com/enyim/EnyimMemcached/blob/develop/LICENSE)
+* **RavenDB** see license [here](https://github.com/ravendb/ravendb/blob/v5.2/LICENSE.txt)
 
 ### Contact
 Please contact at francesco.delre.87[at]gmail.com for any details.

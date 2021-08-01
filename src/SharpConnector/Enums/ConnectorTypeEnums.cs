@@ -10,6 +10,7 @@ namespace SharpConnector.Enums
         Redis,
         MongoDb,
         LiteDb,
-        Memcached
+        Memcached,
+        RavenDb
     }
 }

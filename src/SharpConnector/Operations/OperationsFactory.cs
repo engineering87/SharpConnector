@@ -52,6 +52,11 @@ namespace SharpConnector.Operations
                         var memcachedConfig = connectorConfig as MemcachedConfig;
                         return new MemcachedOperations<T>(memcachedConfig);
                     }
+                case ConnectorTypeEnums.RavenDb:
+                    {
+                        var ravenDbConfig = connectorConfig as RavenDbConfig;
+                        return new RavenDbOperations<T>(ravenDbConfig);
+                    }
                 default:
                     throw new ArgumentOutOfRangeException();
             }

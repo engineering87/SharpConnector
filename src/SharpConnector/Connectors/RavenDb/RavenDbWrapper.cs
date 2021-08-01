@@ -1,34 +1,30 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+﻿// (c) 2021 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
-using MongoDB.Driver;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
 using System.Threading.Tasks;
 
-namespace SharpConnector.Connectors.MongoDb
+namespace SharpConnector.Connectors.RavenDb
 {
-    public class MongoDbWrapper
+    public class RavenDbWrapper
     {
-        private readonly MongoDbAccess _mongoDbAccess;
+        private readonly RavenDbAccess _ravenDbAccess;
 
         /// <summary>
-        /// Create a new MongoDbWrapper instance.
+        /// Create a new RavenDbWrapper instance.
         /// </summary>
-        /// <param name="mongoDbConfig">The MongoDb connector config.</param>
-        public MongoDbWrapper(MongoDbConfig mongoDbConfig)
+        /// <param name="ravenDbConfig">The RavenDb connector config.</param>
+        public RavenDbWrapper(RavenDbConfig ravenDbConfig)
         {
-            _mongoDbAccess = new MongoDbAccess(mongoDbConfig);
+            _ravenDbAccess = new RavenDbAccess(ravenDbConfig);
         }
 
-        /// <summary>
-        /// Get the value of Key.
-        /// </summary>
-        /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
         public ConnectorEntity Get(string key)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", key);
-            return _mongoDbAccess.Collection.Find(filter).FirstOrDefault();
+            using (var session = _ravenDbAccess.Store.OpenSession())
+            {
+                return session.Load<ConnectorEntity>(key);
+            }
         }
 
         /// <summary>
@@ -38,8 +34,11 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public Task<ConnectorEntity> GetAsync(string key)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", key);
-            return _mongoDbAccess.Collection.Find(filter).FirstOrDefaultAsync();
+            using (var session = _ravenDbAccess.Store.OpenSession())
+            {
+                var entity = session.Load<ConnectorEntity>(key);
+                return Task.FromResult(entity);
+            }
         }
 
         /// <summary>
@@ -49,8 +48,11 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public bool Insert(ConnectorEntity connectorEntity)
         {
-            Delete(connectorEntity.Key);
-            _mongoDbAccess.Collection.InsertOne(connectorEntity);
+            using (var session = _ravenDbAccess.Store.OpenSession())
+            {
+                session.Store(connectorEntity, connectorEntity.Key);
+                session.SaveChanges();
+            }
             return true;
         }
 
@@ -62,8 +64,8 @@ namespace SharpConnector.Connectors.MongoDb
         public Task<bool> InsertAsync(ConnectorEntity connectorEntity)
         {
             DeleteAsync(connectorEntity.Key);
-            var insert = _mongoDbAccess.Collection.InsertOneAsync(connectorEntity);
-            return Task.FromResult(insert.IsCompletedSuccessfully);
+            var insert = Insert(connectorEntity);
+            return Task.FromResult(insert);
         }
 
         /// <summary>
@@ -73,8 +75,12 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public bool Delete(string key)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", key);
-            return _mongoDbAccess.Collection.DeleteOne(filter).IsAcknowledged;
+            using (var session = _ravenDbAccess.Store.OpenSession())
+            {
+                session.Delete(key);
+                session.SaveChanges();
+            }
+            return true;
         }
 
         /// <summary>
@@ -84,9 +90,12 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public Task<bool> DeleteAsync(string key)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", key);
-            var delete = _mongoDbAccess.Collection.DeleteOneAsync(filter);
-            return Task.FromResult(delete.IsCompletedSuccessfully);
+            using (var session = _ravenDbAccess.Store.OpenSession())
+            {
+                session.Delete(key);
+                session.SaveChanges();
+            }
+            return Task.FromResult(true);
         }
 
         /// <summary>
@@ -96,9 +105,14 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public bool Update(ConnectorEntity connectorEntity)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", connectorEntity.Key);
-            var update = Builders<ConnectorEntity>.Update.Set("Payload", connectorEntity.Payload);
-            return _mongoDbAccess.Collection.UpdateOne(filter, update).IsAcknowledged;
+            using (var session = _ravenDbAccess.Store.OpenSession())
+            {
+                var entity = session.Load<ConnectorEntity>(connectorEntity.Key);
+                entity.Payload = connectorEntity.Payload;
+                entity.Expiration = connectorEntity.Expiration;
+                session.SaveChanges();
+            }
+            return true;
         }
 
         /// <summary>
@@ -108,9 +122,8 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public Task<bool> UpdateAsync(ConnectorEntity connectorEntity)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", connectorEntity.Key);
-            var update = Builders<ConnectorEntity>.Update.Set("Payload", connectorEntity.Payload);
-            return Task.FromResult(_mongoDbAccess.Collection.UpdateOneAsync(filter, update).IsCompletedSuccessfully);
+            var update = Update(connectorEntity);
+            return Task.FromResult(update);
         }
     }
 }
