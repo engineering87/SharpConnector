@@ -2,7 +2,7 @@
 
 <img src="https://github.com/engineering87/SharpConnector/blob/main/sharpconnector_logo.jpg" width="300">
 
-SharpConnector is a general purpose multiple connector to NoSQL database. It simplifies the integration with the NoSql database by unifying the operations in a single interface without the need to develop specific logic for each connector. SharpConnector is a **.NET Standard** library.
+SharpConnector is a general purpose multiple connector to NoSQL database. It simplifies the integration with the NoSql database by unifying the operations in a single interface without the need to develop specific logic for each connector. SharpConnector is a **.NET 6** library.
 Each NoSQL database has its own peculiarities, some are document-oriented, others are of the key-value type,SharpConnector tries to unify the access interfaces in order to simplify the developments.
 
 ### How it works
