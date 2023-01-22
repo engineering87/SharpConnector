@@ -3,6 +3,7 @@
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.RavenDb;
 using SharpConnector.Entities;
+using SharpConnector.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -31,7 +32,7 @@ namespace SharpConnector.Operations
         {
             var connectorEntity = _ravenDbWrapper.Get(key);
             if (connectorEntity != null)
-                return (T)Convert.ChangeType(connectorEntity.Payload, typeof(T));
+                return connectorEntity.ToPayloadObject<T>();
             return default;
         }
 
@@ -40,17 +41,24 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <returns></returns>
-        public override Task<T> GetAsync(string key)
+        public override async Task<T> GetAsync(string key)
         {
-            var connectorEntity = _ravenDbWrapper.GetAsync(key);
+            var connectorEntity = await _ravenDbWrapper.GetAsync(key);
             if (connectorEntity != null)
-                return (Task<T>)Convert.ChangeType(connectorEntity.Result.Payload, typeof(Task<T>));
+                return connectorEntity.ToPayloadObject<T>();
             return default;
         }
 
+        /// <summary>
+        /// Get all values from RavenDb..
+        /// </summary>
+        /// <returns></returns>
         public override IEnumerable<T> GetAll()
         {
-            throw new NotImplementedException();
+            var connectorEntities = _ravenDbWrapper.GetAll();
+            if (connectorEntities != null)
+                return connectorEntities.ToPayloadList<T>();
+            return default;
         }
 
         /// <summary>
@@ -70,10 +78,12 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
+        /// <param name="expiration">The expiration of the key.</param>
         /// <returns></returns>
         public override bool Insert(string key, T value, TimeSpan expiration)
         {
-            throw new NotImplementedException();
+            var connectorEntity = new ConnectorEntity(key, value, expiration);
+            return _ravenDbWrapper.Insert(connectorEntity);
         }
 
         /// <summary>
@@ -82,15 +92,44 @@ namespace SharpConnector.Operations
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
         /// <returns></returns>
-        public override Task<bool> InsertAsync(string key, T value)
+        public override async Task<bool> InsertAsync(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return _ravenDbWrapper.InsertAsync(connectorEntity);
+            return await _ravenDbWrapper.InsertAsync(connectorEntity);
         }
 
-        public override Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
+        /// <summary>
+        /// Set the Key to hold the value.
+        /// </summary>
+        /// <param name="key">The key of the object.</param>
+        /// <param name="value">The value to store.</param>
+        /// <param name="expiration">The expiration of the key.</param>
+        /// <returns></returns>
+        public override async Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
         {
-            throw new NotImplementedException();
+            var connectorEntity = new ConnectorEntity(key, value, expiration);
+            return await _ravenDbWrapper.InsertAsync(connectorEntity);
+        }
+
+        /// <summary>
+        /// Multiple set operation.
+        /// </summary>
+        /// <param name="values">The values to store.</param>
+        /// <returns></returns>
+        public override bool InsertMany(Dictionary<string, T> values)
+        {
+            return _ravenDbWrapper.InsertMany(values.ToConnectorEntityList());
+        }
+
+        /// <summary>
+        /// Multiple set operation.
+        /// </summary>
+        /// <param name="values">The values to store.</param>
+        /// <param name="expiration">The expiration of the keys.</param>
+        /// <returns></returns>
+        public override bool InsertMany(Dictionary<string, T> values, TimeSpan expiration)
+        {
+            return _ravenDbWrapper.InsertMany(values.ToConnectorEntityList(expiration));
         }
 
         /// <summary>
@@ -108,9 +147,9 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <returns></returns>
-        public override Task<bool> DeleteAsync(string key)
+        public override async Task<bool> DeleteAsync(string key)
         {
-            return _ravenDbWrapper.DeleteAsync(key);
+            return await _ravenDbWrapper.DeleteAsync(key);
         }
 
         /// <summary>
@@ -131,10 +170,10 @@ namespace SharpConnector.Operations
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
         /// <returns></returns>
-        public override Task<bool> UpdateAsync(string key, T value)
+        public override async Task<bool> UpdateAsync(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return _ravenDbWrapper.UpdateAsync(connectorEntity);
+            return await _ravenDbWrapper.UpdateAsync(connectorEntity);
         }
     }
 }

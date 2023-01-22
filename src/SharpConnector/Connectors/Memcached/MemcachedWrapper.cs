@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SharpConnector.Connectors.Memcached
@@ -33,10 +34,10 @@ namespace SharpConnector.Connectors.Memcached
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <returns></returns>
-        public Task<ConnectorEntity> GetAsync(string key)
+        public async Task<ConnectorEntity> GetAsync(string key)
         {
-            var result = _memcachedAccess.MemcachedClient.GetAsync<ConnectorEntity>(key);
-            return Task.FromResult(result.Result?.Value);
+            var result = await _memcachedAccess.MemcachedClient.GetAsync<ConnectorEntity>(key);
+            return result?.Value;
         }
 
         /// <summary>
@@ -63,6 +64,27 @@ namespace SharpConnector.Connectors.Memcached
             return _memcachedAccess.MemcachedClient.AddAsync(connectorEntity.Key,
                 JsonConvert.SerializeObject(connectorEntity),
                 seconds);
+        }
+
+        /// <summary>
+        /// Multiple set operation.
+        /// </summary>
+        /// <param name="values">The ConnectorEntities to store.</param>
+        /// <returns></returns>
+        public bool InsertMany(List<ConnectorEntity> connectorEntities)
+        {
+            var result = true;
+            foreach (var entity in connectorEntities)
+            {
+                var seconds = entity.Expiration?.Seconds ?? 0;
+                var currentResult = _memcachedAccess.MemcachedClient.Add(entity.Key,
+                                JsonConvert.SerializeObject(entity),
+                                seconds);
+
+                if (currentResult == false)
+                    result = false;
+            }
+            return result;
         }
 
         /// <summary>

@@ -20,6 +20,8 @@ namespace SharpConnector.Operations
         public abstract bool Insert(string key, T value, TimeSpan expiration);
         public abstract Task<bool> InsertAsync(string key, T value);
         public abstract Task<bool> InsertAsync(string key, T value, TimeSpan expiration);
+        public abstract bool InsertMany(Dictionary<string, T> values);
+        public abstract bool InsertMany(Dictionary<string, T> values, TimeSpan expiration);
         public abstract bool Delete(string key);
         public abstract Task<bool> DeleteAsync(string key);
         public abstract bool Update(string key, T value);

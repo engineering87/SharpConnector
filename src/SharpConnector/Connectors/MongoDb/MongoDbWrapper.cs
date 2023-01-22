@@ -3,6 +3,7 @@
 using MongoDB.Driver;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SharpConnector.Connectors.MongoDb
@@ -36,10 +37,20 @@ namespace SharpConnector.Connectors.MongoDb
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <returns></returns>
-        public Task<ConnectorEntity> GetAsync(string key)
+        public async Task<ConnectorEntity> GetAsync(string key)
         {
             var filter = Builders<ConnectorEntity>.Filter.Eq("Key", key);
-            return _mongoDbAccess.Collection.Find(filter).FirstOrDefaultAsync();
+            var entity = await _mongoDbAccess.Collection.FindAsync(filter);
+            return await entity.FirstOrDefaultAsync();
+        }
+
+        /// <summary>
+        /// Get all the values.
+        /// </summary>
+        /// <returns></returns>
+        public List<ConnectorEntity> GetAll()
+        {
+            return _mongoDbAccess.Collection.Find(x => true).ToList();
         }
 
         /// <summary>
@@ -64,6 +75,17 @@ namespace SharpConnector.Connectors.MongoDb
             DeleteAsync(connectorEntity.Key);
             var insert = _mongoDbAccess.Collection.InsertOneAsync(connectorEntity);
             return Task.FromResult(insert.IsCompletedSuccessfully);
+        }
+
+        /// <summary>
+        /// Multiple set operation.
+        /// </summary>
+        /// <param name="connectorEntities">The ConnectorEntities to store.</param>
+        /// <returns></returns>
+        public bool InsertMany(List<ConnectorEntity> connectorEntities)
+        {
+            _mongoDbAccess.Collection.InsertMany(connectorEntities);
+            return true;
         }
 
         /// <summary>

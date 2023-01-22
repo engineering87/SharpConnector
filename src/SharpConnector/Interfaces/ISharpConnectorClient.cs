@@ -19,6 +19,8 @@ namespace SharpConnector.Interfaces
         bool Insert(string key, T value, TimeSpan expiration);
         Task<bool> InsertAsync(string key, T value);
         Task<bool> InsertAsync(string key, T value, TimeSpan expiration);
+        bool InsertMany(Dictionary<string, T> values);
+        bool InsertMany(Dictionary<string, T> values, TimeSpan expiration);
         bool Delete(string key);
         Task<bool> DeleteAsync(string key);
         bool Update(string key, T value);

@@ -3,6 +3,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SharpConnector.Interfaces;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SharpConnector.Test
 {
@@ -27,7 +29,23 @@ namespace SharpConnector.Test
             var result = _sharpConnectorClient.Insert(key, "payload");
             Assert.IsTrue(result);
         }
-        
+
+        [TestMethod]
+        public void InsertMany()
+        {
+            var dictionary = new Dictionary<string, string>()
+            {
+                { "key", "payload" },
+                { "key2", "payload2" },
+                { "key3", "payload3" }
+            };
+            var result = _sharpConnectorClient.InsertMany(dictionary);
+            Assert.IsTrue(result);
+            var list = _sharpConnectorClient.GetAll();
+            Assert.IsNotNull(list);
+            Assert.IsTrue(list.ToList().Count >= dictionary.Count);
+        }
+
         [TestMethod]
         public void Get()
         {
@@ -36,6 +54,20 @@ namespace SharpConnector.Test
             Assert.IsTrue(insert);
             var obj = _sharpConnectorClient.Get(key);
             Assert.AreEqual(obj, "payload");
+        }
+
+        [TestMethod]
+        public void GetAll()
+        {
+            const string key = "testKey";
+            const string otherkey = "testKey2";
+            var insert = _sharpConnectorClient.Insert(key, "payload");
+            Assert.IsTrue(insert);
+            insert = _sharpConnectorClient.Insert(otherkey, "payload");
+            Assert.IsTrue(insert);
+            var list = _sharpConnectorClient.GetAll();
+            Assert.IsNotNull(list);
+            Assert.IsTrue(list.ToList().Count >= 2);
         }
 
         [TestMethod]

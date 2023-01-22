@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.Memcached;
 using SharpConnector.Entities;
+using SharpConnector.Utilities;
 
 namespace SharpConnector.Operations
 {
@@ -30,7 +31,7 @@ namespace SharpConnector.Operations
         {
             var connectorEntity = _memcachedWrapper.Get(key);
             if (connectorEntity != null)
-                return (T)Convert.ChangeType(connectorEntity.Payload, typeof(T));
+                return connectorEntity.ToPayloadObject<T>();
             return default;
         }
 
@@ -39,11 +40,11 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <returns></returns>
-        public override Task<T> GetAsync(string key)
+        public override async Task<T> GetAsync(string key)
         {
-            var connectorEntity = _memcachedWrapper.GetAsync(key);
+            var connectorEntity = await _memcachedWrapper.GetAsync(key);
             if (connectorEntity != null)
-                return (Task<T>)Convert.ChangeType(connectorEntity.Result.Payload, typeof(Task<T>));
+                return connectorEntity.ToPayloadObject<T>();
             return default;
         }
 
@@ -83,10 +84,10 @@ namespace SharpConnector.Operations
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
         /// <returns></returns>
-        public override Task<bool> InsertAsync(string key, T value)
+        public override async Task<bool> InsertAsync(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return _memcachedWrapper.InsertAsync(connectorEntity);
+            return await _memcachedWrapper.InsertAsync(connectorEntity);
         }
 
         /// <summary>
@@ -96,10 +97,31 @@ namespace SharpConnector.Operations
         /// <param name="value">The value to store.</param>
         /// <param name="expiration">The expiration of the key.</param>
         /// <returns></returns>
-        public override Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
+        public override async Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
         {
             var connectorEntity = new ConnectorEntity(key, value, expiration);
-            return _memcachedWrapper.InsertAsync(connectorEntity);
+            return await _memcachedWrapper.InsertAsync(connectorEntity);
+        }
+
+        /// <summary>
+        /// Multiple set operation.
+        /// </summary>
+        /// <param name="values">The values to store.</param>
+        /// <returns></returns>
+        public override bool InsertMany(Dictionary<string, T> values)
+        {
+            return _memcachedWrapper.InsertMany(values.ToConnectorEntityList());
+        }
+
+        /// <summary>
+        /// Multiple set operation.
+        /// </summary>
+        /// <param name="values">The values to store.</param>
+        /// <param name="expiration">The expiration of the keys.</param>
+        /// <returns></returns>
+        public override bool InsertMany(Dictionary<string, T> values, TimeSpan expiration)
+        {
+            return _memcachedWrapper.InsertMany(values.ToConnectorEntityList(expiration));
         }
 
         /// <summary>
@@ -117,9 +139,9 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <returns></returns>
-        public override Task<bool> DeleteAsync(string key)
+        public override async Task<bool> DeleteAsync(string key)
         {
-            return _memcachedWrapper.DeleteAsync(key);
+            return await _memcachedWrapper.DeleteAsync(key);
         }
 
         /// <summary>
@@ -140,10 +162,10 @@ namespace SharpConnector.Operations
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
         /// <returns></returns>
-        public override Task<bool> UpdateAsync(string key, T value)
+        public override async Task<bool> UpdateAsync(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return _memcachedWrapper.UpdateAsync(connectorEntity);
+            return await _memcachedWrapper.UpdateAsync(connectorEntity);
         }
     }
 }

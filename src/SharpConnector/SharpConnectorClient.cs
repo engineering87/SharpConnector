@@ -83,14 +83,18 @@ namespace SharpConnector
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <returns></returns>
-        public Task<T> GetAsync(string key)
+        public async Task<T> GetAsync(string key)
         {
-            return _operations.GetAsync(key);
+            return await _operations.GetAsync(key);
         }
 
+        /// <summary>
+        /// Get all the values.
+        /// </summary>
+        /// <returns></returns>
         public IEnumerable<T> GetAll()
         {
-            throw new NotImplementedException();
+            return _operations.GetAll();
         }
 
         /// <summary>
@@ -117,26 +121,47 @@ namespace SharpConnector
         }
 
         /// <summary>
-        /// Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
+        /// Set key to hold the object value. If key already holds a value, it is overwritten, regardless of its type.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to set.</param>
         /// <returns></returns>
-        public Task<bool> InsertAsync(string key, T value)
+        public async Task<bool> InsertAsync(string key, T value)
         {
-            return _operations.InsertAsync(key, value);
+            return await _operations.InsertAsync(key, value);
         }
 
         /// <summary>
-        /// Set key to hold the string value. If key already holds a value, it is overwritten, regardless of its type.
+        /// Set key to hold the object value. If key already holds a value, it is overwritten, regardless of its type.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="expiration">The expiration of the key.</param>
         /// <returns></returns>
-        public Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
+        public async Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
         {
-            return _operations.InsertAsync(key, value, expiration);
+            return await _operations.InsertAsync(key, value, expiration);
+        }
+
+        /// <summary>
+        /// Multiple set keys to hold the object values.
+        /// </summary>
+        /// <param name="values">The <key, object> dictionary to set.</param>
+        /// <returns></returns>
+        public bool InsertMany(Dictionary<string, T> values)
+        {
+            return _operations.InsertMany(values);
+        }
+
+        /// <summary>
+        /// Multiple set keys to hold the object values.
+        /// </summary>
+        /// <param name="values">The <key, object> dictionary to set.</param>
+        /// <param name="expiration">The expiration of the keys.</param>
+        /// <returns></returns>
+        public bool InsertMany(Dictionary<string, T> values, TimeSpan expiration)
+        {
+            return _operations.InsertMany(values, expiration);
         }
 
         /// <summary>
@@ -154,9 +179,9 @@ namespace SharpConnector
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <returns></returns>
-        public Task<bool> DeleteAsync(string key)
+        public async Task<bool> DeleteAsync(string key)
         {
-            return _operations.DeleteAsync(key);
+            return await _operations.DeleteAsync(key);
         }
 
         /// <summary>
@@ -176,9 +201,9 @@ namespace SharpConnector
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to set.</param>
         /// <returns></returns>
-        public Task<bool> UpdateAsync(string key, T value)
+        public async Task<bool> UpdateAsync(string key, T value)
         {
-            return _operations.UpdateAsync(key, value);
+            return await _operations.UpdateAsync(key, value);
         }
     }
 }

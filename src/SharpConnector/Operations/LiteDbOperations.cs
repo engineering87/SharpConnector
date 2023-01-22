@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using SharpConnector.Utilities;
 
 namespace SharpConnector.Operations
 {
@@ -31,7 +32,7 @@ namespace SharpConnector.Operations
         {
             var connectorEntity = _liteDbWrapper.Get(key);
             if (connectorEntity != null)
-                return (T)Convert.ChangeType(connectorEntity.Payload, typeof(T));
+                return connectorEntity.ToPayloadObject<T>();
             return default;
         }
 
@@ -40,17 +41,24 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <returns></returns>
-        public override Task<T> GetAsync(string key)
+        public override async Task<T> GetAsync(string key)
         {
-            var connectorEntity = _liteDbWrapper.GetAsync(key);
+            var connectorEntity = await _liteDbWrapper.GetAsync(key);
             if (connectorEntity != null)
-                return (Task<T>)Convert.ChangeType(connectorEntity.Result.Payload, typeof(Task<T>));
+                return connectorEntity.ToPayloadObject<T>();
             return default;
         }
 
+        /// <summary>
+        /// Get all values from LiteDb.
+        /// </summary>
+        /// <returns></returns>
         public override IEnumerable<T> GetAll()
         {
-            throw new NotImplementedException();
+            var connectorEntities = _liteDbWrapper.GetAll();
+            if (connectorEntities != null)
+                return connectorEntities.ToPayloadList<T>();
+            return default;
         }
 
         /// <summary>
@@ -84,10 +92,10 @@ namespace SharpConnector.Operations
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
         /// <returns></returns>
-        public override Task<bool> InsertAsync(string key, T value)
+        public override async Task<bool> InsertAsync(string key, T value)
         {
             var connectorEntity = new LiteDbConnectorEntity(key, value, null);
-            return _liteDbWrapper.InsertAsync(connectorEntity);
+            return await _liteDbWrapper.InsertAsync(connectorEntity);
         }
 
         /// <summary>
@@ -97,10 +105,31 @@ namespace SharpConnector.Operations
         /// <param name="value">The value to store.</param>
         /// <param name="expiration">The expiration of the key.</param>
         /// <returns></returns>
-        public override Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
+        public override async Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
         {
             var connectorEntity = new LiteDbConnectorEntity(key, value, expiration);
-            return _liteDbWrapper.InsertAsync(connectorEntity);
+            return await _liteDbWrapper.InsertAsync(connectorEntity);
+        }
+
+        /// <summary>
+        /// Multiple set operation.
+        /// </summary>
+        /// <param name="values">The values to store.</param>
+        /// <returns></returns>
+        public override bool InsertMany(Dictionary<string, T> values)
+        {
+            return _liteDbWrapper.InsertMany(values.ToLiteDbConnectorEntityList());
+        }
+
+        /// <summary>
+        /// Multiple set operation.
+        /// </summary>
+        /// <param name="values">The values to store.</param>
+        /// <param name="expiration">The expiration of the keys.</param>
+        /// <returns></returns>
+        public override bool InsertMany(Dictionary<string, T> values, TimeSpan expiration)
+        {
+            return _liteDbWrapper.InsertMany(values.ToLiteDbConnectorEntityList(expiration));
         }
 
         /// <summary>
@@ -118,9 +147,9 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <returns></returns>
-        public override Task<bool> DeleteAsync(string key)
+        public override async Task<bool> DeleteAsync(string key)
         {
-            return _liteDbWrapper.DeleteAsync(key);
+            return await _liteDbWrapper.DeleteAsync(key);
         }
 
         /// <summary>
@@ -141,10 +170,10 @@ namespace SharpConnector.Operations
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
         /// <returns></returns>
-        public override Task<bool> UpdateAsync(string key, T value)
+        public override async Task<bool> UpdateAsync(string key, T value)
         {
             var connectorEntity = new LiteDbConnectorEntity(key, value, null);
-            return _liteDbWrapper.UpdateAsync(connectorEntity);
+            return await _liteDbWrapper.UpdateAsync(connectorEntity);
         }
     }
 }

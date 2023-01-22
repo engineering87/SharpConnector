@@ -2,6 +2,8 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SharpConnector.Connectors.RavenDb
@@ -32,12 +34,26 @@ namespace SharpConnector.Connectors.RavenDb
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <returns></returns>
-        public Task<ConnectorEntity> GetAsync(string key)
+        public async Task<ConnectorEntity> GetAsync(string key)
+        {
+            using (var session = _ravenDbAccess.Store.OpenAsyncSession())
+            {
+                return await session.LoadAsync<ConnectorEntity>(key);
+            }
+        }
+
+        /// <summary>
+        /// Get all the values.
+        /// </summary>
+        /// <returns></returns>
+        public List<ConnectorEntity> GetAll()
         {
             using (var session = _ravenDbAccess.Store.OpenSession())
             {
-                var entity = session.Load<ConnectorEntity>(key);
-                return Task.FromResult(entity);
+                return session
+                    .Query<ConnectorEntity>()
+                    .Customize(cr => cr.WaitForNonStaleResults())
+                    .ToList();
             }
         }
 
@@ -61,11 +77,32 @@ namespace SharpConnector.Connectors.RavenDb
         /// </summary>
         /// <param name="connectorEntity">The ConnectorEntity to store.</param>
         /// <returns></returns>
-        public Task<bool> InsertAsync(ConnectorEntity connectorEntity)
+        public async Task<bool> InsertAsync(ConnectorEntity connectorEntity)
         {
-            DeleteAsync(connectorEntity.Key);
-            var insert = Insert(connectorEntity);
-            return Task.FromResult(insert);
+            using (var session = _ravenDbAccess.Store.OpenAsyncSession())
+            {
+                await session.StoreAsync(connectorEntity, connectorEntity.Key);
+                await session.SaveChangesAsync();
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Multiple set operation.
+        /// </summary>
+        /// <param name="connectorEntities">The ConnectorEntities to store.</param>
+        /// <returns></returns>
+        public bool InsertMany(List<ConnectorEntity> connectorEntities)
+        {
+            using (var session = _ravenDbAccess.Store.OpenSession())
+            {
+                foreach (var entity in connectorEntities)
+                {
+                    session.Store(entity, entity.Key);
+                }
+                session.SaveChanges();
+            }
+            return true;
         }
 
         /// <summary>
@@ -88,14 +125,14 @@ namespace SharpConnector.Connectors.RavenDb
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <returns></returns>
-        public Task<bool> DeleteAsync(string key)
+        public async Task<bool> DeleteAsync(string key)
         {
-            using (var session = _ravenDbAccess.Store.OpenSession())
+            using (var session = _ravenDbAccess.Store.OpenAsyncSession())
             {
                 session.Delete(key);
-                session.SaveChanges();
+                await session.SaveChangesAsync();
             }
-            return Task.FromResult(true);
+            return true;
         }
 
         /// <summary>
@@ -120,10 +157,16 @@ namespace SharpConnector.Connectors.RavenDb
         /// </summary>
         /// <param name="connectorEntity">The ConnectorEntity to store.</param>
         /// <returns></returns>
-        public Task<bool> UpdateAsync(ConnectorEntity connectorEntity)
+        public async Task<bool> UpdateAsync(ConnectorEntity connectorEntity)
         {
-            var update = Update(connectorEntity);
-            return Task.FromResult(update);
+            using (var session = _ravenDbAccess.Store.OpenAsyncSession())
+            {
+                var entity = await session.LoadAsync<ConnectorEntity>(connectorEntity.Key);
+                entity.Payload = connectorEntity.Payload;
+                entity.Expiration = connectorEntity.Expiration;
+                await session.SaveChangesAsync();
+            }
+            return true;
         }
     }
 }

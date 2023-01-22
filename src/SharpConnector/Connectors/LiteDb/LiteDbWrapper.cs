@@ -5,6 +5,7 @@ using SharpConnector.Entities;
 using System.Linq;
 using System.Threading.Tasks;
 using LiteDB;
+using System.Collections.Generic;
 
 namespace SharpConnector.Connectors.LiteDb
 {
@@ -44,6 +45,15 @@ namespace SharpConnector.Connectors.LiteDb
         }
 
         /// <summary>
+        /// Get all the values.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<LiteDbConnectorEntity> GetAll()
+        {
+            return _liteDbAccess.Collection.Find(x=> true).ToList();
+        }
+
+        /// <summary>
         /// Set the Key to hold the value.
         /// </summary>
         /// <param name="connectorEntity">The ConnectorEntity to store.</param>
@@ -65,6 +75,17 @@ namespace SharpConnector.Connectors.LiteDb
             Delete(connectorEntity.Key);
             var insert = Insert(connectorEntity);
             return Task.FromResult(insert);
+        }
+
+        /// <summary>
+        /// Multiple set operation.
+        /// </summary>
+        /// <param name="connectorEntities">The ConnectorEntities to store.</param>
+        /// <returns></returns>
+        public bool InsertMany(List<LiteDbConnectorEntity> connectorEntities)
+        {
+            _liteDbAccess.Collection.InsertBulk(connectorEntities);
+            return true;
         }
 
         /// <summary>

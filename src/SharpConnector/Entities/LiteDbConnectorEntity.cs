@@ -1,4 +1,6 @@
-﻿using System;
+﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+// This code is licensed under MIT license (see LICENSE.txt for details)
+using System;
 using LiteDB;
 
 namespace SharpConnector.Entities
@@ -6,10 +8,6 @@ namespace SharpConnector.Entities
     [Serializable]
     public class LiteDbConnectorEntity : ConnectorEntity
     {
-        //[BsonId]
-        //[BsonField("_id")]
-        //public ObjectId Id { get; } = ObjectId.NewObjectId();
-
         public LiteDbConnectorEntity() { }
 
         [BsonCtor]
