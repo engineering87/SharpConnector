@@ -1,12 +1,16 @@
-[![Github license](mit.svg)](https://github.com/engineering87/SharpConnector/blob/master/LICENSE)
+# SharpConnector
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Nuget](https://img.shields.io/nuget/v/SharpConnector?style=plastic)](https://www.nuget.org/packages/SharpConnector)
+[![issues - dotnet-design-patterns](https://img.shields.io/github/issues/engineering87/SharpConnector)](https://github.com/engineering87/SharpConnector/issues)
+[![stars - dotnet-design-patterns](https://img.shields.io/github/stars/engineering87/SharpConnector?style=social)](https://github.com/engineering87/SharpConnector)
 
 <img src="https://github.com/engineering87/SharpConnector/blob/main/sharpconnector_logo.jpg" width="300">
 
-SharpConnector is a general purpose multiple connector to NoSQL database. It simplifies the integration with the NoSql database by unifying the operations in a single interface without the need to develop specific logic for each connector. SharpConnector is a **.NET 6** library.
-Each NoSQL database has its own peculiarities, some are document-oriented, others are of the key-value type,SharpConnector tries to unify the access interfaces in order to simplify the developments.
+SharpConnector is a .NET general-purpose connector for NoSQL databases. It simplifies integration with NoSQL databases by unifying operations into a single interface, eliminating the need to develop specific logic for each connector. Each NoSQL database has its own peculiarities, some are document-oriented, while others are key-value stores. SharpConnector aims to unify access interfaces to streamline development.
 
 ### How it works
-SharpConnector provides access to **CRUD** operations to NoSql databases with *<Key, Value>*, abstracting the interface from the implementation. **Insert, Get, Delete, Update** operations are currently exposed to the following databases:
+SharpConnector provides access to **CRUD** operations to NoSQL databases with **<Key, Value>**, abstracting the interface from the implementation. **Insert, Get, Delete, Update** operations are currently exposed to the following databases:
 
 * **Redis**
 * **MongoDB**
@@ -47,11 +51,8 @@ If you want to add new connectors, please follow these three rules:
 2) For each new connector the relevant **UnitTest** class must be present.
 3) Any third party libraries added in the code must be compatible with the MIT license, and the license must also be made explicit in the code.
 
-**Getting started with Git and GitHub**
-
- * [Setting up Git for Windows and connecting to GitHub](http://help.github.com/win-set-up-git/)
- * [Forking a GitHub repository](http://help.github.com/fork-a-repo/)
- * [The simple guide to GIT guide](http://rogerdudler.github.com/git-guide/)
+ * [Setting up Git](https://docs.github.com/en/get-started/getting-started-with-git/set-up-git)
+ * [Fork the repository](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo)
  * [Open an issue](https://github.com/engineering87/SharpConnector/issues) if you encounter a bug or have a suggestion for improvements/features
 
 ### Licensee
@@ -66,4 +67,4 @@ SharpConnector uses the following externals references:
 * **RavenDB** see license [here](https://github.com/ravendb/ravendb/blob/v5.2/LICENSE.txt)
 
 ### Contact
-Please contact at francesco.delre.87[at]gmail.com for any details.
+Please contact at francesco.delre.87[at]protonmail.com for any details.
