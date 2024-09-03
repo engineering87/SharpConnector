@@ -3,11 +3,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Nuget](https://img.shields.io/nuget/v/SharpConnector?style=plastic)](https://www.nuget.org/packages/SharpConnector)
 [![issues - dotnet-design-patterns](https://img.shields.io/github/issues/engineering87/SharpConnector)](https://github.com/engineering87/SharpConnector/issues)
+[![Build](https://github.com/engineering87/SharpConnector/actions/workflows/dotnet.yml/badge.svg)](https://github.com/engineering87/SharpConnector/actions/workflows/dotnet.yml)
 [![stars - dotnet-design-patterns](https://img.shields.io/github/stars/engineering87/SharpConnector?style=social)](https://github.com/engineering87/SharpConnector)
 
 <img src="https://github.com/engineering87/SharpConnector/blob/main/sharpconnector_logo.jpg" width="300">
 
-SharpConnector is a .NET general-purpose connector for NoSQL databases. It simplifies integration with NoSQL databases by unifying operations into a single interface, eliminating the need to develop specific logic for each connector. Each NoSQL database has its own peculiarities, some are document-oriented, while others are key-value stores. SharpConnector aims to unify access interfaces to streamline development.
+SharpConnector is a .NET library designed to streamline integration with NoSQL databases. It provides a unified interface that simplifies database operations, eliminating the need to develop custom logic for each specific database connector. Since each NoSQL database has its own unique characteristics—such as being document-oriented or key-value-based—SharpConnector abstracts these differences, providing a consistent and simplified access layer to accelerate development.
 
 ### How it works
 SharpConnector provides access to **CRUD** operations to NoSQL databases with **<Key, Value>**, abstracting the interface from the implementation. **Insert, Get, Delete, Update** operations are currently exposed to the following databases:
@@ -67,4 +68,4 @@ SharpConnector uses the following externals references:
 * **RavenDB** see license [here](https://github.com/ravendb/ravendb/blob/v5.2/LICENSE.txt)
 
 ### Contact
-Please contact at francesco.delre.87[at]protonmail.com for any details.
+Please contact at francesco.delre[at]protonmail.com for any details.
