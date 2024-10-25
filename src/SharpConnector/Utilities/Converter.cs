@@ -3,7 +3,6 @@
 using SharpConnector.Entities;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace SharpConnector.Utilities
 {
@@ -74,7 +73,7 @@ namespace SharpConnector.Utilities
         public static List<ConnectorEntity> ToConnectorEntityList<T>(this Dictionary<string, T> values, TimeSpan? expiration = null)
         {
             if (values == null) 
-                return new List<ConnectorEntity>();
+                return [];
 
             var connectorEntities = new List<ConnectorEntity>();
             foreach (var entry in values)
@@ -96,7 +95,7 @@ namespace SharpConnector.Utilities
         public static List<LiteDbConnectorEntity> ToLiteDbConnectorEntityList<T>(this Dictionary<string, T> values, TimeSpan? expiration = null)
         {
             if (values == null)
-                return new List<LiteDbConnectorEntity>();
+                return [];
 
             var connectorEntities = new List<LiteDbConnectorEntity>();
             foreach (var entry in values)

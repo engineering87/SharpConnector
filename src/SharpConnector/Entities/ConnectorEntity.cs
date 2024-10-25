@@ -3,6 +3,7 @@
 using Newtonsoft.Json;
 using System;
 using MongoDB.Bson.Serialization.Attributes;
+using SharpConnector.Utilities;
 
 namespace SharpConnector.Entities
 {
@@ -34,7 +35,7 @@ namespace SharpConnector.Entities
                 throw new ArgumentException("Key or Payload cannot be null");
 
             var type = payload.GetType();
-            if (type.IsSerializable)
+            if (type.IsSerializable())
             {
                 Key = key;
                 Payload = payload;
@@ -57,7 +58,7 @@ namespace SharpConnector.Entities
                 throw new ArgumentException("Key or Payload cannot be null");
 
             var type = payload.GetType();
-            if (type.IsSerializable)
+            if (type.IsSerializable())
             {
                 Key = key;
                 Payload = payload;
@@ -76,7 +77,7 @@ namespace SharpConnector.Entities
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            if (!(obj is ConnectorEntity p))
+            if (obj is not ConnectorEntity p)
                 return false;
 
             return Payload.GetHashCode() == p.GetHashCode();
