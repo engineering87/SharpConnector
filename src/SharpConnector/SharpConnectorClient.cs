@@ -13,6 +13,11 @@ namespace SharpConnector
     {
         private IOperations<T> _operations;
 
+        public SharpConnectorClient(IConfiguration configuration)
+        {
+            InitOperations(configuration);
+        }
+
         /// <summary>
         /// Create e new SharpConnectorClient instance.
         /// </summary>
