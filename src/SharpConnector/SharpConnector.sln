@@ -5,7 +5,7 @@ VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharpConnector", "SharpConnector.csproj", "{04B2A952-D494-45B5-8819-EB0C38975CCD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharpConnector.Tests", "..\SharpConnector.Test\SharpConnector.Tests.csproj", "{F5953500-0FA2-4520-8E52-AB7E67293F09}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharpConnector.Tests", "..\SharpConnector.Tests\SharpConnector.Tests.csproj", "{F5953500-0FA2-4520-8E52-AB7E67293F09}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharpConnector.Api", "..\SharpConnector.Api\SharpConnector.Api.csproj", "{72A48B94-89D2-4F16-AE8C-E32B763EFA99}"
 EndProject
