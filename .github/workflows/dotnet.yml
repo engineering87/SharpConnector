@@ -25,4 +25,4 @@ jobs:
     - name: Build
       run: dotnet build src/SharpConnector/SharpConnector.csproj --no-restore
     - name: Test
-      run: dotnet test src/SharpConnector.Test/SharpConnector.Test.csproj --no-build --verbosity normal
+      run: dotnet test src/SharpConnector.Tests/SharpConnector.Tests.csproj --no-build --verbosity normal
