@@ -20,11 +20,9 @@ SharpConnector provides access to **CRUD** operations to NoSQL databases with **
 * **EnyimMemcached**
 * **RavenDB**
 
-other connectors and operations are under development.
-
 ### How to use it
-To use SharpConnector simply configure the *connectionString* to the desired connector and the *instance* type.
-Add the *ConnectorConfig* node configuration within the *appsettings.json* file, here is the example for Redis connector:
+To get started with SharpConnector, configure your *connectionString* and specify the connector *instance* type. 
+Then, add the ConnectorConfig node within your appsettings.json file. Here’s an example configuration for a Redis connector:
 
 ```json
 {
@@ -36,13 +34,19 @@ Add the *ConnectorConfig* node configuration within the *appsettings.json* file,
 }
 ```
 
-and instantiate a new client specifying the type of data (for example string):
+Once configured, create a new SharpConnector client, specifying the payload type (e.g., string):
 
 ```csharp
 SharpConnectorClient<string> client = new SharpConnectorClient<string>()
 ```
 
-SharpConnector works with any object that is serializable.
+Alternatively, you can integrate SharpConnector client using dependency injection. Here’s how to register the SharpConnector service with a string payload type:
+
+```csharp
+// Register the SharpConnector services with string payload type.
+builder.Services.AddSharpConnectorServices<string>();
+```
+This setup provides flexibility in working with different payload types and makes SharpConnector easy to use within dependency injection configurations.
 
 ### Contributing
 Thank you for considering to help out with the source code!
