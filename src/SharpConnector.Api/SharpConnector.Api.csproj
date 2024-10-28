@@ -8,6 +8,32 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="appsettings.litedb.json" />
+    <Content Remove="appsettings.memcached.json" />
+    <Content Remove="appsettings.mongodb.json" />
+    <Content Remove="appsettings.ravendb.json" />
+    <Content Remove="appsettings.redis.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="appsettings.litedb.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="appsettings.memcached.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="appsettings.mongodb.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="appsettings.ravendb.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="appsettings.redis.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
   </ItemGroup>
 

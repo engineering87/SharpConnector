@@ -34,8 +34,7 @@ namespace SharpConnector.Entities
             if (string.IsNullOrEmpty(key) || payload == null)
                 throw new ArgumentException("Key or Payload cannot be null");
 
-            var type = payload.GetType();
-            if (type.IsSerializable())
+            if (payload.IsSerializable())
             {
                 Key = key;
                 Payload = payload;
@@ -57,8 +56,7 @@ namespace SharpConnector.Entities
             if (string.IsNullOrEmpty(key) || payload == null)
                 throw new ArgumentException("Key or Payload cannot be null");
 
-            var type = payload.GetType();
-            if (type.IsSerializable())
+            if (payload.IsSerializable())
             {
                 Key = key;
                 Payload = payload;

@@ -20,9 +20,12 @@ namespace SharpConnector.Utilities
                 JsonSerializer.Serialize(obj);
                 return true;
             }
-            catch (Exception)
+            catch (JsonException jsonEx)
             {
-                // If serialization fails, the object is not serializable
+                return false;
+            }
+            catch (Exception ex)
+            {
                 return false;
             }
         }
