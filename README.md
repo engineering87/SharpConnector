@@ -12,13 +12,16 @@
 SharpConnector is a .NET library designed to streamline integration with NoSQL databases. It provides a unified interface that simplifies database operations, eliminating the need to develop custom logic for each specific database connector. Since each NoSQL database has its own unique characteristics—such as being document-oriented or key-value-based—SharpConnector abstracts these differences, providing a consistent and simplified access layer to accelerate development.
 
 ### How it works
-SharpConnector provides access to **CRUD** operations to NoSQL databases with **<Key, Value>**, abstracting the interface from the implementation. **Insert, Get, Delete, Update** operations are currently exposed to the following databases:
+SharpConnector offers a unified interface for performing CRUD operations on various types of NoSQL databases. While NoSQL databases often differ in their internal structures (e.g., key-value stores, document databases), this library abstracts these distinctions, enabling streamlined key-value-based CRUD operations.
+Through SharpConnector, you can use a consistent interface to perform Insert, Get, Delete, and Update operations across multiple NoSQL systems, currently supporting:
 
-* **Redis**
-* **MongoDB**
-* **LiteDB**
-* **EnyimMemcached**
-* **RavenDB**
+* **Redis (key-value)**
+* **MongoDB (document-oriented)**
+* **LiteDB (embedded document database)**
+* **EnyimMemcached (key-value)**
+* **RavenDB (document-oriented)**
+
+SharpConnector thus simplifies the development process, providing flexibility and compatibility across diverse NoSQL paradigms without the need to handle specific database implementations.
 
 ### How to use it
 To get started with SharpConnector, configure your *connectionString* and specify the connector *instance* type. 
