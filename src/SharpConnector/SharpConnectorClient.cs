@@ -13,6 +13,11 @@ namespace SharpConnector
     {
         private IOperations<T> _operations;
 
+        public SharpConnectorClient(IConfiguration configuration)
+        {
+            InitOperations(configuration);
+        }
+
         /// <summary>
         /// Create e new SharpConnectorClient instance.
         /// </summary>
@@ -95,6 +100,11 @@ namespace SharpConnector
         public IEnumerable<T> GetAll()
         {
             return _operations.GetAll();
+        }
+
+        public async Task<IEnumerable<T>> GetAllAsync()
+        {
+            return await _operations.GetAllAsync();
         }
 
         /// <summary>
@@ -204,6 +214,16 @@ namespace SharpConnector
         public async Task<bool> UpdateAsync(string key, T value)
         {
             return await _operations.UpdateAsync(key, value);
+        }
+
+        /// <summary>
+        /// Asynchronously inserts multiple ConnectorEntity instances into the storage.
+        /// </summary>
+        /// <param name="values">A list of ConnectorEntity instances to be inserted.</param>
+        /// <returns>A Task representing the asynchronous operation, containing a boolean value indicating the success or failure of the insert operation.</returns>
+        public async Task<bool> InsertManyAsync(IEnumerable<T> values)
+        {
+            return await _operations.InsertManyAsync(values);
         }
     }
 }

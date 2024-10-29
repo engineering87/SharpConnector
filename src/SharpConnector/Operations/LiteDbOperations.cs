@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
 using SharpConnector.Utilities;
+using SharpConnector.Connectors.Redis;
+using System.Linq;
+using SharpConnector.Connectors.Memcached;
 
 namespace SharpConnector.Operations
 {
@@ -174,6 +177,22 @@ namespace SharpConnector.Operations
         {
             var connectorEntity = new LiteDbConnectorEntity(key, value, null);
             return await _liteDbWrapper.UpdateAsync(connectorEntity);
+        }
+
+        public override async Task<IEnumerable<T>> GetAllAsync()
+        {
+            var connectorEntities = await _liteDbWrapper.GetAllAsync();
+            return connectorEntities
+                .Cast<T>()
+                .ToList();
+        }
+
+        public override async Task<bool> InsertManyAsync(IEnumerable<T> values)
+        {
+            var connectorEntityList = values
+                .Cast<LiteDbConnectorEntity>()
+                .ToList();
+            return await _liteDbWrapper.InsertManyAsync(connectorEntityList);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿// (c) 2021 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
+using Raven.Client.Documents;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
 using System.Collections.Generic;
@@ -58,6 +59,22 @@ namespace SharpConnector.Connectors.RavenDb
         }
 
         /// <summary>
+        /// Get all values asynchronously.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation, containing a list of ConnectorEntities.</returns>
+        public async Task<List<ConnectorEntity>> GetAllAsync()
+        {
+            using (var session = _ravenDbAccess.Store.OpenAsyncSession())
+            {
+                var entities = await session
+                    .Query<ConnectorEntity>()
+                    .Customize(cr => cr.WaitForNonStaleResults())
+                    .ToListAsync();
+                return entities;
+            }
+        }
+
+        /// <summary>
         /// Set the Key to hold the value.
         /// </summary>
         /// <param name="connectorEntity">The ConnectorEntity to store.</param>
@@ -106,6 +123,24 @@ namespace SharpConnector.Connectors.RavenDb
         }
 
         /// <summary>
+        /// Asynchronously insert multiple ConnectorEntities.
+        /// </summary>
+        /// <param name="connectorEntities">The ConnectorEntities to store.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public async Task<bool> InsertManyAsync(List<ConnectorEntity> connectorEntities)
+        {
+            using (var session = _ravenDbAccess.Store.OpenAsyncSession())
+            {
+                foreach (var entity in connectorEntities)
+                {
+                    await session.StoreAsync(entity, entity.Key);
+                }
+                await session.SaveChangesAsync();
+            }
+            return true;
+        }
+
+        /// <summary>
         /// Removes the specified Key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
@@ -145,6 +180,7 @@ namespace SharpConnector.Connectors.RavenDb
             using (var session = _ravenDbAccess.Store.OpenSession())
             {
                 var entity = session.Load<ConnectorEntity>(connectorEntity.Key);
+                if (entity == null) return false;
                 entity.Payload = connectorEntity.Payload;
                 entity.Expiration = connectorEntity.Expiration;
                 session.SaveChanges();
@@ -162,6 +198,7 @@ namespace SharpConnector.Connectors.RavenDb
             using (var session = _ravenDbAccess.Store.OpenAsyncSession())
             {
                 var entity = await session.LoadAsync<ConnectorEntity>(connectorEntity.Key);
+                if (entity == null) return false;
                 entity.Payload = connectorEntity.Payload;
                 entity.Expiration = connectorEntity.Expiration;
                 await session.SaveChangesAsync();

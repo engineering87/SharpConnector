@@ -2,10 +2,12 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.RavenDb;
+using SharpConnector.Connectors.Redis;
 using SharpConnector.Entities;
 using SharpConnector.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SharpConnector.Operations
@@ -174,6 +176,22 @@ namespace SharpConnector.Operations
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
             return await _ravenDbWrapper.UpdateAsync(connectorEntity);
+        }
+
+        public override async Task<IEnumerable<T>> GetAllAsync()
+        {
+            var connectorEntities = await _ravenDbWrapper.GetAllAsync();
+            return connectorEntities
+                .Cast<T>()
+                .ToList();
+        }
+
+        public override async Task<bool> InsertManyAsync(IEnumerable<T> values)
+        {
+            var connectorEntityList = values
+                .Cast<ConnectorEntity>()
+                .ToList();
+            return await _ravenDbWrapper.InsertManyAsync(connectorEntityList);
         }
     }
 }

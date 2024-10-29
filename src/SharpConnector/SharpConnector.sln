@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30621.155
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpConnector", "SharpConnector.csproj", "{04B2A952-D494-45B5-8819-EB0C38975CCD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharpConnector", "SharpConnector.csproj", "{04B2A952-D494-45B5-8819-EB0C38975CCD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpConnector.Test", "..\SharpConnector.Test\SharpConnector.Test.csproj", "{F5953500-0FA2-4520-8E52-AB7E67293F09}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharpConnector.Tests", "..\SharpConnector.Tests\SharpConnector.Tests.csproj", "{F5953500-0FA2-4520-8E52-AB7E67293F09}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharpConnector.Api", "..\SharpConnector.Api\SharpConnector.Api.csproj", "{72A48B94-89D2-4F16-AE8C-E32B763EFA99}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{F5953500-0FA2-4520-8E52-AB7E67293F09}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5953500-0FA2-4520-8E52-AB7E67293F09}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5953500-0FA2-4520-8E52-AB7E67293F09}.Release|Any CPU.Build.0 = Release|Any CPU
+		{72A48B94-89D2-4F16-AE8C-E32B763EFA99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72A48B94-89D2-4F16-AE8C-E32B763EFA99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72A48B94-89D2-4F16-AE8C-E32B763EFA99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72A48B94-89D2-4F16-AE8C-E32B763EFA99}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

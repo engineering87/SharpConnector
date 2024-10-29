@@ -1,7 +1,11 @@
-﻿using Newtonsoft.Json;
+﻿// (c) 2021 Francesco Del Re <francesco.delre.87@gmail.com>
+// This code is licensed under MIT license (see LICENSE.txt for details)
+using Newtonsoft.Json;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SharpConnector.Connectors.Memcached
@@ -41,6 +45,15 @@ namespace SharpConnector.Connectors.Memcached
         }
 
         /// <summary>
+        /// Get all ConnectorEntities asynchronously.
+        /// </summary>
+        /// <returns>A list of ConnectorEntities.</returns>
+        public async Task<List<ConnectorEntity>> GetAllAsync()
+        {
+            throw new NotSupportedException("This operation is not supported.");
+        }
+
+        /// <summary>
         /// Set the Key to hold the value.
         /// </summary>
         /// <param name="connectorEntity">The ConnectorEntity to store.</param>
@@ -73,18 +86,19 @@ namespace SharpConnector.Connectors.Memcached
         /// <returns></returns>
         public bool InsertMany(List<ConnectorEntity> connectorEntities)
         {
-            var result = true;
-            foreach (var entity in connectorEntities)
-            {
-                var seconds = entity.Expiration?.Seconds ?? 0;
-                var currentResult = _memcachedAccess.MemcachedClient.Add(entity.Key,
-                                JsonConvert.SerializeObject(entity),
-                                seconds);
+            return connectorEntities.All(Insert);
+        }
 
-                if (currentResult == false)
-                    result = false;
-            }
-            return result;
+        /// <summary>
+        /// Asynchronously inserts multiple ConnectorEntities.
+        /// </summary>
+        /// <param name="connectorEntities">The list of ConnectorEntities to store.</param>
+        /// <returns>True if all operations succeeded, false otherwise.</returns>
+        public async Task<bool> InsertManyAsync(List<ConnectorEntity> connectorEntities)
+        {
+            var tasks = connectorEntities.Select(InsertAsync);
+            var results = await Task.WhenAll(tasks);
+            return results.All(r => r);
         }
 
         /// <summary>
