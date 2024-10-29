@@ -2,9 +2,11 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.MongoDb;
+using SharpConnector.Connectors.Redis;
 using SharpConnector.Entities;
 using SharpConnector.Utilities;
 
@@ -174,6 +176,22 @@ namespace SharpConnector.Operations
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
             return await _mongoDbWrapper.UpdateAsync(connectorEntity);
+        }
+
+        public override async Task<IEnumerable<T>> GetAllAsync()
+        {
+            var connectorEntities = await _mongoDbWrapper.GetAllAsync();
+            return connectorEntities
+                .Cast<T>()
+                .ToList();
+        }
+
+        public override async Task<bool> InsertManyAsync(IEnumerable<T> values)
+        {
+            var connectorEntityList = values
+                .Cast<ConnectorEntity>()
+                .ToList();
+            return await _mongoDbWrapper.InsertManyAsync(connectorEntityList);
         }
     }
 }

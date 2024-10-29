@@ -29,7 +29,9 @@ namespace SharpConnector.Connectors.LiteDb
         /// <returns></returns>
         public LiteDbConnectorEntity Get(string key)
         {
-            return _liteDbAccess.Collection.Find(Query.EQ("Key", new BsonValue(key))).FirstOrDefault();
+            return _liteDbAccess.Collection
+                .Find(Query.EQ("Key", new BsonValue(key)))
+                .FirstOrDefault();
         }
 
         /// <summary>
@@ -40,7 +42,9 @@ namespace SharpConnector.Connectors.LiteDb
         public Task<LiteDbConnectorEntity> GetAsync(string key)
         {
             // LiteDb library does not implement asynchronous operations
-            var entity = _liteDbAccess.Collection.Find(Query.EQ("Key", new BsonValue(key))).FirstOrDefault();
+            var entity = _liteDbAccess.Collection
+                .Find(Query.EQ("Key", new BsonValue(key)))
+                .FirstOrDefault();
             return Task.FromResult(entity);
         }
 
@@ -52,6 +56,17 @@ namespace SharpConnector.Connectors.LiteDb
         {
             return _liteDbAccess.Collection.Find(x=> true).ToList();
         }
+
+        /// <summary>
+        /// Get all the values asynchronously.
+        /// </summary>
+        /// <returns></returns>
+        public Task<IEnumerable<LiteDbConnectorEntity>> GetAllAsync()
+        {
+            var entities = GetAll();
+            return Task.FromResult(entities);
+        }
+
 
         /// <summary>
         /// Set the Key to hold the value.
@@ -72,9 +87,8 @@ namespace SharpConnector.Connectors.LiteDb
         public Task<bool> InsertAsync(LiteDbConnectorEntity connectorEntity)
         {
             // LiteDb library does not implement asynchronous operations
-            Delete(connectorEntity.Key);
-            var insert = Insert(connectorEntity);
-            return Task.FromResult(insert);
+            var result = Insert(connectorEntity);
+            return Task.FromResult(result);
         }
 
         /// <summary>
@@ -86,6 +100,17 @@ namespace SharpConnector.Connectors.LiteDb
         {
             _liteDbAccess.Collection.InsertBulk(connectorEntities);
             return true;
+        }
+
+        /// <summary>
+        /// Asynchronously inserts multiple ConnectorEntities.
+        /// </summary>
+        /// <param name="connectorEntities">The list of ConnectorEntities to store.</param>
+        /// <returns>True if all operations succeeded, false otherwise.</returns>
+        public Task<bool> InsertManyAsync(List<LiteDbConnectorEntity> connectorEntities)
+        {
+            InsertMany(connectorEntities);
+            return Task.FromResult(true);
         }
 
         /// <summary>
@@ -117,8 +142,7 @@ namespace SharpConnector.Connectors.LiteDb
         /// <returns></returns>
         public bool Update(LiteDbConnectorEntity connectorEntity)
         {
-            // TODO switch to single access with UpdateMany
-            _liteDbAccess.Collection.DeleteMany(Query.EQ("Key", new BsonValue(connectorEntity.Key)));
+            Delete(connectorEntity.Key);
             return Insert(connectorEntity);
         }
 
@@ -130,8 +154,8 @@ namespace SharpConnector.Connectors.LiteDb
         public Task<bool> UpdateAsync(LiteDbConnectorEntity connectorEntity)
         {
             // LiteDb library does not implement asynchronous operations yet
-            var update = Update(connectorEntity);
-            return Task.FromResult(update);
+            var result = Update(connectorEntity);
+            return Task.FromResult(result);
         }
     }
 }
