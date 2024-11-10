@@ -14,8 +14,13 @@ namespace SharpConnector.Configuration
     {
         public string ConnectionString { get; }
         public string DatabaseName { get; }
+
+        // Not used
         public string CollectionName { get; private set; }
         public int DatabaseNumber { get; private set; }
+        public string Username { get; private set; }
+        public string Password { get; private set; }
+        public string BucketName { get; private set; }
 
         public RavenDbConfig(IConfiguration section)
         {
@@ -26,7 +31,7 @@ namespace SharpConnector.Configuration
             ConnectionString = sectionChildrenConnectionString?.Value;
 
             var sectionChildrenDatabaseName = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.databasename.ToString());
-            DatabaseName = sectionChildrenDatabaseName?.Value;
+            DatabaseName = sectionChildrenDatabaseName?.Value.Trim();
         }
     }
 }

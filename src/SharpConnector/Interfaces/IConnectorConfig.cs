@@ -11,5 +11,8 @@ namespace SharpConnector.Interfaces
         string ConnectionString { get; }
         string DatabaseName { get; }
         string CollectionName { get; }
+        public string Username { get; }
+        public string Password { get; }
+        public string BucketName { get; }
     }
 }

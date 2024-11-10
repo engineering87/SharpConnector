@@ -7,10 +7,15 @@ namespace SharpConnector.Configuration
 {
     public class MemcachedConfig : IConnectorConfig
     {
-        public int DatabaseNumber { get; private set; }
         public string ConnectionString { get; }
+
+        // Not used
+        public int DatabaseNumber { get; private set; }
         public string DatabaseName { get; private set; }
         public string CollectionName { get; private set; }
+        public string Username { get; private set; }
+        public string Password { get; private set; }
+        public string BucketName { get; private set; }
 
         public MemcachedConfig(IConfiguration section)
         {

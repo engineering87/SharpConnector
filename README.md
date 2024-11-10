@@ -20,6 +20,7 @@ Through SharpConnector, you can use a consistent interface to perform Insert, Ge
 * **LiteDB (embedded document database)**
 * **EnyimMemcached (key-value)**
 * **RavenDB (document-oriented)**
+* **Couchbase (document-oriented)**
 
 SharpConnector thus simplifies the development process, providing flexibility and compatibility across diverse NoSQL paradigms without the need to handle specific database implementations.
 
@@ -74,6 +75,7 @@ SharpConnector uses the following externals references:
 * **LiteDB** see license [here](https://github.com/mbdavid/LiteDB/blob/master/LICENSE)
 * **EnyimMemcached** see license [here](https://github.com/enyim/EnyimMemcached/blob/develop/LICENSE)
 * **RavenDB** see license [here](https://github.com/ravendb/ravendb/blob/v5.2/LICENSE.txt)
+* **Couchbase** see license [here](https://github.com/couchbase/couchbase-net-client/blob/master/LICENSE)
 
 ### Contact
 Please contact at francesco.delre[at]protonmail.com for any details.
