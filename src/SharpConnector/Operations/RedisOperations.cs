@@ -177,6 +177,10 @@ namespace SharpConnector.Operations
             return await _redisWrapper.UpdateAsync(connectorEntity);
         }
 
+        /// <summary>
+        /// Get all values from Redis asynchronously.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation, with the result being all values stored in Redis.</returns>
         public override async Task<IEnumerable<T>> GetAllAsync()
         {
             var connectorEntities = await _redisWrapper.GetAllAsync();
@@ -185,6 +189,11 @@ namespace SharpConnector.Operations
                 .ToList();
         }
 
+        /// <summary>
+        /// Insert multiple key-value pairs into Redis asynchronously.
+        /// </summary>
+        /// <param name="values">A collection of values to store.</param>
+        /// <returns>A task representing the asynchronous operation, with the result being true if all insertions are successful.</returns>
         public override async Task<bool> InsertManyAsync(IEnumerable<T> values)
         {
             var connectorEntityList = values
