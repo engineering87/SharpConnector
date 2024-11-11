@@ -14,8 +14,13 @@ namespace SharpConnector.Configuration
     {
         public string ConnectionString { get; }
         public int DatabaseNumber { get; } // 0 default
+
+        // Not used
         public string DatabaseName { get; private set; }
         public string CollectionName { get; private set; }
+        public string Username { get; private set; }
+        public string Password { get; private set; }
+        public string BucketName { get; private set; }
 
         public RedisConfig(IConfiguration section)
         {

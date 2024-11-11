@@ -3,12 +3,14 @@
 using MongoDB.Driver;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using System;
 
 namespace SharpConnector.Connectors.MongoDb
 {
-    public class MongoDbAccess
+    public class MongoDbAccess : IDisposable
     {
         public IMongoCollection<ConnectorEntity> Collection { get; }
+        private MongoClient _client;
 
         /// <summary>
         /// Create a new MongoDbAccess instance.
@@ -18,9 +20,18 @@ namespace SharpConnector.Connectors.MongoDb
         {
             var databaseName = mongoDbConfig.DatabaseName;
             var collectionName = mongoDbConfig.CollectionName;
-            var client = new MongoClient(mongoDbConfig.ConnectionString);
-            var db = client.GetDatabase(databaseName);
+            _client = new MongoClient(mongoDbConfig.ConnectionString);
+            var db = _client.GetDatabase(databaseName);
             Collection = db.GetCollection<ConnectorEntity>(collectionName);
+        }
+
+        /// <summary>
+        /// Dispose of the MongoClient.
+        /// </summary>
+        public void Dispose()
+        {
+            _client = null;
+            GC.SuppressFinalize(this);
         }
     }
 }

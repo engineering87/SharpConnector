@@ -6,7 +6,7 @@ using System;
 
 namespace SharpConnector.Connectors.RavenDb
 {
-    public class RavenDbAccess
+    public class RavenDbAccess : IDisposable
     {
         private static Lazy<IDocumentStore> DocumentStore { get; set; }
 
@@ -29,9 +29,18 @@ namespace SharpConnector.Connectors.RavenDb
         /// <summary>
         /// Return the DocumentStore.
         /// </summary>
-        public IDocumentStore Store
+        public IDocumentStore Store => DocumentStore.Value;
+
+        /// <summary>
+        /// Dispose of the DocumentStore.
+        /// </summary>
+        public void Dispose()
         {
-            get { return DocumentStore.Value; }
+            if (DocumentStore.IsValueCreated)
+            {
+                DocumentStore.Value.Dispose();
+            }
+            GC.SuppressFinalize(this);
         }
     }
 }

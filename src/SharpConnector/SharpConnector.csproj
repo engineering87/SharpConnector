@@ -9,14 +9,15 @@
     <Description>General purpose multiple connector to NoSQL database</Description>
     <PackageProjectUrl>https://github.com/engineering87/SharpConnector</PackageProjectUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>3.1.0</Version>
-    <AssemblyVersion>2.0.0.0</AssemblyVersion>
-    <FileVersion>2.0.0.0</FileVersion>
+    <Version>3.2.0</Version>
+    <AssemblyVersion>3.2.0</AssemblyVersion>
+    <FileVersion>3.2.0</FileVersion>
     <PackageIcon>logo.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CouchbaseNetClient" Version="3.6.4" />
     <PackageReference Include="EnyimMemcachedCore" Version="3.2.4" />
     <PackageReference Include="LiteDB" Version="5.0.21" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
@@ -25,7 +26,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
     <PackageReference Include="MongoDB.Driver" Version="3.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="RavenDB.Client" Version="6.2.0" />
+    <PackageReference Include="RavenDB.Client" Version="6.2.1" />
     <PackageReference Include="StackExchange.Redis" Version="2.8.16" />
   </ItemGroup>
 

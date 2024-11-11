@@ -3,12 +3,14 @@
 using LiteDB;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using System;
 
 namespace SharpConnector.Connectors.LiteDb
 {
-    public class LiteDbAccess
+    public class LiteDbAccess : IDisposable
     {
         public ILiteCollection<LiteDbConnectorEntity> Collection { get; }
+        private LiteDatabase _liteDatabase;
 
         /// <summary>
         /// Create a new LiteDbAccess instance.
@@ -16,9 +18,18 @@ namespace SharpConnector.Connectors.LiteDb
         /// <param name="liteDbConfig">The LiteDb configuration.</param>
         public LiteDbAccess(LiteDbConfig liteDbConfig)
         {
-            var liteDatabase = new LiteDatabase(liteDbConfig.ConnectionString);
+            _liteDatabase = new LiteDatabase(liteDbConfig.ConnectionString);
             var collectionName = liteDbConfig.CollectionName;
-            Collection = liteDatabase.GetCollection<LiteDbConnectorEntity>(collectionName);
+            Collection = _liteDatabase.GetCollection<LiteDbConnectorEntity>(collectionName);
+        }
+
+        /// <summary>
+        /// Dispose the LiteDatabase instance.
+        /// </summary>
+        public void Dispose()
+        {
+            _liteDatabase?.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

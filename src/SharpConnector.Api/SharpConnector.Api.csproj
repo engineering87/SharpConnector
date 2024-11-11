@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="appsettings.couchbase.json" />
     <Content Remove="appsettings.litedb.json" />
     <Content Remove="appsettings.memcached.json" />
     <Content Remove="appsettings.mongodb.json" />
@@ -16,6 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="appsettings.couchbase.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="appsettings.litedb.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -39,6 +43,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SharpConnector\SharpConnector.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

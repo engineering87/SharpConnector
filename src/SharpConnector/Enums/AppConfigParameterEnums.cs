@@ -7,6 +7,9 @@ namespace SharpConnector.Enums
         databasename,
         collectionname,
         databasenumber,
-        connectionstring
+        connectionstring,
+        bucketname,
+        username,
+        password
     }
 }

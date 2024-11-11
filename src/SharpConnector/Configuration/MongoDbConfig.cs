@@ -15,7 +15,12 @@ namespace SharpConnector.Configuration
         public string ConnectionString { get; }
         public string DatabaseName { get; }
         public string CollectionName { get; }
+
+        // Not used
         public int DatabaseNumber { get; private set; }
+        public string Username { get; private set; }
+        public string Password { get; private set; }
+        public string BucketName { get; private set; }
 
         public MongoDbConfig(IConfiguration section)
         {
@@ -26,10 +31,10 @@ namespace SharpConnector.Configuration
             ConnectionString = sectionChildrenConnectionString?.Value;
 
             var sectionChildrenDatabaseName = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.databasename.ToString());
-            DatabaseName = sectionChildrenDatabaseName?.Value;
+            DatabaseName = sectionChildrenDatabaseName?.Value.Trim();
 
             var sectionChildrenCollectionName = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.collectionname.ToString());
-            CollectionName = sectionChildrenCollectionName?.Value;
+            CollectionName = sectionChildrenCollectionName?.Value.Trim();
         }
     }
 }

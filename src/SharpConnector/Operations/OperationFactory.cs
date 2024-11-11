@@ -27,6 +27,7 @@ namespace SharpConnector.Operations
                 ConnectorTypeEnums.LiteDb => new LiteDbConfig(section),
                 ConnectorTypeEnums.Memcached => new MemcachedConfig(section),
                 ConnectorTypeEnums.RavenDb => new RavenDbConfig(section),
+                ConnectorTypeEnums.Couchbase => new CouchbaseConfig(section),
                 _ => section.Get<IConnectorConfig>()
             };
         }

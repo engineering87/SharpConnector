@@ -57,6 +57,11 @@ namespace SharpConnector.Operations
                         var ravenDbConfig = connectorConfig as RavenDbConfig;
                         return new RavenDbOperations<T>(ravenDbConfig);
                     }
+                case ConnectorTypeEnums.Couchbase:
+                    {
+                        var couchbaseDbConfig = connectorConfig as CouchbaseConfig;
+                        return new CouchbaseOperations<T>(couchbaseDbConfig);
+                    }
                 default:
                     throw new ArgumentOutOfRangeException();
             }
