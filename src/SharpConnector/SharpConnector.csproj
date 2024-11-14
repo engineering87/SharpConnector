@@ -6,10 +6,10 @@
     <Copyright>MIT</Copyright>
     <Authors>Francesco Del Re</Authors>
     <RepositoryUrl>https://github.com/engineering87/SharpConnector</RepositoryUrl>
-    <Description>General purpose multiple connector to NoSQL database</Description>
+    <Description>A flexible solution that accelerates integrations with multiple NoSQL databases</Description>
     <PackageProjectUrl>https://github.com/engineering87/SharpConnector</PackageProjectUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>3.2.0</Version>
+    <Version>3.3.0</Version>
     <AssemblyVersion>3.2.0</AssemblyVersion>
     <FileVersion>3.2.0</FileVersion>
     <PackageIcon>logo.png</PackageIcon>
