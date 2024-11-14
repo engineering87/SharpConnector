@@ -61,7 +61,7 @@ Once configured, create a new SharpConnector client, specifying the payload type
 SharpConnectorClient<string> client = new SharpConnectorClient<string>()
 ```
 
-Alternatively, you can integrate SharpConnector client using dependency injection. Here’s how to register the SharpConnector service with a string payload type:
+Alternatively, you can integrate SharpConnector client using dependency injection. Here’s how to register the SharpConnector service with a simple string payload type:
 
 ```csharp
 // Register the SharpConnector services with string payload type.
@@ -85,14 +85,18 @@ If you want to add new connectors, please follow these three rules:
 ### Licensee
 SharpConnector source code is available under MIT License, see license in the source.
 
-### External references
-SharpConnector uses the following externals references:
-* **StackExchange.Redis** see license [here](https://github.com/StackExchange/StackExchange.Redis/blob/main/LICENSE)
-* **MongoDB.Driver** see license [here](https://github.com/mongodb/mongo-csharp-driver/blob/master/License.txt)
-* **LiteDB** see license [here](https://github.com/mbdavid/LiteDB/blob/master/LICENSE)
-* **EnyimMemcached** see license [here](https://github.com/enyim/EnyimMemcached/blob/develop/LICENSE)
-* **RavenDB** see license [here](https://github.com/ravendb/ravendb/blob/v5.2/LICENSE.txt)
-* **Couchbase** see license [here](https://github.com/couchbase/couchbase-net-client/blob/master/LICENSE)
+#### External References
+The SharpConnector library relies on several third-party libraries to deliver advanced functionality. 
+Each of these libraries operates under a specific license, which governs its usage. To ensure transparency and compliance, the libraries and their licenses are listed in this repository:
+
+* **StackExchange.Redis**, a General purpose redis client, see **license** [here](https://github.com/StackExchange/StackExchange.Redis/blob/main/LICENSE)
+* **MongoDB.Driver**, the Official C# .NET Driver for MongoDB, see **license** [here](https://github.com/mongodb/mongo-csharp-driver/blob/main/LICENSE.md)
+* **LiteDB**, a .NET NoSQL Document Store in a single data file, see **license** [here](https://github.com/mbdavid/LiteDB/blob/master/LICENSE)
+* **EnyimMemcached**, a C# Memcached client, see **license** [here](https://github.com/enyim/EnyimMemcached/blob/develop/LICENSE)
+* **RavenDB**, ACID Document Database, see **license** [here](https://github.com/ravendb/ravendb/blob/v6.2/LICENSE.txt)
+* **Couchbase**, the official Couchbase SDK for .NET Core and Full Frameworks, see **license** [here](https://github.com/couchbase/couchbase-net-client/blob/master/LICENSE)
+
+Each library is included to enhance the functionality of SharpConnector while adhering to its licensing terms.
 
 ### Contact
 Please contact at francesco.delre[at]protonmail.com for any details.
