@@ -18,6 +18,12 @@ namespace SharpConnector.Configuration
         public int DatabaseNumber { get; private set; }
         public string DatabaseName { get; private set; }
         public string CollectionName { get; private set; }
+        public string AccessKey { get; private set; }
+        public string SecretKey { get; private set; }
+        public string Region { get; private set; }
+        public string ServiceUrl { get; private set; }
+        public bool UseHttp { get; private set; }
+        public string TableName { get; private set; }
 
         public CouchbaseConfig(IConfiguration section)
         {

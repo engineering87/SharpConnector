@@ -14,5 +14,11 @@ namespace SharpConnector.Interfaces
         public string Username { get; }
         public string Password { get; }
         public string BucketName { get; }
+        public string AccessKey { get; }
+        public string SecretKey { get; }
+        public string Region { get; }
+        public string ServiceUrl { get; }
+        public bool UseHttp { get; }
+        public string TableName { get; }
     }
 }

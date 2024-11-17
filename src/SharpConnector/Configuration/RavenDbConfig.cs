@@ -21,6 +21,12 @@ namespace SharpConnector.Configuration
         public string Username { get; private set; }
         public string Password { get; private set; }
         public string BucketName { get; private set; }
+        public string AccessKey { get; private set; }
+        public string SecretKey { get; private set; }
+        public string Region { get; private set; }
+        public string ServiceUrl { get; private set; }
+        public bool UseHttp { get; private set; }
+        public string TableName { get; private set; }
 
         public RavenDbConfig(IConfiguration section)
         {

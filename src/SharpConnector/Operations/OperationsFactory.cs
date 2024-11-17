@@ -62,6 +62,11 @@ namespace SharpConnector.Operations
                         var couchbaseDbConfig = connectorConfig as CouchbaseConfig;
                         return new CouchbaseOperations<T>(couchbaseDbConfig);
                     }
+                case ConnectorTypeEnums.DynamoDb:
+                    {
+                        var dynamoDbConfig = connectorConfig as DynamoDbConfig;
+                        return new DynamoDbOperations<T>(dynamoDbConfig);
+                    }
                 default:
                     throw new ArgumentOutOfRangeException();
             }

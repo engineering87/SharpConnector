@@ -10,6 +10,12 @@ namespace SharpConnector.Enums
         connectionstring,
         bucketname,
         username,
-        password
+        password,
+        accesskey,
+        secretkey,
+        region,
+        serviceurl,
+        usehttp,
+        tablename
     }
 }
