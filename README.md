@@ -14,7 +14,7 @@ SharpConnector is a .NET library designed to streamline integration with NoSQL d
 ## Features
 
 - Unified interface for CRUD operations across various NoSQL databases.
-- Supports key-value stores (Redis, EnyimMemcached) and document-oriented databases (MongoDB, LiteDB, RavenDB, Couchbase).
+- Supports key-value stores (Redis, EnyimMemcached, DynbamoDb) and document-oriented databases (MongoDB, LiteDB, RavenDB, Couchbase).
 - Facilitates streamlined database operations without the need for custom connectors.
 - Simplified integration using configuration files and dependency injection.
 - Easy integration for various payload types.
@@ -33,11 +33,12 @@ SharpConnector offers a unified interface for performing CRUD operations on vari
 Through SharpConnector, you can use a consistent interface to perform Insert, Get, Delete, and Update operations across multiple NoSQL systems, currently supporting:
 
 * **Redis (key-value)**
-* **MongoDB (document-oriented)**
+* **MongoDB (key-value or document-oriented)**
 * **LiteDB (embedded document database)**
 * **EnyimMemcached (key-value)**
 * **RavenDB (document-oriented)**
 * **Couchbase (document-oriented)**
+* **DynbamoDb (key-value or document-oriented)**
 
 SharpConnector thus simplifies the development process, providing flexibility and compatibility across diverse NoSQL paradigms without the need to handle specific database implementations.
 
@@ -95,6 +96,7 @@ Each of these libraries operates under a specific license, which governs its usa
 * **EnyimMemcached**, a C# Memcached client, see **license** [here](https://github.com/enyim/EnyimMemcached/blob/develop/LICENSE)
 * **RavenDB**, ACID Document Database, see **license** [here](https://github.com/ravendb/ravendb/blob/v6.2/LICENSE.txt)
 * **Couchbase**, the official Couchbase SDK for .NET Core and Full Frameworks, see **license** [here](https://github.com/couchbase/couchbase-net-client/blob/master/LICENSE)
+* **DynamoDb**, the official AWS SDK for .NET. For more information on the AWS SDK for .NET, see our web site: , see **license** [here](https://github.com/aws/aws-sdk-net/blob/main/License.txt)
 
 Each library is included to enhance the functionality of SharpConnector while adhering to its licensing terms.
 
