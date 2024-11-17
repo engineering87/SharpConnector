@@ -96,7 +96,7 @@ Each of these libraries operates under a specific license, which governs its usa
 * **EnyimMemcached**, a C# Memcached client, see **license** [here](https://github.com/enyim/EnyimMemcached/blob/develop/LICENSE)
 * **RavenDB**, ACID Document Database, see **license** [here](https://github.com/ravendb/ravendb/blob/v6.2/LICENSE.txt)
 * **Couchbase**, the official Couchbase SDK for .NET Core and Full Frameworks, see **license** [here](https://github.com/couchbase/couchbase-net-client/blob/master/LICENSE)
-* **DynamoDb**, the official AWS SDK for .NET. For more information on the AWS SDK for .NET, see our web site: , see **license** [here](https://github.com/aws/aws-sdk-net/blob/main/License.txt)
+* **DynamoDb**, the official AWS SDK for .NET, see **license** [here](https://github.com/aws/aws-sdk-net/blob/main/License.txt)
 
 Each library is included to enhance the functionality of SharpConnector while adhering to its licensing terms.
 
