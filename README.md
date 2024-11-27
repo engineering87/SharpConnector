@@ -43,18 +43,98 @@ Through SharpConnector, you can use a consistent interface to perform Insert, Ge
 SharpConnector thus simplifies the development process, providing flexibility and compatibility across diverse NoSQL paradigms without the need to handle specific database implementations.
 
 ### How to use it
-To get started with SharpConnector, configure your *connectionString* and specify the connector *instance* type. 
-Then, add the ConnectorConfig node within your appsettings.json file. Here’s an example configuration for a Redis connector:
+To get started with SharpConnector, configure the connector *instance* type. 
+Then, add the specif `ConnectorConfig` node within your *appsettings.json* file:
 
-```json
-{
-  "ConnectorConfig": {
-    "Instance": "Redis",
-    "DatabaseNumber": 0,
-    "ConnectionString": "redisServer:6380,password=password,ssl=True,abortConnect=False"
-  }
-}
-```
+- Redis
+	```json
+	{
+	  "ConnectorConfig": {
+		"Instance": "Redis",
+		"DatabaseNumber": 0,
+		"ConnectionString": "redisServer:6380,password=password,ssl=True,abortConnect=False"
+	  }
+	}
+	```
+- MongoDb
+	```json
+	{
+	  "ConnectorConfig": {
+		"Instance": "MongoDb",
+		"DatabaseName": "test",
+		"CollectionName": "test",
+		"ConnectionString": "mongodb_connectionstring_here"
+	  }
+	}
+	```
+	
+- LiteDB
+	```json
+	{
+	  "ConnectorConfig": {
+		"Instance": "LiteDb",
+		"CollectionName": "test",
+		"ConnectionString": "LiteDbTest.db"
+	  }
+	}
+	```
+
+- Memcached
+	```json
+	{
+	  "ConnectorConfig": {
+		"Instance": "Memcached",
+		"ConnectionString": "127.0.0.1:11211"
+	  }
+	}
+	```
+	
+- RavenDB
+	```json
+	{
+	  "ConnectorConfig": {
+		"Instance": "RavenDb",
+		"DatabaseName": "test",
+		"ConnectionString": "http://live-test.ravendb.net"
+	  }
+	}
+	```
+
+- Couchbase
+	```json
+	{
+	  "ConnectorConfig": {
+		"Instance": "Couchbase",
+		"ConnectionString": "couchbase://localhost",
+		"Username": "Administrator",
+		"Password": "password",
+		"BucketName": "example_bucket",
+		"Options": {
+		  "EnableTls": false,
+		  "KvTimeout": 2500,
+		  "QueryTimeout": 7500,
+		  "AnalyticsTimeout": 10000,
+		  "SearchTimeout": 5000,
+		  "ManagementTimeout": 10000
+		}
+	  }
+	}
+	```
+
+- DynbamoDb
+	```json
+	{
+	  "ConnectorConfig": {
+		"Instance": "DynamoDb",
+		"AccessKey": "your-access-key-here",
+		"SecretKey": "your-secret-key-here",
+		"Region": "us-west-2",
+		"ServiceUrl": "https://dynamodb.us-west-2.amazonaws.com",
+		"UseHttp": false,
+		"TableName": "MyTableName"
+	  }
+	}
+	```
 
 Once configured, create a new SharpConnector client, specifying the payload type (e.g., string):
 
