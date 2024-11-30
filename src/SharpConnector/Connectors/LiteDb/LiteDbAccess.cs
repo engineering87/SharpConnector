@@ -10,7 +10,9 @@ namespace SharpConnector.Connectors.LiteDb
     public class LiteDbAccess : IDisposable
     {
         public ILiteCollection<LiteDbConnectorEntity> Collection { get; }
-        private LiteDatabase _liteDatabase;
+        private readonly LiteDatabase _liteDatabase;
+
+        private bool _disposed;
 
         /// <summary>
         /// Create a new LiteDbAccess instance.
@@ -18,6 +20,11 @@ namespace SharpConnector.Connectors.LiteDb
         /// <param name="liteDbConfig">The LiteDb configuration.</param>
         public LiteDbAccess(LiteDbConfig liteDbConfig)
         {
+            if (liteDbConfig == null)
+            {
+                throw new ArgumentNullException(nameof(liteDbConfig));
+            }
+
             _liteDatabase = new LiteDatabase(liteDbConfig.ConnectionString);
             var collectionName = liteDbConfig.CollectionName;
             Collection = _liteDatabase.GetCollection<LiteDbConnectorEntity>(collectionName);
@@ -28,8 +35,20 @@ namespace SharpConnector.Connectors.LiteDb
         /// </summary>
         public void Dispose()
         {
-            _liteDatabase?.Dispose();
+            Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _liteDatabase?.Dispose();
+                }
+                _disposed = true;
+            }
         }
     }
 }

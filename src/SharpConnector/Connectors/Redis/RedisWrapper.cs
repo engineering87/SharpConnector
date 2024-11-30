@@ -24,6 +24,24 @@ namespace SharpConnector.Connectors.Redis
         }
 
         /// <summary>
+        /// Get a Redis database.
+        /// </summary>
+        private IDatabase GetDatabase(int databaseNumber) =>
+            _redisAccess.Connection.GetDatabase(databaseNumber);
+
+        /// <summary>
+        /// Serialize an object to JSON.
+        /// </summary>
+        private static string Serialize(object obj) =>
+            JsonConvert.SerializeObject(obj);
+
+        /// <summary>
+        /// Deserialize JSON to an object.
+        /// </summary>
+        private static T Deserialize<T>(string json) =>
+            JsonConvert.DeserializeObject<T>(json);
+
+        /// <summary>
         /// Get the value of Key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
@@ -31,9 +49,8 @@ namespace SharpConnector.Connectors.Redis
         /// <returns></returns>
         public ConnectorEntity Get(string key, int databaseNumber = 0)
         {
-            var database = _redisAccess.GetConnection().GetDatabase(databaseNumber);
-            var value = database.StringGet(key);
-            return !value.IsNull ? JsonConvert.DeserializeObject<ConnectorEntity>(value) : default;
+            var value = GetDatabase(databaseNumber).StringGet(key);
+            return value.HasValue ? Deserialize<ConnectorEntity>(value) : null;
         }
 
         /// <summary>
@@ -44,9 +61,8 @@ namespace SharpConnector.Connectors.Redis
         /// <returns></returns>
         public async Task<ConnectorEntity> GetAsync(string key, int databaseNumber = 0)
         {
-            var database = _redisAccess.GetConnection().GetDatabase(databaseNumber);
-            var value = await database.StringGetAsync(key).ConfigureAwait(false);
-            return value.HasValue ? JsonConvert.DeserializeObject<ConnectorEntity>(value) : default;
+            var value = await GetDatabase(databaseNumber).StringGetAsync(key).ConfigureAwait(false);
+            return value.HasValue ? Deserialize<ConnectorEntity>(value) : null;
         }
 
         /// <summary>
@@ -61,26 +77,25 @@ namespace SharpConnector.Connectors.Redis
         /// <returns></returns>
         public IEnumerable<ConnectorEntity> GetAll(int databaseNumber = 0)
         {
-            var result = new List<ConnectorEntity>();
-            var connection = _redisAccess.GetConnection();
-            var database = connection.GetDatabase(databaseNumber);
-            var endpoints = connection.GetEndPoints(true);
+            var connection = _redisAccess.Connection;
+            var database = GetDatabase(databaseNumber);
+            var entities = new List<ConnectorEntity>();
 
-            foreach (var endpoint in endpoints)
+            foreach (var endpoint in connection.GetEndPoints())
             {
                 var server = connection.GetServer(endpoint);
                 var keys = server.Keys(databaseNumber);
 
-                foreach (var redisKey in keys)
+                foreach (var key in keys)
                 {
-                    var value = database.StringGet(redisKey);
-                    if (!value.IsNull)
+                    var value = database.StringGet(key);
+                    if (value.HasValue)
                     {
-                        result.Add(JsonConvert.DeserializeObject<ConnectorEntity>(value));
+                        entities.Add(Deserialize<ConnectorEntity>(value));
                     }
                 }
             }
-            return result;
+            return entities;
         }
 
         /// <summary>
@@ -90,26 +105,25 @@ namespace SharpConnector.Connectors.Redis
         /// <returns>A task that represents the asynchronous operation, containing a list of all ConnectorEntity instances in the specified database.</returns>
         public async Task<IEnumerable<ConnectorEntity>> GetAllAsync(int databaseNumber = 0)
         {
-            var result = new List<ConnectorEntity>();
-            var connection = _redisAccess.GetConnection();
-            var database = connection.GetDatabase(databaseNumber);
-            var endpoints = connection.GetEndPoints(true);
+            var connection = _redisAccess.Connection;
+            var database = GetDatabase(databaseNumber);
+            var entities = new List<ConnectorEntity>();
 
-            foreach (var endpoint in endpoints)
+            foreach (var endpoint in connection.GetEndPoints())
             {
                 var server = connection.GetServer(endpoint);
                 var keys = server.Keys(databaseNumber);
 
-                var tasks = keys.Select(async redisKey =>
+                var tasks = keys.Select(async key =>
                 {
-                    var value = await database.StringGetAsync(redisKey);
-                    return !value.IsNull ? JsonConvert.DeserializeObject<ConnectorEntity>(value) : null;
+                    var value = await database.StringGetAsync(key);
+                    return value.HasValue ? Deserialize<ConnectorEntity>(value) : null;
                 });
 
-                var entities = await Task.WhenAll(tasks);
-                result.AddRange(entities.Where(e => e != null));
+                var results = await Task.WhenAll(tasks).ConfigureAwait(false);
+                entities.AddRange(results.Where(e => e != null));
             }
-            return result;
+            return entities;
         }
 
         /// <summary>
@@ -120,10 +134,9 @@ namespace SharpConnector.Connectors.Redis
         /// <returns></returns>
         public bool Insert(ConnectorEntity connectorEntity, int databaseNumber = 0)
         {
-            var database = _redisAccess.GetConnection().GetDatabase(databaseNumber);
-            return database.StringSet(
-                connectorEntity.Key, 
-                JsonConvert.SerializeObject(connectorEntity), 
+            return GetDatabase(databaseNumber).StringSet(
+                connectorEntity.Key,
+                Serialize(connectorEntity),
                 connectorEntity.Expiration);
         }
 
@@ -135,11 +148,10 @@ namespace SharpConnector.Connectors.Redis
         /// <returns></returns>
         public async Task<bool> InsertAsync(ConnectorEntity connectorEntity, int databaseNumber = 0)
         {
-            var database = _redisAccess.GetConnection().GetDatabase(databaseNumber);
-            return await database.StringSetAsync(
+            return await GetDatabase(databaseNumber).StringSetAsync(
                 connectorEntity.Key,
-                JsonConvert.SerializeObject(connectorEntity),
-                connectorEntity.Expiration).ConfigureAwait(false);
+                Serialize(connectorEntity),
+                connectorEntity.Expiration);
         }
 
         /// <summary>
@@ -150,7 +162,7 @@ namespace SharpConnector.Connectors.Redis
         /// <returns></returns>
         public async Task<bool> InsertManyAsync(List<ConnectorEntity> connectorEntities, int databaseNumber = 0)
         {
-            var database = _redisAccess.GetConnection().GetDatabase(databaseNumber);
+            var database = _redisAccess.Connection.GetDatabase(databaseNumber);
             var tasks = connectorEntities.Select(entity =>
                 database.StringSetAsync(entity.Key, JsonConvert.SerializeObject(entity), entity.Expiration));
 
@@ -167,7 +179,7 @@ namespace SharpConnector.Connectors.Redis
         public bool InsertMany(List<ConnectorEntity> connectorEntities, int databaseNumber = 0)
         {
             var result = true;
-            var database = _redisAccess.GetConnection().GetDatabase(databaseNumber);
+            var database = _redisAccess.Connection.GetDatabase(databaseNumber);
             foreach (var entity in connectorEntities)
             {
                 var currentResult = database.StringSet(
@@ -189,9 +201,7 @@ namespace SharpConnector.Connectors.Redis
         /// <returns></returns>
         public bool Delete(string key, int databaseNumber = 0)
         {
-            var redisKey = new RedisKey(key);
-            var database = _redisAccess.GetConnection().GetDatabase(databaseNumber);
-            return database.KeyDelete(redisKey);
+            return GetDatabase(databaseNumber).KeyDelete(key);
         }
 
         /// <summary>
@@ -202,9 +212,7 @@ namespace SharpConnector.Connectors.Redis
         /// <returns></returns>
         public async Task<bool> DeleteAsync(string key, int databaseNumber = 0)
         {
-            var redisKey = new RedisKey(key);
-            var database = _redisAccess.GetConnection().GetDatabase(databaseNumber);
-            return await database.KeyDeleteAsync(redisKey);
+            return await GetDatabase(databaseNumber).KeyDeleteAsync(key);
         }
 
         /// <summary>

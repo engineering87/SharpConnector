@@ -16,14 +16,20 @@ namespace SharpConnector.Connectors.RavenDb
         /// <param name="ravenDbConfig"></param>
         public RavenDbAccess(RavenDbConfig ravenDbConfig)
         {
-            IDocumentStore documentStore = new DocumentStore
+            if (DocumentStore == null)
             {
-                Urls = new[] { ravenDbConfig.ConnectionString },
-                Database = ravenDbConfig.DatabaseName
-            };
+                DocumentStore = new Lazy<IDocumentStore>(() =>
+                {
+                    var documentStore = new DocumentStore
+                    {
+                        Urls = [ravenDbConfig.ConnectionString],
+                        Database = ravenDbConfig.DatabaseName
+                    };
 
-            documentStore.Initialize();
-            DocumentStore = new Lazy<IDocumentStore>(documentStore);
+                    documentStore.Initialize();
+                    return documentStore;
+                });
+            }
         }
 
         /// <summary>

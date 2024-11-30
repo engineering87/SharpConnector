@@ -90,10 +90,10 @@ namespace SharpConnector.Entities
         /// <returns>True if the specified object is a ConnectorEntity and has the same Payload hash code; otherwise, false.</returns>
         public override bool Equals(object obj)
         {
-            if (obj is not ConnectorEntity p)
-                return false;
-
-            return Payload.GetHashCode() == p.GetHashCode();
+            return obj is ConnectorEntity other &&
+                   Key == other.Key &&
+                   Payload.GetHashCode() == other.Payload.GetHashCode() &&
+                   Expiration == other.Expiration;
         }
 
         /// <summary>
@@ -102,7 +102,7 @@ namespace SharpConnector.Entities
         /// <returns>A hash code for the current instance, combining the hash codes of the Key, Payload, and Expiration.</returns>
         public override int GetHashCode()
         {
-            return Key.GetHashCode() ^ Payload.GetHashCode() ^ Expiration.GetHashCode();
+            return HashCode.Combine(Key, Payload, Expiration);
         }
 
         /// <summary>

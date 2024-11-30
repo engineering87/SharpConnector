@@ -29,6 +29,7 @@ namespace SharpConnector.Connectors.MongoDb
         public ConnectorEntity Get(string key)
         {
             var filter = Builders<ConnectorEntity>.Filter.Eq("Key", key);
+            
             return _mongoDbAccess.Collection
                 .Find(filter)
                 .FirstOrDefault();
@@ -41,9 +42,10 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public async Task<ConnectorEntity> GetAsync(string key)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", key);
-            var entity = await _mongoDbAccess.Collection.FindAsync(filter);
-            return await entity.FirstOrDefaultAsync();
+            var filter = Builders<ConnectorEntity>.Filter.Eq(x => x.Key, key);
+            var cursor = await _mongoDbAccess.Collection.FindAsync(filter).ConfigureAwait(false);
+            
+            return await cursor.FirstOrDefaultAsync().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -64,7 +66,7 @@ namespace SharpConnector.Connectors.MongoDb
         public async Task<List<ConnectorEntity>> GetAllAsync()
         {
             return await _mongoDbAccess.Collection
-                .Find(x => true)
+                .Find(FilterDefinition<ConnectorEntity>.Empty)
                 .ToListAsync()
                 .ConfigureAwait(false);
         }
@@ -76,11 +78,11 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public bool Insert(ConnectorEntity connectorEntity)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", connectorEntity.Key);
+            var filter = Builders<ConnectorEntity>.Filter.Eq(x => x.Key, connectorEntity.Key);
             var options = new ReplaceOptions { IsUpsert = true };
-            _mongoDbAccess.Collection
-                .ReplaceOne(filter, connectorEntity, options);
-            return true;
+
+            var result = _mongoDbAccess.Collection.ReplaceOne(filter, connectorEntity, options);
+            return result.IsAcknowledged;
         }
 
         /// <summary>
@@ -92,10 +94,9 @@ namespace SharpConnector.Connectors.MongoDb
         {
             var filter = Builders<ConnectorEntity>.Filter.Eq("Key", connectorEntity.Key);
             var options = new ReplaceOptions { IsUpsert = true };
-            await _mongoDbAccess.Collection
-                .ReplaceOneAsync(filter, connectorEntity, options)
-                .ConfigureAwait(false);
-            return true;
+
+            var result = await _mongoDbAccess.Collection.ReplaceOneAsync(filter, connectorEntity, options).ConfigureAwait(false);
+            return result.IsAcknowledged;
         }
 
         /// <summary>
@@ -106,6 +107,7 @@ namespace SharpConnector.Connectors.MongoDb
         public bool InsertMany(List<ConnectorEntity> connectorEntities)
         {
             var options = new InsertManyOptions { IsOrdered = false };
+            
             _mongoDbAccess.Collection
                 .InsertMany(connectorEntities, options);
             return true;
@@ -119,6 +121,7 @@ namespace SharpConnector.Connectors.MongoDb
         public async Task<bool> InsertManyAsync(List<ConnectorEntity> connectorEntities)
         {
             var options = new InsertManyOptions { IsOrdered = false };
+            
             await _mongoDbAccess.Collection
                 .InsertManyAsync(connectorEntities, options)
                 .ConfigureAwait(false);
@@ -132,9 +135,10 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public bool Delete(string key)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", key);
-            return _mongoDbAccess.Collection
-                .DeleteOne(filter).IsAcknowledged;
+            var filter = Builders<ConnectorEntity>.Filter.Eq(x => x.Key, key);
+            
+            var result = _mongoDbAccess.Collection.DeleteOne(filter);
+            return result.IsAcknowledged && result.DeletedCount > 0;
         }
 
         /// <summary>
@@ -144,7 +148,8 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns>A boolean indicating if the deletion was acknowledged.</returns>
         public async Task<bool> DeleteAsync(string key)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", key);
+            var filter = Builders<ConnectorEntity>.Filter.Eq(x => x.Key, key);
+            
             var result = await _mongoDbAccess.Collection
                 .DeleteOneAsync(filter)
                 .ConfigureAwait(false);
@@ -158,10 +163,12 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public bool Update(ConnectorEntity connectorEntity)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", connectorEntity.Key);
-            var update = Builders<ConnectorEntity>.Update.Set("Payload", connectorEntity.Payload);
-            return _mongoDbAccess.Collection
-                .UpdateOne(filter, update).IsAcknowledged;
+            var filter = Builders<ConnectorEntity>.Filter.Eq(x => x.Key, connectorEntity.Key);
+            var update = Builders<ConnectorEntity>.Update
+                .Set(x => x.Payload, connectorEntity.Payload);
+
+            var result = _mongoDbAccess.Collection.UpdateOne(filter, update);
+            return result.IsAcknowledged && result.ModifiedCount > 0;
         }
 
         /// <summary>
@@ -171,11 +178,11 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns>A boolean indicating if the update was acknowledged.</returns>
         public async Task<bool> UpdateAsync(ConnectorEntity connectorEntity)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", connectorEntity.Key);
-            var update = Builders<ConnectorEntity>.Update.Set("Payload", connectorEntity.Payload);
-            var result = await _mongoDbAccess.Collection
-                .UpdateOneAsync(filter, update)
-                .ConfigureAwait(false);
+            var filter = Builders<ConnectorEntity>.Filter.Eq(x => x.Key, connectorEntity.Key);
+            var update = Builders<ConnectorEntity>.Update
+                .Set(x => x.Payload, connectorEntity.Payload);
+
+            var result = await _mongoDbAccess.Collection.UpdateOneAsync(filter, update).ConfigureAwait(false);
             return result.IsAcknowledged && result.ModifiedCount > 0;
         }
     }
