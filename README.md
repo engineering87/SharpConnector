@@ -109,14 +109,6 @@ Then, add the specif `ConnectorConfig` node within your *appsettings.json* file:
 		"Username": "Administrator",
 		"Password": "password",
 		"BucketName": "example_bucket",
-		"Options": {
-		  "EnableTls": false,
-		  "KvTimeout": 2500,
-		  "QueryTimeout": 7500,
-		  "AnalyticsTimeout": 10000,
-		  "SearchTimeout": 5000,
-		  "ManagementTimeout": 10000
-		}
 	  }
 	}
 	```
