@@ -7,9 +7,7 @@ using System.Threading.Tasks;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
 using SharpConnector.Utilities;
-using SharpConnector.Connectors.Redis;
 using System.Linq;
-using SharpConnector.Connectors.Memcached;
 
 namespace SharpConnector.Operations
 {
