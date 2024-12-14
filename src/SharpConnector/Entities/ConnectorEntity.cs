@@ -2,7 +2,6 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Newtonsoft.Json;
 using System;
-using MongoDB.Bson.Serialization.Attributes;
 using SharpConnector.Utilities;
 
 namespace SharpConnector.Entities
@@ -12,7 +11,6 @@ namespace SharpConnector.Entities
     /// This class encapsulates a key-value pair with optional time-based expiration.
     /// </summary>
     [Serializable]
-    [BsonIgnoreExtraElements]
     public class ConnectorEntity
     {
         /// <summary>

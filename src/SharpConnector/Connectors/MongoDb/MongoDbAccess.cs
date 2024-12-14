@@ -9,7 +9,7 @@ namespace SharpConnector.Connectors.MongoDb
 {
     public class MongoDbAccess : IDisposable
     {
-        public IMongoCollection<ConnectorEntity> Collection { get; }
+        public IMongoCollection<MongoConnectorEntity> Collection { get; }
         private readonly MongoClient _client;
 
         /// <summary>
@@ -25,7 +25,7 @@ namespace SharpConnector.Connectors.MongoDb
 
             _client = new MongoClient(mongoDbConfig.ConnectionString);
             var database = _client.GetDatabase(mongoDbConfig.DatabaseName);
-            Collection = database.GetCollection<ConnectorEntity>(mongoDbConfig.CollectionName);
+            Collection = database.GetCollection<MongoConnectorEntity>(mongoDbConfig.CollectionName);
         }
 
         /// <summary>

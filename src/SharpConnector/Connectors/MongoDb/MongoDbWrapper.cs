@@ -26,9 +26,9 @@ namespace SharpConnector.Connectors.MongoDb
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <returns></returns>
-        public ConnectorEntity Get(string key)
+        public MongoConnectorEntity Get(string key)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", key);
+            var filter = Builders<MongoConnectorEntity>.Filter.Eq("Key", key);
             
             return _mongoDbAccess.Collection
                 .Find(filter)
@@ -40,9 +40,9 @@ namespace SharpConnector.Connectors.MongoDb
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <returns></returns>
-        public async Task<ConnectorEntity> GetAsync(string key)
+        public async Task<MongoConnectorEntity> GetAsync(string key)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq(x => x.Key, key);
+            var filter = Builders<MongoConnectorEntity>.Filter.Eq(x => x.Key, key);
             var cursor = await _mongoDbAccess.Collection.FindAsync(filter).ConfigureAwait(false);
             
             return await cursor.FirstOrDefaultAsync().ConfigureAwait(false);
@@ -52,7 +52,7 @@ namespace SharpConnector.Connectors.MongoDb
         /// Get all the values.
         /// </summary>
         /// <returns></returns>
-        public List<ConnectorEntity> GetAll()
+        public List<MongoConnectorEntity> GetAll()
         {
             return _mongoDbAccess.Collection
                 .Find(x => true)
@@ -63,10 +63,10 @@ namespace SharpConnector.Connectors.MongoDb
         /// Asynchronously get all the values.
         /// </summary>
         /// <returns></returns>
-        public async Task<List<ConnectorEntity>> GetAllAsync()
+        public async Task<List<MongoConnectorEntity>> GetAllAsync()
         {
             return await _mongoDbAccess.Collection
-                .Find(FilterDefinition<ConnectorEntity>.Empty)
+                .Find(FilterDefinition<MongoConnectorEntity>.Empty)
                 .ToListAsync()
                 .ConfigureAwait(false);
         }
@@ -76,9 +76,9 @@ namespace SharpConnector.Connectors.MongoDb
         /// </summary>
         /// <param name="connectorEntity">The ConnectorEntity to store.</param>
         /// <returns></returns>
-        public bool Insert(ConnectorEntity connectorEntity)
+        public bool Insert(MongoConnectorEntity connectorEntity)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq(x => x.Key, connectorEntity.Key);
+            var filter = Builders<MongoConnectorEntity>.Filter.Eq(x => x.Key, connectorEntity.Key);
             var options = new ReplaceOptions { IsUpsert = true };
 
             var result = _mongoDbAccess.Collection.ReplaceOne(filter, connectorEntity, options);
@@ -90,9 +90,9 @@ namespace SharpConnector.Connectors.MongoDb
         /// </summary>
         /// <param name="connectorEntity">The ConnectorEntity to store.</param>
         /// <returns></returns>
-        public async Task<bool> InsertAsync(ConnectorEntity connectorEntity)
+        public async Task<bool> InsertAsync(MongoConnectorEntity connectorEntity)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq("Key", connectorEntity.Key);
+            var filter = Builders<MongoConnectorEntity>.Filter.Eq("Key", connectorEntity.Key);
             var options = new ReplaceOptions { IsUpsert = true };
 
             var result = await _mongoDbAccess.Collection.ReplaceOneAsync(filter, connectorEntity, options).ConfigureAwait(false);
@@ -104,7 +104,7 @@ namespace SharpConnector.Connectors.MongoDb
         /// </summary>
         /// <param name="connectorEntities">The ConnectorEntities to store.</param>
         /// <returns></returns>
-        public bool InsertMany(List<ConnectorEntity> connectorEntities)
+        public bool InsertMany(List<MongoConnectorEntity> connectorEntities)
         {
             var options = new InsertManyOptions { IsOrdered = false };
             
@@ -118,7 +118,7 @@ namespace SharpConnector.Connectors.MongoDb
         /// </summary>
         /// <param name="connectorEntities">The list of ConnectorEntities to store.</param>
         /// <returns>A boolean indicating if the operation completed successfully.</returns>
-        public async Task<bool> InsertManyAsync(List<ConnectorEntity> connectorEntities)
+        public async Task<bool> InsertManyAsync(List<MongoConnectorEntity> connectorEntities)
         {
             var options = new InsertManyOptions { IsOrdered = false };
             
@@ -135,7 +135,7 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns></returns>
         public bool Delete(string key)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq(x => x.Key, key);
+            var filter = Builders<MongoConnectorEntity>.Filter.Eq(x => x.Key, key);
             
             var result = _mongoDbAccess.Collection.DeleteOne(filter);
             return result.IsAcknowledged && result.DeletedCount > 0;
@@ -148,7 +148,7 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns>A boolean indicating if the deletion was acknowledged.</returns>
         public async Task<bool> DeleteAsync(string key)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq(x => x.Key, key);
+            var filter = Builders<MongoConnectorEntity>.Filter.Eq(x => x.Key, key);
             
             var result = await _mongoDbAccess.Collection
                 .DeleteOneAsync(filter)
@@ -161,10 +161,10 @@ namespace SharpConnector.Connectors.MongoDb
         /// </summary>
         /// <param name="connectorEntity">The ConnectorEntity to store.</param>
         /// <returns></returns>
-        public bool Update(ConnectorEntity connectorEntity)
+        public bool Update(MongoConnectorEntity connectorEntity)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq(x => x.Key, connectorEntity.Key);
-            var update = Builders<ConnectorEntity>.Update
+            var filter = Builders<MongoConnectorEntity>.Filter.Eq(x => x.Key, connectorEntity.Key);
+            var update = Builders<MongoConnectorEntity>.Update
                 .Set(x => x.Payload, connectorEntity.Payload);
 
             var result = _mongoDbAccess.Collection.UpdateOne(filter, update);
@@ -176,10 +176,10 @@ namespace SharpConnector.Connectors.MongoDb
         /// </summary>
         /// <param name="connectorEntity">The ConnectorEntity to store.</param>
         /// <returns>A boolean indicating if the update was acknowledged.</returns>
-        public async Task<bool> UpdateAsync(ConnectorEntity connectorEntity)
+        public async Task<bool> UpdateAsync(MongoConnectorEntity connectorEntity)
         {
-            var filter = Builders<ConnectorEntity>.Filter.Eq(x => x.Key, connectorEntity.Key);
-            var update = Builders<ConnectorEntity>.Update
+            var filter = Builders<MongoConnectorEntity>.Filter.Eq(x => x.Key, connectorEntity.Key);
+            var update = Builders<MongoConnectorEntity>.Update
                 .Set(x => x.Payload, connectorEntity.Payload);
 
             var result = await _mongoDbAccess.Collection.UpdateOneAsync(filter, update).ConfigureAwait(false);

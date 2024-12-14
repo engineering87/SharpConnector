@@ -107,5 +107,27 @@ namespace SharpConnector.Utilities
 
             return connectorEntities;
         }
+
+        /// <summary>
+        /// Returns a list of MongoConnectorEntity.
+        /// </summary>
+        /// <typeparam name="T">The generic type to store.</typeparam>
+        /// <param name="values">The dictionary with <key, object> elements to store.</param>
+        /// <returns></returns>
+        public static List<MongoConnectorEntity> ToMongoDbConnectorEntityList<T>(this Dictionary<string, T> values, TimeSpan? expiration = null)
+        {
+            if (values == null)
+                return [];
+
+            var connectorEntities = new List<MongoConnectorEntity>();
+            foreach (var entry in values)
+            {
+                if (string.IsNullOrEmpty(entry.Key) || entry.Value == null)
+                    continue;
+                connectorEntities.Add(new MongoConnectorEntity(entry.Key, entry.Value, expiration));
+            }
+
+            return connectorEntities;
+        }
     }
 }
