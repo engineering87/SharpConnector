@@ -10,15 +10,15 @@
     <PackageProjectUrl>https://github.com/engineering87/SharpConnector</PackageProjectUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Version>3.3.0</Version>
-    <AssemblyVersion>3.2.0</AssemblyVersion>
-    <FileVersion>3.2.0</FileVersion>
+    <AssemblyVersion>3.3.0</AssemblyVersion>
+    <FileVersion>3.3.0</FileVersion>
     <PackageIcon>logo.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Title>SharpConnector</Title>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.404.10" />
+    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.404.11" />
     <PackageReference Include="CouchbaseNetClient" Version="3.6.4" />
     <PackageReference Include="EnyimMemcachedCore" Version="3.3.2" />
     <PackageReference Include="LiteDB" Version="5.0.21" />
