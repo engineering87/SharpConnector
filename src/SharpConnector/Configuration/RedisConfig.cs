@@ -3,19 +3,19 @@
 using Microsoft.Extensions.Configuration;
 using SharpConnector.Enums;
 using SharpConnector.Interfaces;
-using System.Linq;
+using System;
 
 namespace SharpConnector.Configuration
 {
     /// <summary>
-    /// Redis configuration class.
+    /// Provides configuration settings for Redis.
     /// </summary>
     public class RedisConfig : IConnectorConfig
     {
         public string ConnectionString { get; }
         public int DatabaseNumber { get; } // 0 default
 
-        // Not used
+        #region NOT USED
         public string DatabaseName { get; private set; }
         public string CollectionName { get; private set; }
         public string Username { get; private set; }
@@ -27,17 +27,17 @@ namespace SharpConnector.Configuration
         public string ServiceUrl { get; private set; }
         public bool UseHttp { get; private set; }
         public string TableName { get; private set; }
+        #endregion
 
-        public RedisConfig(IConfiguration section)
+        public RedisConfig(IConfiguration configuration)
         {
-            var sectionChildren = section.GetChildren();
-            var configurationSections = sectionChildren.ToList();
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
 
-            var sectionChildrenConnectionString = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.connectionstring.ToString());
-            ConnectionString = sectionChildrenConnectionString?.Value;
-
-            var sectionChildrenDbNumber = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.databasenumber.ToString());
-            int.TryParse(sectionChildrenDbNumber?.Value, out var dbNumber);
+            ConnectionString = configuration[AppConfigParameterEnums.connectionstring.ToString()]?.Trim();
+            int.TryParse(configuration[AppConfigParameterEnums.databasenumber.ToString()], out var dbNumber);
             DatabaseNumber = dbNumber;
         }
     }

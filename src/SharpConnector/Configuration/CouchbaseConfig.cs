@@ -3,10 +3,13 @@
 using Microsoft.Extensions.Configuration;
 using SharpConnector.Enums;
 using SharpConnector.Interfaces;
-using System.Linq;
+using System;
 
 namespace SharpConnector.Configuration
 {
+    /// <summary>
+    /// Provides configuration settings for Couchbase.
+    /// </summary>
     public class CouchbaseConfig : IConnectorConfig
     {
         public string ConnectionString { get; set; }
@@ -14,7 +17,7 @@ namespace SharpConnector.Configuration
         public string Password { get; set; }
         public string BucketName { get; set; }
 
-        // Not used
+        #region NOT USED
         public int DatabaseNumber { get; private set; }
         public string DatabaseName { get; private set; }
         public string CollectionName { get; private set; }
@@ -24,23 +27,19 @@ namespace SharpConnector.Configuration
         public string ServiceUrl { get; private set; }
         public bool UseHttp { get; private set; }
         public string TableName { get; private set; }
+        #endregion
 
-        public CouchbaseConfig(IConfiguration section)
+        public CouchbaseConfig(IConfiguration configuration)
         {
-            var sectionChildren = section.GetChildren();
-            var configurationSections = sectionChildren.ToList();
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
 
-            var sectionChildrenConnectionString = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.connectionstring.ToString());
-            ConnectionString = sectionChildrenConnectionString?.Value;
-
-            var sectionChildrenBucketName = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.bucketname.ToString());
-            BucketName = sectionChildrenBucketName?.Value.Trim();
-
-            var sectionChildrenUsername = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.username.ToString());
-            Username = sectionChildrenBucketName?.Value.Trim();
-
-            var sectionChildrenPassword = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.password.ToString());
-            Password = sectionChildrenPassword?.Value.Trim();
+            ConnectionString = configuration[AppConfigParameterEnums.connectionstring.ToString()]?.Trim();
+            BucketName = configuration[AppConfigParameterEnums.bucketname.ToString()]?.Trim();
+            Username = configuration[AppConfigParameterEnums.username.ToString()]?.Trim();
+            Password = configuration[AppConfigParameterEnums.password.ToString()]?.Trim();
         }
     }
 }

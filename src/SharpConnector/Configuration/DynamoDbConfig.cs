@@ -3,10 +3,13 @@
 using Microsoft.Extensions.Configuration;
 using SharpConnector.Enums;
 using SharpConnector.Interfaces;
-using System.Linq;
+using System;
 
 namespace SharpConnector.Configuration
 {
+    /// <summary>
+    /// Provides configuration settings for DynamoDb.
+    /// </summary>
     public class DynamoDbConfig : IConnectorConfig
     {
         public string AccessKey { get; }
@@ -16,7 +19,7 @@ namespace SharpConnector.Configuration
         public bool UseHttp { get; }
         public string TableName { get; }
 
-        // Not used
+        #region NOT USED
         public string ConnectionString { get; private set; }
         public int DatabaseNumber { get; private set; }
         public string DatabaseName { get; private set; }
@@ -24,30 +27,22 @@ namespace SharpConnector.Configuration
         public string Username { get; private set; }
         public string Password { get; private set; }
         public string BucketName { get; private set; }
+        #endregion
 
-        public DynamoDbConfig(IConfiguration section)
+        public DynamoDbConfig(IConfiguration configuration)
         {
-            var sectionChildren = section.GetChildren();
-            var configurationSections = sectionChildren.ToList();
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
 
-            var sectionChildrenAccessKey = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.accesskey.ToString());
-            AccessKey = sectionChildrenAccessKey?.Value;
-
-            var sectionChildrenSecretKey = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.secretkey.ToString());
-            SecretKey = sectionChildrenSecretKey?.Value;
-
-            var sectionChildrenRegion = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.region.ToString());
-            Region = sectionChildrenRegion?.Value;
-
-            var sectionChildrenServiceUrl = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.serviceurl.ToString());
-            ServiceUrl = sectionChildrenServiceUrl?.Value;
-
-            var sectionChildrenUseHttp = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.usehttp.ToString());
-            bool.TryParse(sectionChildrenUseHttp?.Value, out var useHttp);
+            AccessKey = configuration[AppConfigParameterEnums.accesskey.ToString()]?.Trim();
+            SecretKey = configuration[AppConfigParameterEnums.secretkey.ToString()]?.Trim();
+            Region = configuration[AppConfigParameterEnums.region.ToString()]?.Trim();
+            ServiceUrl = configuration[AppConfigParameterEnums.serviceurl.ToString()]?.Trim();
+            bool.TryParse(configuration[AppConfigParameterEnums.usehttp.ToString()], out var useHttp);
             UseHttp = useHttp;
-
-            var sectionChildrenTableName = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.tablename.ToString());
-            TableName = sectionChildrenTableName?.Value;
+            TableName = configuration[AppConfigParameterEnums.tablename.ToString()]?.Trim();
         }
     }
 }

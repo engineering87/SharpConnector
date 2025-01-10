@@ -1,21 +1,21 @@
 ﻿// (c) 2021 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Microsoft.Extensions.Configuration;
-using SharpConnector.Interfaces;
-using System.Linq;
 using SharpConnector.Enums;
+using SharpConnector.Interfaces;
+using System;
 
 namespace SharpConnector.Configuration
 {
     /// <summary>
-    /// RavenDbConfig configuration class.
+    /// Provides configuration settings for RavenDB.
     /// </summary>
     public class RavenDbConfig : IConnectorConfig
     {
         public string ConnectionString { get; }
         public string DatabaseName { get; }
 
-        // Not used
+        #region NOT USED
         public string CollectionName { get; private set; }
         public int DatabaseNumber { get; private set; }
         public string Username { get; private set; }
@@ -27,17 +27,17 @@ namespace SharpConnector.Configuration
         public string ServiceUrl { get; private set; }
         public bool UseHttp { get; private set; }
         public string TableName { get; private set; }
+        #endregion
 
-        public RavenDbConfig(IConfiguration section)
+        public RavenDbConfig(IConfiguration configuration)
         {
-            var sectionChildren = section.GetChildren();
-            var configurationSections = sectionChildren.ToList();
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
 
-            var sectionChildrenConnectionString = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.connectionstring.ToString());
-            ConnectionString = sectionChildrenConnectionString?.Value;
-
-            var sectionChildrenDatabaseName = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.databasename.ToString());
-            DatabaseName = sectionChildrenDatabaseName?.Value.Trim();
+            ConnectionString = configuration[AppConfigParameterEnums.connectionstring.ToString()]?.Trim();
+            DatabaseName = configuration[AppConfigParameterEnums.databasename.ToString()]?.Trim();
         }
     }
 }
