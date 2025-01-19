@@ -18,14 +18,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.405.2" />
-    <PackageReference Include="CouchbaseNetClient" Version="3.6.4" />
+    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.405.8" />
+    <PackageReference Include="CouchbaseNetClient" Version="3.6.5" />
     <PackageReference Include="EnyimMemcachedCore" Version="3.3.2" />
     <PackageReference Include="LiteDB" Version="5.0.21" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.1" />
     <PackageReference Include="MongoDB.Driver" Version="3.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="RavenDB.Client" Version="6.2.2" />
