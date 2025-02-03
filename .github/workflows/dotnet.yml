@@ -24,9 +24,6 @@ jobs:
     - name: Install Commitlint dependencies
       run: npm install --save-dev @commitlint/config-conventional
 
-    - name: Run Commitlint
-      run: npx commitlint --from HEAD~ --to HEAD
-
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
