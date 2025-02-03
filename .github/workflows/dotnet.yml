@@ -11,18 +11,32 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Install Commitlint dependencies
+      run: npm install --save-dev @commitlint/config-conventional
+
+    - name: Run Commitlint
+      run: npx commitlint --from HEAD~ --to HEAD
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
+
     - name: Restore dependencies
       run: dotnet restore src/SharpConnector/SharpConnector.csproj
+
     - name: Build
       run: dotnet build src/SharpConnector/SharpConnector.csproj --no-restore
+
     - name: Test
       run: dotnet test src/SharpConnector.Tests/SharpConnector.Tests.csproj --no-build --verbosity normal
