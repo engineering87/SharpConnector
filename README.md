@@ -130,16 +130,16 @@ Then, add the specif `ConnectorConfig` node within your *appsettings.json* file:
 	```
 
 - ArangoDB
-```json
-{
-  "ConnectorConfig": {
-    "Instance": "ArangoDb",
-    "ConnectionString": "http://localhost:8529",
-    "Username": "username",
-    "Password": "password",
-    "CollectionName": "test"
-  }
-}
+	```json
+	{
+	"ConnectorConfig": {
+		"Instance": "ArangoDb",
+		"ConnectionString": "http://localhost:8529",
+		"Username": "username",
+		"Password": "password",
+		"CollectionName": "test"
+	}
+	}
 ```
 
 Once configured, create a new SharpConnector client, specifying the payload type (e.g., string):
