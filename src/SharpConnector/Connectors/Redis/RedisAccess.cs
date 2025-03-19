@@ -9,7 +9,7 @@ namespace SharpConnector.Connectors.Redis
     internal class RedisAccess : IDisposable
     {
         private readonly Lazy<ConnectionMultiplexer> _connection;
-        public ConnectionMultiplexer GetConnection() => _connection.Value;
+        public ConnectionMultiplexer Connection => _connection.Value;
 
         /// <summary>
         /// Create a new RedisAccess instance.
@@ -17,15 +17,32 @@ namespace SharpConnector.Connectors.Redis
         /// <param name="connectorConfig">The Redis configuration.</param>
         public RedisAccess(RedisConfig connectorConfig)
         {
-            var conn = ConfigurationOptions.Parse(connectorConfig.ConnectionString);
-            conn.AllowAdmin = true;
-            _connection = new Lazy<ConnectionMultiplexer>(() => ConnectionMultiplexer.Connect(conn));
+            if (connectorConfig == null)
+            {
+                throw new ArgumentNullException(nameof(connectorConfig));
+            }
+
+            var connOptions = ConfigurationOptions.Parse(connectorConfig.ConnectionString);
+            connOptions.AllowAdmin = true;
+            connOptions.ConnectRetry = 5;
+            connOptions.ConnectTimeout = 5000;
+            connOptions.KeepAlive = 10;
+
+            _connection = new Lazy<ConnectionMultiplexer>(() => ConnectionMultiplexer.Connect(connOptions));
         }
+
+        /// <summary>
+        /// Check if the connection is active.
+        /// </summary>
+        public bool IsConnected => Connection?.IsConnected ?? false;
 
         public void Dispose()
         {
-            _connection?.Value?.Close();
-            _connection?.Value?.Dispose();
+            if (_connection.IsValueCreated)
+            {
+                _connection.Value.Close();
+                _connection.Value.Dispose();
+            }
         }
     }
 }

@@ -9,8 +9,8 @@ namespace SharpConnector.Connectors.MongoDb
 {
     public class MongoDbAccess : IDisposable
     {
-        public IMongoCollection<ConnectorEntity> Collection { get; }
-        private MongoClient _client;
+        public IMongoCollection<MongoConnectorEntity> Collection { get; }
+        private readonly MongoClient _client;
 
         /// <summary>
         /// Create a new MongoDbAccess instance.
@@ -18,11 +18,14 @@ namespace SharpConnector.Connectors.MongoDb
         /// <param name="mongoDbConfig">The MongoDb configuration.</param>
         public MongoDbAccess(MongoDbConfig mongoDbConfig)
         {
-            var databaseName = mongoDbConfig.DatabaseName;
-            var collectionName = mongoDbConfig.CollectionName;
+            if (mongoDbConfig == null)
+            {
+                throw new ArgumentNullException(nameof(mongoDbConfig), "MongoDB configuration cannot be null.");
+            }
+
             _client = new MongoClient(mongoDbConfig.ConnectionString);
-            var db = _client.GetDatabase(databaseName);
-            Collection = db.GetCollection<ConnectorEntity>(collectionName);
+            var database = _client.GetDatabase(mongoDbConfig.DatabaseName);
+            Collection = database.GetCollection<MongoConnectorEntity>(mongoDbConfig.CollectionName);
         }
 
         /// <summary>
@@ -30,7 +33,6 @@ namespace SharpConnector.Connectors.MongoDb
         /// </summary>
         public void Dispose()
         {
-            _client = null;
             GC.SuppressFinalize(this);
         }
     }

@@ -3,12 +3,12 @@
 using Microsoft.Extensions.Configuration;
 using SharpConnector.Enums;
 using SharpConnector.Interfaces;
-using System.Linq;
+using System;
 
 namespace SharpConnector.Configuration
 {
     /// <summary>
-    /// MongoDb configuration class.
+    /// Provides configuration settings for MongoDb.
     /// </summary>
     public class MongoDbConfig : IConnectorConfig
     {
@@ -16,25 +16,29 @@ namespace SharpConnector.Configuration
         public string DatabaseName { get; }
         public string CollectionName { get; }
 
-        // Not used
+        #region NOT USED
         public int DatabaseNumber { get; private set; }
         public string Username { get; private set; }
         public string Password { get; private set; }
         public string BucketName { get; private set; }
+        public string AccessKey { get; private set; }
+        public string SecretKey { get; private set; }
+        public string Region { get; private set; }
+        public string ServiceUrl { get; private set; }
+        public bool UseHttp { get; private set; }
+        public string TableName { get; private set; }
+        #endregion
 
-        public MongoDbConfig(IConfiguration section)
+        public MongoDbConfig(IConfiguration configuration)
         {
-            var sectionChildren = section.GetChildren();
-            var configurationSections = sectionChildren.ToList();
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
 
-            var sectionChildrenConnectionString = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.connectionstring.ToString());
-            ConnectionString = sectionChildrenConnectionString?.Value;
-
-            var sectionChildrenDatabaseName = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.databasename.ToString());
-            DatabaseName = sectionChildrenDatabaseName?.Value.Trim();
-
-            var sectionChildrenCollectionName = configurationSections.FirstOrDefault(s => s.Key.ToLower() == AppConfigParameterEnums.collectionname.ToString());
-            CollectionName = sectionChildrenCollectionName?.Value.Trim();
+            ConnectionString = configuration[AppConfigParameterEnums.connectionstring.ToString()]?.Trim();
+            DatabaseName = configuration[AppConfigParameterEnums.databasename.ToString()]?.Trim();
+            CollectionName = configuration[AppConfigParameterEnums.collectionname.ToString()]?.Trim();
         }
     }
 }

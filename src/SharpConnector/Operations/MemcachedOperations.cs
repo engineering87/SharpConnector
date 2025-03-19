@@ -6,7 +6,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.Memcached;
-using SharpConnector.Connectors.Redis;
 using SharpConnector.Entities;
 using SharpConnector.Utilities;
 

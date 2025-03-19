@@ -23,6 +23,11 @@ namespace SharpConnector.Connectors.Memcached
             _memcachedAccess = new MemcachedAccess(memcachedConfig);
         }
 
+        private int GetExpiration(ConnectorEntity connectorEntity)
+        {
+            return connectorEntity.Expiration?.Seconds ?? 0;
+        }
+
         /// <summary>
         /// Get the value of Key.
         /// </summary>
@@ -50,7 +55,7 @@ namespace SharpConnector.Connectors.Memcached
         /// <returns>A list of ConnectorEntities.</returns>
         public async Task<List<ConnectorEntity>> GetAllAsync()
         {
-            throw new NotSupportedException("This operation is not supported.");
+            throw new NotImplementedException();
         }
 
         /// <summary>

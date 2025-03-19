@@ -2,7 +2,6 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.RavenDb;
-using SharpConnector.Connectors.Redis;
 using SharpConnector.Entities;
 using SharpConnector.Utilities;
 using System;
@@ -178,6 +177,10 @@ namespace SharpConnector.Operations
             return await _ravenDbWrapper.UpdateAsync(connectorEntity);
         }
 
+        /// <summary>
+        /// Get all values asynchronously from RavenDb.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation, which wraps an enumerable of all objects.</returns>
         public override async Task<IEnumerable<T>> GetAllAsync()
         {
             var connectorEntities = await _ravenDbWrapper.GetAllAsync();
@@ -186,6 +189,11 @@ namespace SharpConnector.Operations
                 .ToList();
         }
 
+        /// <summary>
+        /// Insert multiple values asynchronously.
+        /// </summary>
+        /// <param name="values">The values to store as an enumerable.</param>
+        /// <returns>A task representing the asynchronous operation, which returns true if the insertion was successful.</returns>
         public override async Task<bool> InsertManyAsync(IEnumerable<T> values)
         {
             var connectorEntityList = values

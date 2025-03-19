@@ -1,6 +1,7 @@
 ﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using SharpConnector.Configuration;
@@ -13,58 +14,44 @@ namespace SharpConnector.Operations
     {
         private readonly IConfigurationSection _section;
 
+        private readonly Dictionary<ConnectorTypeEnums, Func<object, IOperations<T>>> _strategies;
+
         public OperationsFactory(IConfigurationSection section)
         {
-            this._section = section;
+            _section = section ?? throw new ArgumentNullException(nameof(section));
+
+            _strategies = new Dictionary<ConnectorTypeEnums, Func<object, IOperations<T>>>
+            {
+                { ConnectorTypeEnums.Redis, config => new RedisOperations<T>((RedisConfig)config) },
+                { ConnectorTypeEnums.MongoDb, config => new MongoDbOperations<T>((MongoDbConfig)config) },
+                { ConnectorTypeEnums.LiteDb, config => new LiteDbOperations<T>((LiteDbConfig)config) },
+                { ConnectorTypeEnums.Memcached, config => new MemcachedOperations<T>((MemcachedConfig)config) },
+                { ConnectorTypeEnums.RavenDb, config => new RavenDbOperations<T>((RavenDbConfig)config) },
+                { ConnectorTypeEnums.Couchbase, config => new CouchbaseOperations<T>((CouchbaseConfig)config) },
+                { ConnectorTypeEnums.DynamoDb, config => new DynamoDbOperations<T>((DynamoDbConfig)config) },
+                { ConnectorTypeEnums.ArangoDb, config => new ArangoDbOperations<T>((ArangoDbConfig)config) }
+            };
         }
 
         /// <summary>
         /// Get a new Operations instance related to the connector type and config.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Instance of IOperations&lt;T&gt;.</returns>
         public IOperations<T> GetStrategy()
         {
-            var dbType = _section.GetChildren().FirstOrDefault(s => s.Key.ToLower() == "instance")?.Value;
+            var dbType = _section
+                .GetChildren()
+                .FirstOrDefault(s => s.Key.Equals("instance", StringComparison.OrdinalIgnoreCase))?.Value;
 
-            if (!Enum.TryParse(dbType, true, out ConnectorTypeEnums connectorTypes))
-                throw new Exception("Instance section for SharpConnector was not found.");
+            if (!Enum.TryParse(dbType, true, out ConnectorTypeEnums connectorType))
+                throw new InvalidOperationException("Instance section for SharpConnector was not found.");
 
-            var connectorConfig = GetConfigurationStrategy(_section, connectorTypes);
-            switch (connectorTypes)
-            {
-                case ConnectorTypeEnums.Redis:
-                    {
-                        var redisConfig = connectorConfig as RedisConfig;
-                        return new RedisOperations<T>(redisConfig);
-                    }
-                case ConnectorTypeEnums.MongoDb:
-                    {
-                        var mongoDbConfig = connectorConfig as MongoDbConfig;
-                        return new MongoDbOperations<T>(mongoDbConfig);
-                    }
-                case ConnectorTypeEnums.LiteDb:
-                    {
-                        var liteDbConfig = connectorConfig as LiteDbConfig;
-                        return new LiteDbOperations<T>(liteDbConfig);
-                    }
-                case ConnectorTypeEnums.Memcached:
-                    {
-                        var memcachedConfig = connectorConfig as MemcachedConfig;
-                        return new MemcachedOperations<T>(memcachedConfig);
-                    }
-                case ConnectorTypeEnums.RavenDb:
-                    {
-                        var ravenDbConfig = connectorConfig as RavenDbConfig;
-                        return new RavenDbOperations<T>(ravenDbConfig);
-                    }
-                case ConnectorTypeEnums.Couchbase:
-                    {
-                        var couchbaseDbConfig = connectorConfig as CouchbaseConfig;
-                        return new CouchbaseOperations<T>(couchbaseDbConfig);
-                    }
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            var connectorConfig = GetConfigurationStrategy(_section, connectorType);
+
+            if (!_strategies.TryGetValue(connectorType, out var strategy))
+                throw new ArgumentOutOfRangeException(nameof(connectorType), "Unsupported connector type.");
+
+            return strategy(connectorConfig);
         }
     }
 }

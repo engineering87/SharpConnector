@@ -1,0 +1,26 @@
+on:
+  push:
+    branches:
+      - '*'  # Runs on any push to any branch
+  pull_request:
+    branches:
+      - '*'  # Runs on any pull request targeting any branch
+
+name: Lint commits
+jobs:
+  lint-commits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Fixup git permissions
+        shell: bash
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - uses: actions/setup-node@v4.1.0
+        with:
+          node-version: 20
+      - name: Install commitlint dependencies
+        run: npm install --save-dev @commitlint/cli @commitlint/config-conventional
+      - name: Check commit messages
+        run: npx commitlint --from HEAD~${{ github.event.pull_request.commits || 1 }} --to HEAD

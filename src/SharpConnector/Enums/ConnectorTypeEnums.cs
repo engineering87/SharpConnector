@@ -12,6 +12,8 @@ namespace SharpConnector.Enums
         LiteDb,
         Memcached,
         RavenDb,
-        Couchbase
+        Couchbase,
+        DynamoDb,
+        ArangoDb
     }
 }

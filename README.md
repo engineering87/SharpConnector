@@ -14,7 +14,7 @@ SharpConnector is a .NET library designed to streamline integration with NoSQL d
 ## Features
 
 - Unified interface for CRUD operations across various NoSQL databases.
-- Supports key-value stores (Redis, EnyimMemcached) and document-oriented databases (MongoDB, LiteDB, RavenDB, Couchbase).
+- Supports key-value stores (Redis, EnyimMemcached, DynbamoDb) and document-oriented databases (MongoDB, LiteDB, RavenDB, Couchbase).
 - Facilitates streamlined database operations without the need for custom connectors.
 - Simplified integration using configuration files and dependency injection.
 - Easy integration for various payload types.
@@ -33,24 +33,111 @@ SharpConnector offers a unified interface for performing CRUD operations on vari
 Through SharpConnector, you can use a consistent interface to perform Insert, Get, Delete, and Update operations across multiple NoSQL systems, currently supporting:
 
 * **Redis (key-value)**
-* **MongoDB (document-oriented)**
+* **MongoDB (key-value or document-oriented)**
 * **LiteDB (embedded document database)**
 * **EnyimMemcached (key-value)**
 * **RavenDB (document-oriented)**
 * **Couchbase (document-oriented)**
+* **DynbamoDb (key-value or document-oriented)**
+* **ArangoDB (multi-model)**
 
 SharpConnector thus simplifies the development process, providing flexibility and compatibility across diverse NoSQL paradigms without the need to handle specific database implementations.
 
 ### How to use it
-To get started with SharpConnector, configure your *connectionString* and specify the connector *instance* type. 
-Then, add the ConnectorConfig node within your appsettings.json file. Here’s an example configuration for a Redis connector:
+To get started with SharpConnector, configure the connector *instance* type. 
+Then, add the specif `ConnectorConfig` node within your *appsettings.json* file:
 
+- Redis
+	```json
+	{
+	  "ConnectorConfig": {
+		"Instance": "Redis",
+		"DatabaseNumber": 0,
+		"ConnectionString": "redisServer:6380,password=password,ssl=True,abortConnect=False"
+	  }
+	}
+	```
+- MongoDb
+	```json
+	{
+	  "ConnectorConfig": {
+		"Instance": "MongoDb",
+		"DatabaseName": "test",
+		"CollectionName": "test",
+		"ConnectionString": "mongodb_connectionstring_here"
+	  }
+	}
+	```
+	
+- LiteDB
+	```json
+	{
+	  "ConnectorConfig": {
+		"Instance": "LiteDb",
+		"CollectionName": "test",
+		"ConnectionString": "LiteDbTest.db"
+	  }
+	}
+	```
+
+- Memcached
+	```json
+	{
+	  "ConnectorConfig": {
+		"Instance": "Memcached",
+		"ConnectionString": "127.0.0.1:11211"
+	  }
+	}
+	```
+	
+- RavenDB
+	```json
+	{
+	  "ConnectorConfig": {
+		"Instance": "RavenDb",
+		"DatabaseName": "test",
+		"ConnectionString": "http://live-test.ravendb.net"
+	  }
+	}
+	```
+
+- Couchbase
+	```json
+	{
+	  "ConnectorConfig": {
+		"Instance": "Couchbase",
+		"ConnectionString": "couchbase://localhost",
+		"Username": "Administrator",
+		"Password": "password",
+		"BucketName": "example_bucket",
+	  }
+	}
+	```
+
+- DynbamoDb
+	```json
+	{
+	  "ConnectorConfig": {
+		"Instance": "DynamoDb",
+		"AccessKey": "your-access-key-here",
+		"SecretKey": "your-secret-key-here",
+		"Region": "us-west-2",
+		"ServiceUrl": "https://dynamodb.us-west-2.amazonaws.com",
+		"UseHttp": false,
+		"TableName": "MyTableName"
+	  }
+	}
+	```
+
+- ArangoDB
 ```json
 {
   "ConnectorConfig": {
-    "Instance": "Redis",
-    "DatabaseNumber": 0,
-    "ConnectionString": "redisServer:6380,password=password,ssl=True,abortConnect=False"
+    "Instance": "ArangoDb",
+    "ConnectionString": "http://localhost:8529",
+    "Username": "username",
+    "Password": "password",
+    "CollectionName": "test"
   }
 }
 ```
@@ -95,6 +182,8 @@ Each of these libraries operates under a specific license, which governs its usa
 * **EnyimMemcached**, a C# Memcached client, see **license** [here](https://github.com/enyim/EnyimMemcached/blob/develop/LICENSE)
 * **RavenDB**, ACID Document Database, see **license** [here](https://github.com/ravendb/ravendb/blob/v6.2/LICENSE.txt)
 * **Couchbase**, the official Couchbase SDK for .NET Core and Full Frameworks, see **license** [here](https://github.com/couchbase/couchbase-net-client/blob/master/LICENSE)
+* **DynamoDb**, the official AWS SDK for .NET, see **license** [here](https://github.com/aws/aws-sdk-net/blob/main/License.txt)
+* **ArangoDB**, a consistent, comprehensive, minimal driver for ArangoDB, see **license** [here](https://github.com/ArangoDB-Community/arangodb-net-standard/blob/master/LICENSE)
 
 Each library is included to enhance the functionality of SharpConnector while adhering to its licensing terms.
 

@@ -2,7 +2,6 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Newtonsoft.Json;
 using System;
-using MongoDB.Bson.Serialization.Attributes;
 using SharpConnector.Utilities;
 
 namespace SharpConnector.Entities
@@ -12,7 +11,6 @@ namespace SharpConnector.Entities
     /// This class encapsulates a key-value pair with optional time-based expiration.
     /// </summary>
     [Serializable]
-    [BsonIgnoreExtraElements]
     public class ConnectorEntity
     {
         /// <summary>
@@ -90,10 +88,10 @@ namespace SharpConnector.Entities
         /// <returns>True if the specified object is a ConnectorEntity and has the same Payload hash code; otherwise, false.</returns>
         public override bool Equals(object obj)
         {
-            if (obj is not ConnectorEntity p)
-                return false;
-
-            return Payload.GetHashCode() == p.GetHashCode();
+            return obj is ConnectorEntity other &&
+                   Key == other.Key &&
+                   Payload.GetHashCode() == other.Payload.GetHashCode() &&
+                   Expiration == other.Expiration;
         }
 
         /// <summary>
@@ -102,7 +100,7 @@ namespace SharpConnector.Entities
         /// <returns>A hash code for the current instance, combining the hash codes of the Key, Payload, and Expiration.</returns>
         public override int GetHashCode()
         {
-            return Key.GetHashCode() ^ Payload.GetHashCode() ^ Expiration.GetHashCode();
+            return HashCode.Combine(Key, Payload, Expiration);
         }
 
         /// <summary>

@@ -6,7 +6,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.MongoDb;
-using SharpConnector.Connectors.Redis;
 using SharpConnector.Entities;
 using SharpConnector.Utilities;
 
@@ -71,7 +70,7 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override bool Insert(string key, T value)
         {
-            var connectorEntity = new ConnectorEntity(key, value, null);
+            var connectorEntity = new MongoConnectorEntity(key, value, null);
             return _mongoDbWrapper.Insert(connectorEntity);
         }
 
@@ -84,7 +83,7 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override bool Insert(string key, T value, TimeSpan expiration)
         {
-            var connectorEntity = new ConnectorEntity(key, value, expiration);
+            var connectorEntity = new MongoConnectorEntity(key, value, expiration);
             return _mongoDbWrapper.Insert(connectorEntity);
         }
 
@@ -96,7 +95,7 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override async Task<bool> InsertAsync(string key, T value)
         {
-            var connectorEntity = new ConnectorEntity(key, value, null);
+            var connectorEntity = new MongoConnectorEntity(key, value, null);
             return await _mongoDbWrapper.InsertAsync(connectorEntity);
         }
 
@@ -109,7 +108,7 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override async Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
         {
-            var connectorEntity = new ConnectorEntity(key, value, expiration);
+            var connectorEntity = new MongoConnectorEntity(key, value, expiration);
             return await _mongoDbWrapper.InsertAsync(connectorEntity);
         }
 
@@ -120,7 +119,7 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override bool InsertMany(Dictionary<string, T> values)
         {
-            return _mongoDbWrapper.InsertMany(values.ToConnectorEntityList());
+            return _mongoDbWrapper.InsertMany(values.ToMongoDbConnectorEntityList());
         }
 
         /// <summary>
@@ -131,7 +130,7 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override bool InsertMany(Dictionary<string, T> values, TimeSpan expiration)
         {
-            return _mongoDbWrapper.InsertMany(values.ToConnectorEntityList(expiration));
+            return _mongoDbWrapper.InsertMany(values.ToMongoDbConnectorEntityList(expiration));
         }
 
         /// <summary>
@@ -162,7 +161,7 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override bool Update(string key, T value)
         {
-            var connectorEntity = new ConnectorEntity(key, value, null);
+            var connectorEntity = new MongoConnectorEntity(key, value, null);
             return _mongoDbWrapper.Update(connectorEntity);
         }
 
@@ -174,10 +173,14 @@ namespace SharpConnector.Operations
         /// <returns></returns>
         public override async Task<bool> UpdateAsync(string key, T value)
         {
-            var connectorEntity = new ConnectorEntity(key, value, null);
+            var connectorEntity = new MongoConnectorEntity(key, value, null);
             return await _mongoDbWrapper.UpdateAsync(connectorEntity);
         }
 
+        /// <summary>
+        /// Get all values asynchronously from MongoDb.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation, which wraps an enumerable of all objects.</returns>
         public override async Task<IEnumerable<T>> GetAllAsync()
         {
             var connectorEntities = await _mongoDbWrapper.GetAllAsync();
@@ -186,10 +189,15 @@ namespace SharpConnector.Operations
                 .ToList();
         }
 
+        /// <summary>
+        /// Insert multiple values asynchronously.
+        /// </summary>
+        /// <param name="values">The values to store as an enumerable.</param>
+        /// <returns>A task representing the asynchronous operation, which returns true if the insertion was successful.</returns>
         public override async Task<bool> InsertManyAsync(IEnumerable<T> values)
         {
             var connectorEntityList = values
-                .Cast<ConnectorEntity>()
+                .Cast<MongoConnectorEntity>()
                 .ToList();
             return await _mongoDbWrapper.InsertManyAsync(connectorEntityList);
         }

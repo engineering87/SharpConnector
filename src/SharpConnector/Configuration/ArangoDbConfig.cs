@@ -1,4 +1,4 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+﻿// (c) 2025 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Microsoft.Extensions.Configuration;
 using SharpConnector.Enums;
@@ -7,20 +7,17 @@ using System;
 
 namespace SharpConnector.Configuration
 {
-    /// <summary>
-    /// Provides configuration settings for Couchbase.
-    /// </summary>
-    public class CouchbaseConfig : IConnectorConfig
+    public class ArangoDbConfig : IConnectorConfig
     {
-        public string ConnectionString { get; set; }
-        public string Username { get; set; }
-        public string Password { get; set; }
-        public string BucketName { get; set; }
+        public string ConnectionString { get; }
+        public string CollectionName { get; }
+        public string Username { get; }
+        public string Password { get; }
 
         #region NOT USED
-        public int DatabaseNumber { get; private set; }
         public string DatabaseName { get; private set; }
-        public string CollectionName { get; private set; }
+        public int DatabaseNumber { get; private set; }
+        public string BucketName { get; private set; }
         public string AccessKey { get; private set; }
         public string SecretKey { get; private set; }
         public string Region { get; private set; }
@@ -29,7 +26,7 @@ namespace SharpConnector.Configuration
         public string TableName { get; private set; }
         #endregion
 
-        public CouchbaseConfig(IConfiguration configuration)
+        public ArangoDbConfig(IConfiguration configuration)
         {
             if (configuration == null)
             {
@@ -37,7 +34,7 @@ namespace SharpConnector.Configuration
             }
 
             ConnectionString = configuration[AppConfigParameterEnums.connectionstring.ToString()]?.Trim();
-            BucketName = configuration[AppConfigParameterEnums.bucketname.ToString()]?.Trim();
+            CollectionName = configuration[AppConfigParameterEnums.collectionname.ToString()]?.Trim();
             Username = configuration[AppConfigParameterEnums.username.ToString()]?.Trim();
             Password = configuration[AppConfigParameterEnums.password.ToString()]?.Trim();
         }

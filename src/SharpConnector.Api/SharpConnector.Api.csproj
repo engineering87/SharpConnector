@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <Content Remove="appsettings.couchbase.json" />
+    <Content Remove="appsettings.dynamodb.json" />
     <Content Remove="appsettings.litedb.json" />
     <Content Remove="appsettings.memcached.json" />
     <Content Remove="appsettings.mongodb.json" />
@@ -17,6 +18,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="appsettings.dynamodb.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="appsettings.couchbase.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -38,7 +42,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

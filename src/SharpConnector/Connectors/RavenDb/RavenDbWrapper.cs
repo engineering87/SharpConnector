@@ -66,11 +66,10 @@ namespace SharpConnector.Connectors.RavenDb
         {
             using (var session = _ravenDbAccess.Store.OpenAsyncSession())
             {
-                var entities = await session
+                return await session
                     .Query<ConnectorEntity>()
                     .Customize(cr => cr.WaitForNonStaleResults())
                     .ToListAsync();
-                return entities;
             }
         }
 
@@ -149,10 +148,15 @@ namespace SharpConnector.Connectors.RavenDb
         {
             using (var session = _ravenDbAccess.Store.OpenSession())
             {
-                session.Delete(key);
-                session.SaveChanges();
+                var entity = session.Load<ConnectorEntity>(key);
+                if (entity != null)
+                {
+                    session.Delete(key);
+                    session.SaveChanges();
+                    return true;
+                }
+                return false;
             }
-            return true;
         }
 
         /// <summary>
@@ -164,10 +168,15 @@ namespace SharpConnector.Connectors.RavenDb
         {
             using (var session = _ravenDbAccess.Store.OpenAsyncSession())
             {
-                session.Delete(key);
-                await session.SaveChangesAsync();
+                var entity = await session.LoadAsync<ConnectorEntity>(key);
+                if (entity != null)
+                {
+                    session.Delete(key);
+                    await session.SaveChangesAsync();
+                    return true;
+                }
+                return false;
             }
-            return true;
         }
 
         /// <summary>
