@@ -13,6 +13,7 @@ namespace SharpConnector.Enums
         Memcached,
         RavenDb,
         Couchbase,
-        DynamoDb
+        DynamoDb,
+        ArangoDb
     }
 }

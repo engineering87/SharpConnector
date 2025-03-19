@@ -18,6 +18,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ArangoDBNetStandard" Version="3.0.0" />
     <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.406.1" />
     <PackageReference Include="CouchbaseNetClient" Version="3.6.6" />
     <PackageReference Include="EnyimMemcachedCore" Version="3.3.2" />
