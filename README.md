@@ -39,6 +39,7 @@ Through SharpConnector, you can use a consistent interface to perform Insert, Ge
 * **RavenDB (document-oriented)**
 * **Couchbase (document-oriented)**
 * **DynbamoDb (key-value or document-oriented)**
+* **ArangoDB (multi-model)**
 
 SharpConnector thus simplifies the development process, providing flexibility and compatibility across diverse NoSQL paradigms without the need to handle specific database implementations.
 
@@ -128,6 +129,19 @@ Then, add the specif `ConnectorConfig` node within your *appsettings.json* file:
 	}
 	```
 
+- ArangoDB
+```json
+{
+  "ConnectorConfig": {
+    "Instance": "ArangoDb",
+    "ConnectionString": "http://localhost:8529",
+    "Username": "username",
+    "Password": "password",
+    "CollectionName": "test"
+  }
+}
+```
+
 Once configured, create a new SharpConnector client, specifying the payload type (e.g., string):
 
 ```csharp
@@ -169,6 +183,7 @@ Each of these libraries operates under a specific license, which governs its usa
 * **RavenDB**, ACID Document Database, see **license** [here](https://github.com/ravendb/ravendb/blob/v6.2/LICENSE.txt)
 * **Couchbase**, the official Couchbase SDK for .NET Core and Full Frameworks, see **license** [here](https://github.com/couchbase/couchbase-net-client/blob/master/LICENSE)
 * **DynamoDb**, the official AWS SDK for .NET, see **license** [here](https://github.com/aws/aws-sdk-net/blob/main/License.txt)
+* **ArangoDB**, a consistent, comprehensive, minimal driver for ArangoDB, see **license** [here](https://github.com/ArangoDB-Community/arangodb-net-standard/blob/master/LICENSE)
 
 Each library is included to enhance the functionality of SharpConnector while adhering to its licensing terms.
 
