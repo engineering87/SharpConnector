@@ -156,5 +156,22 @@ namespace SharpConnector.Connectors.LiteDb
             var result = Update(connectorEntity);
             return ValueTask.FromResult(result);
         }
+
+        /// <summary>
+        /// Checks if a Key exists.
+        /// </summary>
+        public bool Exists(string key)
+        {
+            return _liteDbAccess.Collection.Exists(Query.EQ("Key", new BsonValue(key)));
+        }
+
+        /// <summary>
+        /// Checks if a Key exists asynchronously.
+        /// </summary>
+        public ValueTask<bool> ExistsAsync(string key)
+        {
+            var exists = Exists(key);
+            return ValueTask.FromResult(exists);
+        }
     }
 }

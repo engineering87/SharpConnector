@@ -201,5 +201,25 @@ namespace SharpConnector.Operations
                 .ToList();
             return await _mongoDbWrapper.InsertManyAsync(connectorEntityList);
         }
+
+        /// <summary>
+        /// Checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>True if the item exists, false otherwise.</returns>
+        public override bool Exists(string key)
+        {
+            return _mongoDbWrapper.Exists(key);
+        }
+
+        /// <summary>
+        /// Asynchronously checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>A task containing true if the item exists, false otherwise.</returns>
+        public override async Task<bool> ExistsAsync(string key)
+        {
+            return await _mongoDbWrapper.ExistsAsync(key);
+        }
     }
 }

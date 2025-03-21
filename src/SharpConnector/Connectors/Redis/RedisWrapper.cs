@@ -232,5 +232,30 @@ namespace SharpConnector.Connectors.Redis
         /// <returns></returns>
         public Task<bool> UpdateAsync(ConnectorEntity connectorEntity, int databaseNumber = 0) =>
             InsertAsync(connectorEntity, databaseNumber);
+
+        /// <summary>
+        /// Checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <param name="databaseNumber">The Redis database.</param>
+        /// <returns>True if the item exists, false otherwise.</returns>
+        public bool Exists(string key, int databaseNumber = 0)
+        {
+            return GetDatabase(databaseNumber)
+                .KeyExists(key);
+        }
+
+        /// <summary>
+        /// Asynchronously checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <param name="databaseNumber">The Redis database.</param>
+        /// <returns>A task containing true if the item exists, false otherwise.</returns>
+        public async Task<bool> ExistsAsync(string key, int databaseNumber = 0)
+        {
+            return await GetDatabase(databaseNumber)
+                .KeyExistsAsync(key)
+                .ConfigureAwait(false);
+        }
     }
 }

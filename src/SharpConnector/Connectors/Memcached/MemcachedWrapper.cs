@@ -151,5 +151,23 @@ namespace SharpConnector.Connectors.Memcached
                 JsonConvert.SerializeObject(connectorEntity),
                 seconds);
         }
+
+        /// <summary>
+        /// Check if a Key exists.
+        /// </summary>
+        public bool Exists(string key)
+        {
+            var value = _memcachedAccess.MemcachedClient.Get<object>(key);
+            return value != null;
+        }
+
+        /// <summary>
+        /// Check if a Key exists asynchronously.
+        /// </summary>
+        public async Task<bool> ExistsAsync(string key)
+        {
+            var result = await _memcachedAccess.MemcachedClient.GetAsync<object>(key);
+            return result?.Value != null;
+        }
     }
 }

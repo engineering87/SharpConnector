@@ -7,7 +7,7 @@ using System;
 
 namespace SharpConnector.Connectors.DynamoDb
 {
-    internal class DynamoDbAccess : IDisposable
+    public class DynamoDbAccess : IDisposable
     {
         private readonly Lazy<AmazonDynamoDBClient> _client;
         public AmazonDynamoDBClient GetClient() => _client.Value;

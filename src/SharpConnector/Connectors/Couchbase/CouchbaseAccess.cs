@@ -8,7 +8,7 @@ using SharpConnector.Configuration;
 
 namespace SharpConnector.Connectors.Couchbase
 {
-    internal class CouchbaseAccess : IAsyncDisposable
+    public class CouchbaseAccess : IAsyncDisposable
     {
         private readonly Lazy<Task<ICluster>> _cluster;
         private readonly string _bucketName;

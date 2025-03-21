@@ -123,5 +123,19 @@ namespace SharpConnector.Interfaces
         /// <param name="value">The new value to set for the item.</param>
         /// <returns>A task that represents the asynchronous operation, with the result being true if successful.</returns>
         Task<bool> UpdateAsync(string key, T value);
+
+        /// <summary>
+        /// Checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>True if the item exists, false otherwise.</returns>
+        bool Exists(string key);
+
+        /// <summary>
+        /// Asynchronously checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>A task containing true if the item exists, false otherwise.</returns>
+        Task<bool> ExistsAsync(string key);
     }
 }

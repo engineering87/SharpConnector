@@ -43,5 +43,9 @@ namespace SharpConnector.Operations
         public abstract bool Update(string key, T value);
         /// <inheritdoc />
         public abstract Task<bool> UpdateAsync(string key, T value);
+        /// <inheritdoc />
+        public abstract bool Exists(string key);
+        /// <inheritdoc />
+        public abstract Task<bool> ExistsAsync(string key);
     }
 }

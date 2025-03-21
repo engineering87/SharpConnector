@@ -1,13 +1,13 @@
 ﻿// (c) 2024 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.DynamoDb;
 using SharpConnector.Entities;
 using SharpConnector.Utilities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SharpConnector.Operations
 {
@@ -198,6 +198,26 @@ namespace SharpConnector.Operations
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
             return await _dynamoDbWrapper.UpdateAsync(connectorEntity);
+        }
+
+        /// <summary>
+        /// Checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>True if the item exists, false otherwise.</returns>
+        public override bool Exists(string key)
+        {
+            return _dynamoDbWrapper.Exists(key);
+        }
+
+        /// <summary>
+        /// Asynchronously checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>A task containing true if the item exists, false otherwise.</returns>
+        public override async Task<bool> ExistsAsync(string key)
+        {
+            return await _dynamoDbWrapper.ExistsAsync(key);
         }
     }
 }

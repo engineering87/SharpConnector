@@ -169,6 +169,10 @@ namespace SharpConnector.Operations
             return await _memcachedWrapper.UpdateAsync(connectorEntity);
         }
 
+        /// <summary>
+        /// Asynchronously retrieves all objects.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of objects.</returns>
         public override async Task<IEnumerable<T>> GetAllAsync()
         {
             var connectorEntities = await _memcachedWrapper.GetAllAsync();
@@ -177,12 +181,38 @@ namespace SharpConnector.Operations
                 .ToList();
         }
 
+        /// <summary>
+        /// Multiple set operation.
+        /// </summary>
+        /// <param name="values">The values to store.</param>
+        /// <param name="expiration">The expiration of the keys.</param>
+        /// <returns></returns>
         public override async Task<bool> InsertManyAsync(IEnumerable<T> values)
         {
             var connectorEntityList = values
                 .Cast<ConnectorEntity>()
                 .ToList();
             return await _memcachedWrapper.InsertManyAsync(connectorEntityList);
+        }
+
+        /// <summary>
+        /// Checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>True if the item exists, false otherwise.</returns>
+        public override bool Exists(string key)
+        {
+            return _memcachedWrapper.Exists(key);
+        }
+
+        /// <summary>
+        /// Asynchronously checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>A task containing true if the item exists, false otherwise.</returns>
+        public override async Task<bool> ExistsAsync(string key)
+        {
+            return await _memcachedWrapper.ExistsAsync(key);
         }
     }
 }

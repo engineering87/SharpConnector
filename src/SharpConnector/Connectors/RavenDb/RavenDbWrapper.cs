@@ -214,5 +214,33 @@ namespace SharpConnector.Connectors.RavenDb
             }
             return true;
         }
+
+        /// <summary>
+        /// Checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>True if the item exists, false otherwise.</returns>
+        public bool Exists(string key)
+        {
+            using (var session = _ravenDbAccess.Store.OpenSession())
+            {
+                var entity = session.Load<ConnectorEntity>(key);
+                return entity != null;
+            }
+        }
+
+        /// <summary>
+        /// Asynchronously checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>A task containing true if the item exists, false otherwise.</returns>
+        public async Task<bool> ExistsAsync(string key)
+        {
+            using (var session = _ravenDbAccess.Store.OpenAsyncSession())
+            {
+                var entity = await session.LoadAsync<ConnectorEntity>(key);
+                return entity != null;
+            }
+        }
     }
 }

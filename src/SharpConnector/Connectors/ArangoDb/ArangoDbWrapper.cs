@@ -186,5 +186,28 @@ namespace SharpConnector.Connectors.ArangoDb
         {
             _arangoDbAccess.Dispose();
         }
+
+        /// <summary>
+        /// Checks whether a document exists in the ArangoDB collection by its key.
+        /// </summary>
+        /// <param name="key">The document key.</param>
+        /// <returns>A boolean indicating whether the document exists in the collection.</returns>
+        public bool Exists(string key)
+        {
+            var task = ExistsAsync(key);
+            task.Wait();
+            return task.Result;
+        }
+
+        /// <summary>
+        /// Asynchronously checks whether a document exists in the ArangoDB collection by its key.
+        /// </summary>
+        /// <param name="key">The document key.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result indicates whether the document exists.</returns>
+        public async Task<bool> ExistsAsync(string key)
+        {
+            var result = await _arangoDbAccess.Client.Document.GetDocumentAsync<ConnectorEntity>(_collectionName, key);
+            return result != null;
+        }
     }
 }

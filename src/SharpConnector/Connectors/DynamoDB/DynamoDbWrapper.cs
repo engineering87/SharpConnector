@@ -217,5 +217,28 @@ namespace SharpConnector.Connectors.DynamoDb
         /// <returns></returns>
         public Task<bool> UpdateAsync(ConnectorEntity connectorEntity) =>
             InsertAsync(connectorEntity);
+
+        /// <summary>
+        /// Checks if a Key exists.
+        /// </summary>
+        public bool Exists(string key)
+        {
+            var document = _table
+                .GetItemAsync(key)
+                .GetAwaiter()
+                .GetResult();
+            return document != null;
+        }
+
+        /// <summary>
+        /// Checks if a Key exists asynchronously.
+        /// </summary>
+        public async Task<bool> ExistsAsync(string key)
+        {
+            var document = await _table
+                .GetItemAsync(key)
+                .ConfigureAwait(false);
+            return document != null;
+        }
     }
 }

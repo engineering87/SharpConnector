@@ -205,5 +205,25 @@ namespace SharpConnector.Operations
             var connectorEntity = new ConnectorEntity(key, value, null);
             return await _arangoDbWrapper.UpdateAsync(connectorEntity);
         }
+
+        /// <summary>
+        /// Checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>True if the item exists, false otherwise.</returns>
+        public override bool Exists(string key)
+        {
+            return _arangoDbWrapper.Exists(key);
+        }
+
+        /// <summary>
+        /// Asynchronously checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>A task containing true if the item exists, false otherwise.</returns>
+        public override async Task<bool> ExistsAsync(string key)
+        {
+            return await _arangoDbWrapper.ExistsAsync(key);
+        }
     }
 }

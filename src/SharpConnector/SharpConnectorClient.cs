@@ -6,6 +6,7 @@ using SharpConnector.Interfaces;
 using SharpConnector.Operations;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Google.Protobuf.WellKnownTypes;
 
 namespace SharpConnector
 {
@@ -161,6 +162,18 @@ namespace SharpConnector
         public async Task<bool> InsertManyAsync(IEnumerable<T> values)
         {
             return await _operations.InsertManyAsync(values);
+        }
+
+        /// <inheritdoc />
+        public bool Exists(string key)
+        {
+            return _operations.Exists(key);
+        }
+
+        /// <inheritdoc />
+        public async Task<bool> ExistsAsync(string key)
+        {
+            return await _operations.ExistsAsync(key);
         }
     }
 }

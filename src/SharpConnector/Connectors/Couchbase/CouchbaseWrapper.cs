@@ -112,5 +112,29 @@ namespace SharpConnector.Connectors.Couchbase
         {
             await _couchbaseAccess.DisposeAsync();
         }
+
+        /// <summary>
+        /// Checks whether an entity exists in the Couchbase bucket by its key.
+        /// </summary>
+        /// <param name="key">The key of the entity to check.</param>
+        /// <returns>A boolean indicating whether the entity exists in the bucket.</returns>
+        public bool Exists(string key)
+        {
+            var collection = GetCollectionAsync().Result;
+            var result = collection.GetAsync(key).Result;
+            return result != null;
+        }
+
+        /// <summary>
+        /// Checks whether an entity exists in the Couchbase bucket by its key asynchronously.
+        /// </summary>
+        /// <param name="key">The key of the entity to check.</param>
+        /// <returns>A task representing whether the entity exists in the bucket.</returns>
+        public async Task<bool> ExistsAsync(string key)
+        {
+            var collection = await GetCollectionAsync();
+            var result = await collection.GetAsync(key);
+            return result != null;
+        }
     }
 }

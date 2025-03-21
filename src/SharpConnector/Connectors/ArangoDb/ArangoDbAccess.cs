@@ -46,7 +46,9 @@ namespace SharpConnector.Connectors.ArangoDb
         {
             try
             {
-                var databases = await Client.Database.GetDatabasesAsync().ConfigureAwait(false);
+                var databases = await Client.Database
+                    .GetDatabasesAsync()
+                    .ConfigureAwait(false);
                 return !databases.Error;
             }
             catch (Exception)

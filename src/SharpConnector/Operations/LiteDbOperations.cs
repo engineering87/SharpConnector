@@ -177,6 +177,10 @@ namespace SharpConnector.Operations
             return await _liteDbWrapper.UpdateAsync(connectorEntity);
         }
 
+        /// <summary>
+        /// Asynchronously retrieves all objects.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a list of objects.</returns>
         public override async Task<IEnumerable<T>> GetAllAsync()
         {
             var connectorEntities = await _liteDbWrapper.GetAllAsync();
@@ -185,12 +189,37 @@ namespace SharpConnector.Operations
                 .ToList();
         }
 
+        /// <summary>
+        /// Insert multiple values asynchronously.
+        /// </summary>
+        /// <param name="values">The values to store as an enumerable.</param>
+        /// <returns>A task representing the asynchronous operation, which returns true if the insertion was successful.</returns>
         public override async Task<bool> InsertManyAsync(IEnumerable<T> values)
         {
             var connectorEntityList = values
                 .Cast<LiteDbConnectorEntity>()
                 .ToList();
             return await _liteDbWrapper.InsertManyAsync(connectorEntityList);
+        }
+
+        /// <summary>
+        /// Checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>True if the item exists, false otherwise.</returns>
+        public override bool Exists(string key)
+        {
+            return _liteDbWrapper.Exists(key);
+        }
+
+        /// <summary>
+        /// Asynchronously checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>A task containing true if the item exists, false otherwise.</returns>
+        public override async Task<bool> ExistsAsync(string key)
+        {
+            return await _liteDbWrapper.ExistsAsync(key);
         }
     }
 }

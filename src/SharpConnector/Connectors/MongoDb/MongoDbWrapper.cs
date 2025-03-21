@@ -182,8 +182,37 @@ namespace SharpConnector.Connectors.MongoDb
             var update = Builders<MongoConnectorEntity>.Update
                 .Set(x => x.Payload, connectorEntity.Payload);
 
-            var result = await _mongoDbAccess.Collection.UpdateOneAsync(filter, update).ConfigureAwait(false);
+            var result = await _mongoDbAccess.Collection
+                .UpdateOneAsync(filter, update)
+                .ConfigureAwait(false);
             return result.IsAcknowledged && result.ModifiedCount > 0;
+        }
+
+        /// <summary>
+        /// Checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>True if the item exists, false otherwise.</returns>
+        public bool Exists(string key)
+        {
+            var filter = Builders<MongoConnectorEntity>.Filter.Eq(x => x.Key, key);
+            return _mongoDbAccess.Collection
+                .Find(filter)
+                .Any();
+        }
+
+        /// <summary>
+        /// Asynchronously checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>A task containing true if the item exists, false otherwise.</returns>
+        public async Task<bool> ExistsAsync(string key)
+        {
+            var filter = Builders<MongoConnectorEntity>.Filter.Eq(x => x.Key, key);
+            return await _mongoDbAccess.Collection
+                .Find(filter)
+                .AnyAsync()
+                .ConfigureAwait(false);
         }
     }
 }
