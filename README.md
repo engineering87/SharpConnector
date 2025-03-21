@@ -132,13 +132,13 @@ Then, add the specif `ConnectorConfig` node within your *appsettings.json* file:
 - ArangoDB
 	```json
 	{
-	"ConnectorConfig": {
-		"Instance": "ArangoDb",
-		"ConnectionString": "http://localhost:8529",
-		"Username": "username",
-		"Password": "password",
-		"CollectionName": "test"
-	}
+		"ConnectorConfig": {
+			"Instance": "ArangoDb",
+			"ConnectionString": "http://localhost:8529",
+			"Username": "username",
+			"Password": "password",
+			"CollectionName": "test"
+		}
 	}
 ```
 
