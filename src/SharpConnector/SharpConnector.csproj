@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="ArangoDBNetStandard" Version="3.0.0" />
-    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.406.5" />
+    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.406.7" />
     <PackageReference Include="CouchbaseNetClient" Version="3.6.6" />
     <PackageReference Include="EnyimMemcachedCore" Version="3.3.2" />
     <PackageReference Include="LiteDB" Version="5.0.21" />
