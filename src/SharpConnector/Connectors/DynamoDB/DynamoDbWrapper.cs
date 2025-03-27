@@ -4,6 +4,7 @@ using Amazon.DynamoDBv2.DocumentModel;
 using Newtonsoft.Json;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -239,6 +240,16 @@ namespace SharpConnector.Connectors.DynamoDb
                 .GetItemAsync(key)
                 .ConfigureAwait(false);
             return document != null;
+        }
+
+        public List<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter)
+        {
+            throw new NotSupportedException();
+        }
+
+        public async Task<List<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter)
+        {
+            throw new NotSupportedException();
         }
     }
 }

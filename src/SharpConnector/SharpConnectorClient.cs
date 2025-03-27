@@ -175,5 +175,17 @@ namespace SharpConnector
         {
             return await _operations.ExistsAsync(key);
         }
+
+        /// <inheritdoc />
+        public IEnumerable<T> Query(Func<T, bool> filter)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

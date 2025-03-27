@@ -3,6 +3,7 @@
 using Raven.Client.Documents;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -240,6 +241,41 @@ namespace SharpConnector.Connectors.RavenDb
             {
                 var entity = await session.LoadAsync<ConnectorEntity>(key);
                 return entity != null;
+            }
+        }
+
+        /// <summary>
+        /// Queries RavenDB database with a filter function.
+        /// </summary>
+        /// <param name="filter">A function to filter the results.</param>
+        /// <returns>A collection of filtered ConnectorEntity instances.</returns>
+        public IEnumerable<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter)
+        {
+            using (var session = _ravenDbAccess.Store.OpenSession())
+            {
+                return session
+                    .Query<ConnectorEntity>()
+                    .Customize(cr => cr.WaitForNonStaleResults())
+                    .Where(filter)
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Asynchronously queries RavenDB database with a filter function.
+        /// </summary>
+        /// <param name="filter">A function to filter the results.</param>
+        /// <returns>A task containing a collection of filtered ConnectorEntity instances.</returns>
+        public async Task<IEnumerable<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter)
+        {
+            using (var session = _ravenDbAccess.Store.OpenAsyncSession())
+            {
+                var allEntities = await session
+                    .Query<ConnectorEntity>()
+                    .Customize(cr => cr.WaitForNonStaleResults())
+                    .ToListAsync();
+
+                return allEntities.Where(filter);
             }
         }
     }

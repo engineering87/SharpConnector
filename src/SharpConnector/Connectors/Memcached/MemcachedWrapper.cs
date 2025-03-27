@@ -169,5 +169,16 @@ namespace SharpConnector.Connectors.Memcached
             var result = await _memcachedAccess.MemcachedClient.GetAsync<object>(key);
             return result?.Value != null;
         }
+
+
+        public List<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter)
+        {
+            throw new NotSupportedException();
+        }
+
+        public async Task<List<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter)
+        {
+            throw new NotSupportedException();
+        }
     }
 }

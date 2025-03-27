@@ -7,6 +7,7 @@ using SharpConnector.Entities;
 using StackExchange.Redis;
 using System.Threading.Tasks;
 using System.Linq;
+using System;
 
 namespace SharpConnector.Connectors.Redis
 {
@@ -256,6 +257,30 @@ namespace SharpConnector.Connectors.Redis
             return await GetDatabase(databaseNumber)
                 .KeyExistsAsync(key)
                 .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Queries Redis database with a filter function.
+        /// </summary>
+        /// <param name="filter">A function to filter the results.</param>
+        /// <param name="databaseNumber">The Redis database.</param>
+        /// <returns>A collection of filtered ConnectorEntity instances.</returns>
+        public IEnumerable<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter, int databaseNumber = 0)
+        {
+            return GetAll(databaseNumber)
+                .Where(filter);
+        }
+
+        /// <summary>
+        /// Asynchronously queries Redis database with a filter function.
+        /// </summary>
+        /// <param name="filter">A function to filter the results.</param>
+        /// <param name="databaseNumber">The Redis database.</param>
+        /// <returns>A task containing a collection of filtered ConnectorEntity instances.</returns>
+        public async Task<IEnumerable<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter, int databaseNumber = 0)
+        {
+            var allEntities = await GetAllAsync(databaseNumber);
+            return allEntities.Where(filter);
         }
     }
 }

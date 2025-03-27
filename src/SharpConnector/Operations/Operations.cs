@@ -47,5 +47,9 @@ namespace SharpConnector.Operations
         public abstract bool Exists(string key);
         /// <inheritdoc />
         public abstract Task<bool> ExistsAsync(string key);
+        /// <inheritdoc />
+        public abstract IEnumerable<T> Query(Func<T, bool> filter);
+        /// <inheritdoc />
+        public abstract Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter);
     }
 }

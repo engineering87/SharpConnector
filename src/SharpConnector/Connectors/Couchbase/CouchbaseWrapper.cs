@@ -136,5 +136,15 @@ namespace SharpConnector.Connectors.Couchbase
             var result = await collection.GetAsync(key);
             return result != null;
         }
+
+        public List<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter)
+        {
+            throw new NotSupportedException();
+        }
+
+        public async Task<List<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter)
+        {
+            throw new NotSupportedException();
+        }
     }
 }

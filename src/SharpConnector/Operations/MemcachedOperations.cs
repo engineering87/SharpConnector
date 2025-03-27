@@ -214,5 +214,15 @@ namespace SharpConnector.Operations
         {
             return await _memcachedWrapper.ExistsAsync(key);
         }
+
+        public override IEnumerable<T> Query(Func<T, bool> filter)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

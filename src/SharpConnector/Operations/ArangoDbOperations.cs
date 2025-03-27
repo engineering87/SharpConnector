@@ -2,6 +2,7 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.ArangoDb;
+using SharpConnector.Connectors.Redis;
 using SharpConnector.Entities;
 using SharpConnector.Utilities;
 using System;
@@ -224,6 +225,25 @@ namespace SharpConnector.Operations
         public override async Task<bool> ExistsAsync(string key)
         {
             return await _arangoDbWrapper.ExistsAsync(key);
+        }
+
+        public override IEnumerable<T> Query(Func<T, bool> filter)
+        {
+            bool castedFilter(ConnectorEntity entity) =>
+                entity is T tItem && filter(tItem);
+
+            return _arangoDbWrapper
+                .Query(castedFilter)
+                .Cast<T>();
+        }
+
+        public override async Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter)
+        {
+            bool castedFilter(ConnectorEntity entity) =>
+             entity is T tItem && filter(tItem);
+
+            var result = await _arangoDbWrapper.QueryAsync(castedFilter);
+            return result.Cast<T>();
         }
     }
 }

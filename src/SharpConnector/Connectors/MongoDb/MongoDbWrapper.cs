@@ -3,7 +3,9 @@
 using MongoDB.Driver;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SharpConnector.Connectors.MongoDb
@@ -213,6 +215,35 @@ namespace SharpConnector.Connectors.MongoDb
                 .Find(filter)
                 .AnyAsync()
                 .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Queries MongoDB collection with a filter function.
+        /// </summary>
+        /// <param name="filter">A filter definition to apply to the query.</param>
+        /// <returns>A collection of filtered MongoConnectorEntity instances.</returns>
+        public List<MongoConnectorEntity> Query(Func<MongoConnectorEntity, bool> filter)
+        {
+            return _mongoDbAccess.Collection
+                .AsQueryable()
+                .Where(filter)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Asynchronously queries MongoDB collection with a filter function.
+        /// </summary>
+        /// <param name="filter">A filter definition to apply to the query.</param>
+        /// <returns>A task containing a collection of filtered MongoConnectorEntity instances.</returns>
+        public async Task<List<MongoConnectorEntity>> QueryAsync(Func<MongoConnectorEntity, bool> filter)
+        {
+            var allDocuments = await _mongoDbAccess.Collection
+                .Find(FilterDefinition<MongoConnectorEntity>.Empty)
+                .ToListAsync();
+
+            return allDocuments
+                .Where(filter)
+                .ToList();
         }
     }
 }

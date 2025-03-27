@@ -2,6 +2,7 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.RavenDb;
+using SharpConnector.Connectors.Redis;
 using SharpConnector.Entities;
 using SharpConnector.Utilities;
 using System;
@@ -220,6 +221,35 @@ namespace SharpConnector.Operations
         public override async Task<bool> ExistsAsync(string key)
         {
             return await _ravenDbWrapper.ExistsAsync(key);
+        }
+
+        /// <summary>
+        /// Esegue una query filtrata sugli elementi nel database.
+        /// </summary>
+        /// <param name="filter">Funzione di filtro che seleziona gli elementi di tipo T.</param>
+        /// <returns>Un IEnumerable di elementi di tipo T che soddisfano il filtro.</returns>
+        public override IEnumerable<T> Query(Func<T, bool> filter)
+        {
+            bool castedFilter(ConnectorEntity entity) =>
+                entity is T tItem && filter(tItem);
+
+            return _ravenDbWrapper
+                .Query(castedFilter)
+                .Cast<T>();
+        }
+
+        /// <summary>
+        /// Esegue una query asincrona filtrata sugli elementi nel database.
+        /// </summary>
+        /// <param name="filter">Funzione di filtro che seleziona gli elementi di tipo T.</param>
+        /// <returns>Un Task contenente un IEnumerable di elementi di tipo T che soddisfano il filtro.</returns>
+        public override async Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter)
+        {
+            bool castedFilter(ConnectorEntity entity) =>
+            entity is T tItem && filter(tItem);
+
+            var result = await _ravenDbWrapper.QueryAsync(castedFilter);
+            return result.Cast<T>();
         }
     }
 }

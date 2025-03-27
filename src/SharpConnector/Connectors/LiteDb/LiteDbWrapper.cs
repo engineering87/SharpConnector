@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using LiteDB;
 using System.Collections.Generic;
+using System;
 
 namespace SharpConnector.Connectors.LiteDb
 {
@@ -30,7 +31,7 @@ namespace SharpConnector.Connectors.LiteDb
         public LiteDbConnectorEntity Get(string key)
         {
             return _liteDbAccess.Collection
-                .Find(Query.EQ("Key", new BsonValue(key)))
+                .Find(LiteDB.Query.EQ("Key", new BsonValue(key)))
                 .FirstOrDefault();
         }
 
@@ -43,7 +44,7 @@ namespace SharpConnector.Connectors.LiteDb
         {
             // LiteDb library does not implement asynchronous operations
             var entity = _liteDbAccess.Collection
-                .Find(Query.EQ("Key", new BsonValue(key)))
+                .Find(LiteDB.Query.EQ("Key", new BsonValue(key)))
                 .FirstOrDefault();
             return ValueTask.FromResult(entity);
         }
@@ -120,7 +121,7 @@ namespace SharpConnector.Connectors.LiteDb
         /// <returns></returns>
         public bool Delete(string key)
         {
-            return _liteDbAccess.Collection.DeleteMany(Query.EQ("Key", new BsonValue(key))) > 0;
+            return _liteDbAccess.Collection.DeleteMany(LiteDB.Query.EQ("Key", new BsonValue(key))) > 0;
         }
 
         /// <summary>
@@ -162,7 +163,7 @@ namespace SharpConnector.Connectors.LiteDb
         /// </summary>
         public bool Exists(string key)
         {
-            return _liteDbAccess.Collection.Exists(Query.EQ("Key", new BsonValue(key)));
+            return _liteDbAccess.Collection.Exists(LiteDB.Query.EQ("Key", new BsonValue(key)));
         }
 
         /// <summary>
@@ -172,6 +173,16 @@ namespace SharpConnector.Connectors.LiteDb
         {
             var exists = Exists(key);
             return ValueTask.FromResult(exists);
+        }
+
+        public List<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter)
+        {
+            throw new NotSupportedException();
+        }
+
+        public async Task<List<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter)
+        {
+            throw new NotSupportedException();
         }
     }
 }

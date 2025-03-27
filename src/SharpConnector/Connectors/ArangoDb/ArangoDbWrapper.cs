@@ -209,5 +209,31 @@ namespace SharpConnector.Connectors.ArangoDb
             var result = await _arangoDbAccess.Client.Document.GetDocumentAsync<ConnectorEntity>(_collectionName, key);
             return result != null;
         }
+
+        /// <summary>
+        /// Executes a query on ArangoDB and filters the results in memory.
+        /// </summary>
+        /// <param name="filter">A function that determines whether an item should be included in the results.</param>
+        /// <returns>A list of matching ConnectorEntity instances.</returns>
+        public List<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter)
+        {
+            var entities = GetAll();
+            return entities
+                .Where(filter)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Asynchronously executes a query on ArangoDB and filters the results in memory.
+        /// </summary>
+        /// <param name="filter">A function that determines whether an item should be included in the results.</param>
+        /// <returns>A task containing a list of matching ConnectorEntity instances.</returns>
+        public async Task<List<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter)
+        {
+            var entities = await GetAllAsync();
+            return entities
+                .Where(filter)
+                .ToList();
+        }
     }
 }

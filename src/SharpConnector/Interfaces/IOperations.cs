@@ -137,5 +137,19 @@ namespace SharpConnector.Interfaces
         /// <param name="key">The unique key of the item.</param>
         /// <returns>A task containing true if the item exists, false otherwise.</returns>
         Task<bool> ExistsAsync(string key);
+
+        /// <summary>
+        /// Finds items that match a given filter expression.
+        /// </summary>
+        /// <param name="filter">A predicate function defining the search criteria.</param>
+        /// <returns>A collection of items that match the filter.</returns>
+        IEnumerable<T> Query(Func<T, bool> filter);
+
+        /// <summary>
+        /// Asynchronously finds items that match a given filter expression.
+        /// </summary>
+        /// <param name="filter">A predicate function defining the search criteria.</param>
+        /// <returns>A task containing a collection of items that match the filter.</returns>
+        Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter);
     }
 }
