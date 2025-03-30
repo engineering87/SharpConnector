@@ -17,6 +17,7 @@ namespace SharpConnector.Interfaces
         /// </summary>
         /// <param name="key">The unique key of the item.</param>
         /// <returns>The item associated with the key.</returns>
+        [Obsolete("Use GetAsync instead.")]
         T Get(string key);
 
         /// <summary>
@@ -30,6 +31,7 @@ namespace SharpConnector.Interfaces
         /// Retrieves all items.
         /// </summary>
         /// <returns>An enumerable of all items.</returns>
+        [Obsolete("Use GetAllAsync instead.")]
         IEnumerable<T> GetAll();
 
         /// <summary>
@@ -44,6 +46,7 @@ namespace SharpConnector.Interfaces
         /// <param name="key">The unique key for the item.</param>
         /// <param name="value">The item to insert.</param>
         /// <returns>True if insertion was successful, false otherwise.</returns>
+        [Obsolete("Use InsertAsync instead.")]
         bool Insert(string key, T value);
 
         /// <summary>
@@ -53,6 +56,7 @@ namespace SharpConnector.Interfaces
         /// <param name="value">The item to insert.</param>
         /// <param name="expiration">The time after which the item expires.</param>
         /// <returns>True if insertion was successful, false otherwise.</returns>
+        [Obsolete("Use InsertAsync instead.")]
         bool Insert(string key, T value, TimeSpan expiration);
 
         /// <summary>
@@ -77,6 +81,7 @@ namespace SharpConnector.Interfaces
         /// </summary>
         /// <param name="values">A dictionary of items to insert, keyed by their unique keys.</param>
         /// <returns>True if all items were inserted successfully, false otherwise.</returns>
+        [Obsolete("Use InsertManyAsync instead.")]
         bool InsertMany(Dictionary<string, T> values);
 
         /// <summary>
@@ -85,6 +90,7 @@ namespace SharpConnector.Interfaces
         /// <param name="values">A dictionary of items to insert, keyed by their unique keys.</param>
         /// <param name="expiration">The time after which the items expire.</param>
         /// <returns>True if all items were inserted successfully, false otherwise.</returns>
+        [Obsolete("Use InsertManyAsync instead.")]
         bool InsertMany(Dictionary<string, T> values, TimeSpan expiration);
 
         /// <summary>
@@ -99,6 +105,7 @@ namespace SharpConnector.Interfaces
         /// </summary>
         /// <param name="key">The unique key of the item to delete.</param>
         /// <returns>True if deletion was successful, false otherwise.</returns>
+        [Obsolete("Use DeleteAsync instead.")]
         bool Delete(string key);
 
         /// <summary>
@@ -114,6 +121,7 @@ namespace SharpConnector.Interfaces
         /// <param name="key">The unique key of the item to update.</param>
         /// <param name="value">The new item value.</param>
         /// <returns>True if the update was successful, false otherwise.</returns>
+        [Obsolete("Use UpdateAsync instead.")]
         bool Update(string key, T value);
 
         /// <summary>
@@ -129,6 +137,7 @@ namespace SharpConnector.Interfaces
         /// </summary>
         /// <param name="key">The unique key of the item.</param>
         /// <returns>True if the item exists, false otherwise.</returns>
+        [Obsolete("Use ExistsAsync instead.")]
         bool Exists(string key);
 
         /// <summary>
@@ -143,6 +152,7 @@ namespace SharpConnector.Interfaces
         /// </summary>
         /// <param name="filter">A predicate function defining the search criteria.</param>
         /// <returns>A collection of items that match the filter.</returns>
+        [Obsolete("Use QueryAsync instead.")]
         IEnumerable<T> Query(Func<T, bool> filter);
 
         /// <summary>
