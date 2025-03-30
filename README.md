@@ -140,7 +140,7 @@ Then, add the specif `ConnectorConfig` node within your *appsettings.json* file:
 			"CollectionName": "test"
 		}
 	}
-```
+	```
 
 Once configured, create a new SharpConnector client, specifying the payload type (e.g., string):
 
@@ -148,7 +148,7 @@ Once configured, create a new SharpConnector client, specifying the payload type
 SharpConnectorClient<string> client = new SharpConnectorClient<string>()
 ```
 
-Alternatively, you can integrate SharpConnector client using dependency injection. Here’s how to register the SharpConnector service with a simple string payload type:
+Alternatively, you can integrate SharpConnector client using dependency injection. Here how to register the SharpConnector service with a simple string payload type:
 
 ```csharp
 // Register the SharpConnector services with string payload type.

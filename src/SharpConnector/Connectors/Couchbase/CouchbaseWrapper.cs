@@ -137,14 +137,40 @@ namespace SharpConnector.Connectors.Couchbase
             return result != null;
         }
 
+        /// <summary>
+        /// Synchronously retrieves a list of <see cref="ConnectorEntity"/> objects that match the specified filter.
+        /// </summary>
+        /// <param name="filter">
+        /// A function to test each element for a condition.
+        /// </param>
+        /// <returns>
+        /// A list of <see cref="ConnectorEntity"/> objects that match the filter.
+        /// </returns>
         public List<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter)
         {
-            throw new NotSupportedException();
+            return QueryAsync(filter)
+                .GetAwaiter()
+                .GetResult();
         }
 
+        /// <summary>
+        /// Asynchronously retrieves a list of <see cref="ConnectorEntity"/> objects that match the specified filter.
+        /// </summary>
+        /// <param name="filter">
+        /// A function to test each element for a condition.
+        /// </param>
+        /// <returns>
+        /// A task that represents the asynchronous operation. The task result contains a list of <see cref="ConnectorEntity"/> objects that match the filter.
+        /// </returns>
         public async Task<List<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter)
         {
-            throw new NotSupportedException();
+            var query = $"SELECT * FROM `{_couchbaseAccess.BucketName}`";
+            var cluster = await _couchbaseAccess.GetClusterAsync();
+            var result = await cluster.QueryAsync<ConnectorEntity>(query);
+
+            return await result.Rows
+                .Where(filter)
+                .ToListAsync();
         }
     }
 }

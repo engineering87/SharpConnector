@@ -23,11 +23,6 @@ namespace SharpConnector.Connectors.Memcached
             _memcachedAccess = new MemcachedAccess(memcachedConfig);
         }
 
-        private int GetExpiration(ConnectorEntity connectorEntity)
-        {
-            return connectorEntity.Expiration?.Seconds ?? 0;
-        }
-
         /// <summary>
         /// Get the value of Key.
         /// </summary>

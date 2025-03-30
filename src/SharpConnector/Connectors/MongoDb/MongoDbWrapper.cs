@@ -237,6 +237,7 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns>A task containing a collection of filtered MongoConnectorEntity instances.</returns>
         public async Task<List<MongoConnectorEntity>> QueryAsync(Func<MongoConnectorEntity, bool> filter)
         {
+            // TODO this is not efficient, but it's a dirty way to get the job done
             var allDocuments = await _mongoDbAccess.Collection
                 .Find(FilterDefinition<MongoConnectorEntity>.Empty)
                 .ToListAsync();
