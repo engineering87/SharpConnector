@@ -14,7 +14,7 @@ namespace SharpConnector.Connectors.DynamoDb
     public class DynamoDbWrapper
     {
         private readonly DynamoDbAccess _dynamoDbAccess;
-        private readonly Table _table;
+        private readonly ITable _table;
 
         /// <summary>
         /// Create a new DynamoDbWrapper instance.
