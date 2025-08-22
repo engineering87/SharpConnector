@@ -42,11 +42,13 @@ namespace SharpConnector.Connectors.RavenDb
         /// </summary>
         public void Dispose()
         {
-            if (DocumentStore.IsValueCreated)
-            {
-                DocumentStore.Value.Dispose();
-            }
             GC.SuppressFinalize(this);
+        }
+
+        public static void Shutdown()
+        {
+            if (DocumentStore.IsValueCreated)
+                DocumentStore.Value.Dispose();
         }
     }
 }

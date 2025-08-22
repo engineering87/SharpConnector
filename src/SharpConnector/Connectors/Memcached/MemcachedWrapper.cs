@@ -6,6 +6,7 @@ using SharpConnector.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SharpConnector.Connectors.Memcached
@@ -17,163 +18,210 @@ namespace SharpConnector.Connectors.Memcached
         /// <summary>
         /// Create a new MemcachedWrapper instance.
         /// </summary>
-        /// <param name="memcachedConfig">The Memcached connector config.</param>
+        /// <param name="memcachedConfig">The Memcached connector configuration.</param>
         public MemcachedWrapper(MemcachedConfig memcachedConfig)
         {
             _memcachedAccess = new MemcachedAccess(memcachedConfig);
         }
 
         /// <summary>
-        /// Get the value of Key.
+        /// Retrieve the value of the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
         public ConnectorEntity Get(string key)
         {
-            return _memcachedAccess.MemcachedClient.Get<ConnectorEntity>(key);
+            var json = _memcachedAccess.MemcachedClient.Get<string>(key);
+            return json != null ? JsonConvert.DeserializeObject<ConnectorEntity>(json) : null;
         }
 
         /// <summary>
-        /// Get the value of Key.
+        /// Asynchronously retrieve the value of the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public async Task<ConnectorEntity> GetAsync(string key)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public async Task<ConnectorEntity> GetAsync(string key, CancellationToken ct = default)
         {
-            var result = await _memcachedAccess.MemcachedClient.GetAsync<ConnectorEntity>(key);
-            return result?.Value;
+            ct.ThrowIfCancellationRequested();
+
+            var res = await _memcachedAccess.MemcachedClient
+                .GetAsync<string>(key)
+                .ConfigureAwait(false);
+
+            var json = res?.Value;
+            return json != null ? JsonConvert.DeserializeObject<ConnectorEntity>(json) : null;
         }
 
         /// <summary>
-        /// Get all ConnectorEntities asynchronously.
+        /// Asynchronously retrieve all ConnectorEntities.
         /// </summary>
-        /// <returns>A list of ConnectorEntities.</returns>
-        public async Task<List<ConnectorEntity>> GetAllAsync()
+        /// <remarks>
+        /// Not supported by Memcached since it does not provide key enumeration.
+        /// </remarks>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>Never returns; always throws <see cref="NotSupportedException"/>.</returns>
+        public Task<List<ConnectorEntity>> GetAllAsync(CancellationToken ct = default)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException("Memcached does not support retrieving all keys/values.");
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Set the key to hold the specified value.
         /// </summary>
-        /// <param name="connectorEntity">The ConnectorEntity to store.</param>
-        /// <returns></returns>
+        /// <param name="connectorEntity">The entity to store.</param>
         public bool Insert(ConnectorEntity connectorEntity)
         {
-            var seconds = connectorEntity.Expiration?.Seconds ?? 0;
-            return _memcachedAccess.MemcachedClient.Add(connectorEntity.Key,
+            var seconds = connectorEntity.Expiration.HasValue
+                ? (int)Math.Ceiling(connectorEntity.Expiration.Value.TotalSeconds)
+                : 0;
+
+            return _memcachedAccess.MemcachedClient.Add(
+                connectorEntity.Key,
                 JsonConvert.SerializeObject(connectorEntity),
                 seconds);
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Asynchronously set the key to hold the specified value.
         /// </summary>
-        /// <param name="connectorEntity">The ConnectorEntity to store.</param>
-        /// <returns></returns>
-        public Task<bool> InsertAsync(ConnectorEntity connectorEntity)
+        /// <param name="connectorEntity">The entity to store.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public Task<bool> InsertAsync(ConnectorEntity connectorEntity, CancellationToken ct = default)
         {
-            var seconds = connectorEntity.Expiration?.Seconds ?? 0;
-            return _memcachedAccess.MemcachedClient.AddAsync(connectorEntity.Key,
+            ct.ThrowIfCancellationRequested();
+
+            var seconds = connectorEntity.Expiration.HasValue
+                ? (int)Math.Ceiling(connectorEntity.Expiration.Value.TotalSeconds)
+                : 0;
+
+            return _memcachedAccess.MemcachedClient.AddAsync(
+                connectorEntity.Key,
                 JsonConvert.SerializeObject(connectorEntity),
                 seconds);
         }
 
         /// <summary>
-        /// Multiple set operation.
+        /// Insert multiple entities.
         /// </summary>
-        /// <param name="values">The ConnectorEntities to store.</param>
-        /// <returns></returns>
+        /// <param name="connectorEntities">The entities to store.</param>
         public bool InsertMany(List<ConnectorEntity> connectorEntities)
         {
             return connectorEntities.All(Insert);
         }
 
         /// <summary>
-        /// Asynchronously inserts multiple ConnectorEntities.
+        /// Asynchronously insert multiple entities.
         /// </summary>
-        /// <param name="connectorEntities">The list of ConnectorEntities to store.</param>
-        /// <returns>True if all operations succeeded, false otherwise.</returns>
-        public async Task<bool> InsertManyAsync(List<ConnectorEntity> connectorEntities)
+        /// <param name="connectorEntities">The entities to store.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>True if all operations succeeded; otherwise, false.</returns>
+        public async Task<bool> InsertManyAsync(List<ConnectorEntity> connectorEntities, CancellationToken ct = default)
         {
-            var tasks = connectorEntities.Select(InsertAsync);
-            var results = await Task.WhenAll(tasks);
+            var tasks = new List<Task<bool>>(connectorEntities.Count);
+            foreach (var entity in connectorEntities)
+            {
+                ct.ThrowIfCancellationRequested();
+                tasks.Add(InsertAsync(entity, ct));
+            }
+
+            var results = await Task.WhenAll(tasks).ConfigureAwait(false);
             return results.All(r => r);
         }
 
         /// <summary>
-        /// Removes the specified Key.
+        /// Remove the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
         public bool Delete(string key)
         {
             return _memcachedAccess.MemcachedClient.Remove(key);
         }
 
         /// <summary>
-        /// Removes the specified Key.
+        /// Asynchronously remove the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public Task<bool> DeleteAsync(string key)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public Task<bool> DeleteAsync(string key, CancellationToken ct = default)
         {
+            ct.ThrowIfCancellationRequested();
             return _memcachedAccess.MemcachedClient.RemoveAsync(key);
         }
 
         /// <summary>
-        /// Updates the specified Key.
+        /// Update the specified key with the provided value.
         /// </summary>
-        /// <param name="connectorEntity">The ConnectorEntity to store.</param>
-        /// <returns></returns>
+        /// <param name="connectorEntity">The entity to store.</param>
         public bool Update(ConnectorEntity connectorEntity)
         {
-            var seconds = connectorEntity.Expiration?.Seconds ?? 0;
-            return _memcachedAccess.MemcachedClient.Replace(connectorEntity.Key,
+            var seconds = connectorEntity.Expiration.HasValue
+                ? (int)Math.Ceiling(connectorEntity.Expiration.Value.TotalSeconds)
+                : 0;
+
+            return _memcachedAccess.MemcachedClient.Replace(
+                connectorEntity.Key,
                 JsonConvert.SerializeObject(connectorEntity),
                 seconds);
         }
 
         /// <summary>
-        /// Updates the specified Key.
+        /// Asynchronously update the specified key with the provided value.
         /// </summary>
-        /// <param name="connectorEntity">The ConnectorEntity to store.</param>
-        /// <returns></returns>
-        public Task<bool> UpdateAsync(ConnectorEntity connectorEntity)
+        /// <param name="connectorEntity">The entity to store.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public Task<bool> UpdateAsync(ConnectorEntity connectorEntity, CancellationToken ct = default)
         {
-            var seconds = connectorEntity.Expiration?.Seconds ?? 0;
-            return _memcachedAccess.MemcachedClient.ReplaceAsync(connectorEntity.Key,
+            ct.ThrowIfCancellationRequested();
+
+            var seconds = connectorEntity.Expiration.HasValue
+                ? (int)Math.Ceiling(connectorEntity.Expiration.Value.TotalSeconds)
+                : 0;
+
+            return _memcachedAccess.MemcachedClient.ReplaceAsync(
+                connectorEntity.Key,
                 JsonConvert.SerializeObject(connectorEntity),
                 seconds);
         }
 
         /// <summary>
-        /// Check if a Key exists.
+        /// Check whether a key exists.
         /// </summary>
+        /// <param name="key">The unique key of the item.</param>
         public bool Exists(string key)
         {
-            var value = _memcachedAccess.MemcachedClient.Get<object>(key);
-            return value != null;
+            var json = _memcachedAccess.MemcachedClient.Get<string>(key);
+            return json != null;
         }
 
         /// <summary>
-        /// Check if a Key exists asynchronously.
+        /// Asynchronously check whether a key exists.
         /// </summary>
-        public async Task<bool> ExistsAsync(string key)
+        /// <param name="key">The unique key of the item.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public async Task<bool> ExistsAsync(string key, CancellationToken ct = default)
         {
-            var result = await _memcachedAccess.MemcachedClient.GetAsync<object>(key);
-            return result?.Value != null;
+            ct.ThrowIfCancellationRequested();
+
+            var res = await _memcachedAccess.MemcachedClient
+                .GetAsync<string>(key)
+                .ConfigureAwait(false);
+
+            return res?.Value != null;
         }
 
-
+        /// <summary>
+        /// Execute a filtered query (not supported by Memcached).
+        /// </summary>
         public List<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException("Memcached does not support server-side queries or key enumeration.");
         }
 
-        public async Task<List<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter)
+        /// <summary>
+        /// Asynchronously execute a filtered query (not supported by Memcached).
+        /// </summary>
+        public Task<List<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter, CancellationToken ct = default)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException("Memcached does not support server-side queries or key enumeration.");
         }
     }
 }

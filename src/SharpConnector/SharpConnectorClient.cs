@@ -1,12 +1,12 @@
 ﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
-using System;
 using Microsoft.Extensions.Configuration;
 using SharpConnector.Interfaces;
 using SharpConnector.Operations;
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
-using Google.Protobuf.WellKnownTypes;
 
 namespace SharpConnector
 {
@@ -39,6 +39,8 @@ namespace SharpConnector
         /// <param name="builder">The configuration builder.</param>
         public SharpConnectorClient(IConfigurationBuilder builder)
         {
+            ArgumentNullException.ThrowIfNull(builder);
+
             var configuration = builder.Build();
 
             InitOperations(configuration);
@@ -50,6 +52,9 @@ namespace SharpConnector
         /// <param name="jsonConfigFileName">The config file name.</param>
         public SharpConnectorClient(string jsonConfigFileName)
         {
+            if (string.IsNullOrWhiteSpace(jsonConfigFileName))
+                throw new ArgumentException("Config file name cannot be null or empty.", nameof(jsonConfigFileName));
+
             var builder = new ConfigurationBuilder()
                 .SetBasePath(System.IO.Directory.GetCurrentDirectory())
                 .AddJsonFile(jsonConfigFileName, optional: true, reloadOnChange: true);
@@ -65,11 +70,9 @@ namespace SharpConnector
         /// <param name="configurationSection"></param>
         private void InitOperations(IConfiguration configurationSection)
         {
-            var section = configurationSection.GetSection("ConnectorConfig");
-            if (section == null)
-            {
+            var section = configurationSection?.GetSection("ConnectorConfig");
+            if (section == null || !section.Exists())
                 throw new KeyNotFoundException("ConnectorConfig for SharpConnector was not found.");
-            }
 
             _operations = new OperationsFactory<T>(section).GetStrategy();
         }
@@ -81,9 +84,9 @@ namespace SharpConnector
         }
 
         /// <inheritdoc />
-        public async Task<T> GetAsync(string key)
+        public async Task<T> GetAsync(string key, CancellationToken ct = default)
         {
-            return await _operations.GetAsync(key);
+            return await _operations.GetAsync(key, ct);
         }
 
         /// <inheritdoc />
@@ -93,9 +96,9 @@ namespace SharpConnector
         }
 
         /// <inheritdoc />
-        public async Task<IEnumerable<T>> GetAllAsync()
+        public async Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)
         {
-            return await _operations.GetAllAsync();
+            return await _operations.GetAllAsync(ct);
         }
 
         /// <inheritdoc />
@@ -111,15 +114,15 @@ namespace SharpConnector
         }
 
         /// <inheritdoc />
-        public async Task<bool> InsertAsync(string key, T value)
+        public async Task<bool> InsertAsync(string key, T value, CancellationToken ct = default)
         {
-            return await _operations.InsertAsync(key, value);
+            return await _operations.InsertAsync(key, value, ct);
         }
 
         /// <inheritdoc />
-        public async Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
+        public async Task<bool> InsertAsync(string key, T value, TimeSpan expiration, CancellationToken ct = default)
         {
-            return await _operations.InsertAsync(key, value, expiration);
+            return await _operations.InsertAsync(key, value, expiration, ct);
         }
 
         /// <inheritdoc />
@@ -141,9 +144,9 @@ namespace SharpConnector
         }
 
         /// <inheritdoc />
-        public async Task<bool> DeleteAsync(string key)
+        public async Task<bool> DeleteAsync(string key, CancellationToken ct = default)
         {
-            return await _operations.DeleteAsync(key);
+            return await _operations.DeleteAsync(key, ct);
         }
 
         /// <inheritdoc />
@@ -153,15 +156,15 @@ namespace SharpConnector
         }
 
         /// <inheritdoc />
-        public async Task<bool> UpdateAsync(string key, T value)
+        public async Task<bool> UpdateAsync(string key, T value, CancellationToken ct = default)
         {
-            return await _operations.UpdateAsync(key, value);
+            return await _operations.UpdateAsync(key, value, ct);
         }
 
         /// <inheritdoc />
-        public async Task<bool> InsertManyAsync(IEnumerable<T> values)
+        public async Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
         {
-            return await _operations.InsertManyAsync(values);
+            return await _operations.InsertManyAsync(values, ct);
         }
 
         /// <inheritdoc />
@@ -171,21 +174,21 @@ namespace SharpConnector
         }
 
         /// <inheritdoc />
-        public async Task<bool> ExistsAsync(string key)
+        public async Task<bool> ExistsAsync(string key, CancellationToken ct = default)
         {
-            return await _operations.ExistsAsync(key);
+            return await _operations.ExistsAsync(key, ct);
         }
 
         /// <inheritdoc />
         public IEnumerable<T> Query(Func<T, bool> filter)
         {
-            throw new NotImplementedException();
+            return _operations.Query(filter);
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter)
+        public async Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter, CancellationToken ct = default)
         {
-            throw new NotImplementedException();
+            return await (_operations.QueryAsync(filter, ct));
         }
     }
 }

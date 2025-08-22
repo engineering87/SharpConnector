@@ -2,12 +2,12 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.ArangoDb;
-using SharpConnector.Connectors.Redis;
 using SharpConnector.Entities;
 using SharpConnector.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SharpConnector.Operations
@@ -43,14 +43,15 @@ namespace SharpConnector.Operations
         /// Asynchronously deletes an object by key.
         /// </summary>
         /// <param name="key">The key of the object to delete.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result indicates success.</returns>
-        public override async Task<bool> DeleteAsync(string key)
+        public override Task<bool> DeleteAsync(string key, CancellationToken ct = default)
         {
-            return await _arangoDbWrapper.DeleteAsync(key);
+            return _arangoDbWrapper.DeleteAsync(key, ct);
         }
 
         /// <summary>
-        /// Retrieves a object by key.
+        /// Retrieves an object by key.
         /// </summary>
         /// <param name="key">The key of the object to retrieve.</param>
         /// <returns>The retrieved document as a <see cref="T"/> object, or default if not found.</returns>
@@ -69,31 +70,29 @@ namespace SharpConnector.Operations
         public override IEnumerable<T> GetAll()
         {
             var connectorEntities = _arangoDbWrapper.GetAll();
-            if (connectorEntities != null)
-                return connectorEntities.ToPayloadList<T>();
-            return default;
+            return connectorEntities?.ToPayloadList<T>() ?? [];
         }
 
         /// <summary>
         /// Asynchronously retrieves all objects from the collection.
         /// </summary>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a list of objects.</returns>
-        public override async Task<IEnumerable<T>> GetAllAsync()
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the list of objects.</returns>
+        public override async Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)
         {
-            var connectorEntities = await _arangoDbWrapper.GetAllAsync();
-            return connectorEntities
-                .Cast<T>()
-                .ToList();
+            var connectorEntities = await _arangoDbWrapper.GetAllAsync(ct).ConfigureAwait(false);
+            return connectorEntities?.ToPayloadList<T>() ?? [];
         }
 
         /// <summary>
-        /// Asynchronously retrieves a object by key.
+        /// Asynchronously retrieves an object by key.
         /// </summary>
         /// <param name="key">The key of the object to retrieve.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the object as a <see cref="T"/> object, or default if not found.</returns>
-        public override async Task<T> GetAsync(string key)
+        public override async Task<T> GetAsync(string key, CancellationToken ct = default)
         {
-            var connectorEntity = await _arangoDbWrapper.GetAsync(key);
+            var connectorEntity = await _arangoDbWrapper.GetAsync(key, ct).ConfigureAwait(false);
             if (connectorEntity != null)
                 return connectorEntity.ToPayloadObject<T>();
             return default;
@@ -112,7 +111,7 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Inserts a object with a specified key, value, and expiration time.
+        /// Inserts an object with a specified key, value, and expiration time.
         /// </summary>
         /// <param name="key">The key of the object to insert.</param>
         /// <param name="value">The value to insert into the object.</param>
@@ -125,15 +124,16 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Asynchronously inserts a object with a specified key and value.
+        /// Asynchronously inserts an object with a specified key and value.
         /// </summary>
         /// <param name="key">The key of the object to insert.</param>
         /// <param name="value">The value to insert into the object.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result indicates success.</returns>
-        public override async Task<bool> InsertAsync(string key, T value)
+        public override Task<bool> InsertAsync(string key, T value, CancellationToken ct = default)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return await _arangoDbWrapper.InsertAsync(connectorEntity);
+            return _arangoDbWrapper.InsertAsync(connectorEntity, ct);
         }
 
         /// <summary>
@@ -142,11 +142,12 @@ namespace SharpConnector.Operations
         /// <param name="key">The key of the object to insert.</param>
         /// <param name="value">The value to insert into the object.</param>
         /// <param name="expiration">The expiration time for the object.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result indicates success.</returns>
-        public override async Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
+        public override Task<bool> InsertAsync(string key, T value, TimeSpan expiration, CancellationToken ct = default)
         {
             var connectorEntity = new ConnectorEntity(key, value, expiration);
-            return await _arangoDbWrapper.InsertAsync(connectorEntity);
+            return _arangoDbWrapper.InsertAsync(connectorEntity, ct);
         }
 
         /// <summary>
@@ -174,17 +175,16 @@ namespace SharpConnector.Operations
         /// Asynchronously inserts multiple objects.
         /// </summary>
         /// <param name="values">A collection of objects to insert.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result indicates success.</returns>
-        public override async Task<bool> InsertManyAsync(IEnumerable<T> values)
+        public override Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
         {
-            var connectorEntityList = values
-                .Cast<ConnectorEntity>()
-                .ToList();
-            return await _arangoDbWrapper.InsertManyAsync(connectorEntityList);
+            var list = values.Select(v => new ConnectorEntity(Guid.NewGuid().ToString(), v, null)).ToList();
+            return _arangoDbWrapper.InsertManyAsync(list, ct);
         }
 
         /// <summary>
-        /// Updates a object with a specified key and value.
+        /// Updates an object with a specified key and value.
         /// </summary>
         /// <param name="key">The key of the object to update.</param>
         /// <param name="value">The new value to update in the object.</param>
@@ -200,11 +200,12 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="key">The key of the object to update.</param>
         /// <param name="value">The new value to update in the object.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result indicates success.</returns>
-        public override async Task<bool> UpdateAsync(string key, T value)
+        public override Task<bool> UpdateAsync(string key, T value, CancellationToken ct = default)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return await _arangoDbWrapper.UpdateAsync(connectorEntity);
+            return _arangoDbWrapper.UpdateAsync(connectorEntity, ct);
         }
 
         /// <summary>
@@ -221,29 +222,36 @@ namespace SharpConnector.Operations
         /// Asynchronously checks if an item exists by its key.
         /// </summary>
         /// <param name="key">The unique key of the item.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task containing true if the item exists, false otherwise.</returns>
-        public override async Task<bool> ExistsAsync(string key)
+        public override Task<bool> ExistsAsync(string key, CancellationToken ct = default)
         {
-            return await _arangoDbWrapper.ExistsAsync(key);
+            return _arangoDbWrapper.ExistsAsync(key, ct);
         }
 
+        /// <summary>
+        /// Executes a filtered query over items in the collection.
+        /// </summary>
+        /// <param name="filter">Predicate that selects items of type T.</param>
         public override IEnumerable<T> Query(Func<T, bool> filter)
         {
-            bool castedFilter(ConnectorEntity entity) =>
-                entity is T tItem && filter(tItem);
-
             return _arangoDbWrapper
-                .Query(castedFilter)
-                .Cast<T>();
+                .Query(e => filter(e.ToPayloadObject<T>()))
+                .Select(e => e.ToPayloadObject<T>());
         }
 
-        public override async Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter)
+        /// <summary>
+        /// Asynchronously executes a filtered query over items in the collection.
+        /// </summary>
+        /// <param name="filter">Predicate that selects items of type T.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter, CancellationToken ct = default)
         {
-            bool castedFilter(ConnectorEntity entity) =>
-             entity is T tItem && filter(tItem);
+            var result = await _arangoDbWrapper
+                .QueryAsync(e => filter(e.ToPayloadObject<T>()), ct)
+                .ConfigureAwait(false);
 
-            var result = await _arangoDbWrapper.QueryAsync(castedFilter);
-            return result.Cast<T>();
+            return result.Select(e => e.ToPayloadObject<T>());
         }
     }
 }

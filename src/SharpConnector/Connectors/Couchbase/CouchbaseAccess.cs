@@ -1,10 +1,10 @@
 ﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
-using Couchbase.KeyValue;
 using Couchbase;
+using Couchbase.KeyValue;
+using SharpConnector.Configuration;
 using System;
 using System.Threading.Tasks;
-using SharpConnector.Configuration;
 
 namespace SharpConnector.Connectors.Couchbase
 {
@@ -47,11 +47,15 @@ namespace SharpConnector.Connectors.Couchbase
             return _bucket;
         }
 
-        public async Task<ICouchbaseCollection> GetCollectionAsync(string collectionName)
+        public async Task<ICouchbaseCollection> GetCollectionAsync(string scopeName, string collectionName)
         {
             var bucket = await GetBucketAsync();
-            return await bucket.DefaultCollectionAsync();
+            var scope = await bucket.ScopeAsync(scopeName);
+            return await scope.CollectionAsync(collectionName);
         }
+
+        public async Task<ICouchbaseCollection> GetCollectionAsync(string collectionName)
+            => await (await GetBucketAsync()).DefaultCollectionAsync();
 
         public async ValueTask DisposeAsync()
         {

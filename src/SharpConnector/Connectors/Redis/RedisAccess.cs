@@ -27,6 +27,7 @@ namespace SharpConnector.Connectors.Redis
             connOptions.ConnectRetry = 5;
             connOptions.ConnectTimeout = 5000;
             connOptions.KeepAlive = 10;
+            connOptions.AbortOnConnectFail = false;
 
             _connection = new Lazy<ConnectionMultiplexer>(() => ConnectionMultiplexer.Connect(connOptions));
         }

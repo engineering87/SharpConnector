@@ -6,6 +6,7 @@ using SharpConnector.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SharpConnector.Connectors.RavenDb
@@ -17,12 +18,16 @@ namespace SharpConnector.Connectors.RavenDb
         /// <summary>
         /// Create a new RavenDbWrapper instance.
         /// </summary>
-        /// <param name="ravenDbConfig">The RavenDb connector config.</param>
+        /// <param name="ravenDbConfig">The RavenDB connector configuration.</param>
         public RavenDbWrapper(RavenDbConfig ravenDbConfig)
         {
             _ravenDbAccess = new RavenDbAccess(ravenDbConfig);
         }
 
+        /// <summary>
+        /// Retrieve the value of the specified key.
+        /// </summary>
+        /// <param name="key">The key of the object.</param>
         public ConnectorEntity Get(string key)
         {
             using (var session = _ravenDbAccess.Store.OpenSession())
@@ -32,22 +37,21 @@ namespace SharpConnector.Connectors.RavenDb
         }
 
         /// <summary>
-        /// Get the value of Key.
+        /// Asynchronously retrieve the value of the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public async Task<ConnectorEntity> GetAsync(string key)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public async Task<ConnectorEntity> GetAsync(string key, CancellationToken ct = default)
         {
             using (var session = _ravenDbAccess.Store.OpenAsyncSession())
             {
-                return await session.LoadAsync<ConnectorEntity>(key);
+                return await session.LoadAsync<ConnectorEntity>(key, ct).ConfigureAwait(false);
             }
         }
 
         /// <summary>
-        /// Get all the values.
+        /// Retrieve all values.
         /// </summary>
-        /// <returns></returns>
         public List<ConnectorEntity> GetAll()
         {
             using (var session = _ravenDbAccess.Store.OpenSession())
@@ -60,25 +64,26 @@ namespace SharpConnector.Connectors.RavenDb
         }
 
         /// <summary>
-        /// Get all values asynchronously.
+        /// Asynchronously retrieve all values.
         /// </summary>
-        /// <returns>A task representing the asynchronous operation, containing a list of ConnectorEntities.</returns>
-        public async Task<List<ConnectorEntity>> GetAllAsync()
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>A task whose result contains the list of <see cref="ConnectorEntity"/>.</returns>
+        public async Task<List<ConnectorEntity>> GetAllAsync(CancellationToken ct = default)
         {
             using (var session = _ravenDbAccess.Store.OpenAsyncSession())
             {
                 return await session
                     .Query<ConnectorEntity>()
                     .Customize(cr => cr.WaitForNonStaleResults())
-                    .ToListAsync();
+                    .ToListAsync(ct)
+                    .ConfigureAwait(false);
             }
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Set the key to hold the specified value.
         /// </summary>
-        /// <param name="connectorEntity">The ConnectorEntity to store.</param>
-        /// <returns></returns>
+        /// <param name="connectorEntity">The entity to store.</param>
         public bool Insert(ConnectorEntity connectorEntity)
         {
             using (var session = _ravenDbAccess.Store.OpenSession())
@@ -90,25 +95,24 @@ namespace SharpConnector.Connectors.RavenDb
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Asynchronously set the key to hold the specified value.
         /// </summary>
-        /// <param name="connectorEntity">The ConnectorEntity to store.</param>
-        /// <returns></returns>
-        public async Task<bool> InsertAsync(ConnectorEntity connectorEntity)
+        /// <param name="connectorEntity">The entity to store.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public async Task<bool> InsertAsync(ConnectorEntity connectorEntity, CancellationToken ct = default)
         {
             using (var session = _ravenDbAccess.Store.OpenAsyncSession())
             {
-                await session.StoreAsync(connectorEntity, connectorEntity.Key);
-                await session.SaveChangesAsync();
+                await session.StoreAsync(connectorEntity, connectorEntity.Key, ct).ConfigureAwait(false);
+                await session.SaveChangesAsync(ct).ConfigureAwait(false);
             }
             return true;
         }
 
         /// <summary>
-        /// Multiple set operation.
+        /// Insert multiple entities.
         /// </summary>
-        /// <param name="connectorEntities">The ConnectorEntities to store.</param>
-        /// <returns></returns>
+        /// <param name="connectorEntities">The entities to store.</param>
         public bool InsertMany(List<ConnectorEntity> connectorEntities)
         {
             using (var session = _ravenDbAccess.Store.OpenSession())
@@ -123,28 +127,28 @@ namespace SharpConnector.Connectors.RavenDb
         }
 
         /// <summary>
-        /// Asynchronously insert multiple ConnectorEntities.
+        /// Asynchronously insert multiple entities.
         /// </summary>
-        /// <param name="connectorEntities">The ConnectorEntities to store.</param>
-        /// <returns>A task representing the asynchronous operation.</returns>
-        public async Task<bool> InsertManyAsync(List<ConnectorEntity> connectorEntities)
+        /// <param name="connectorEntities">The entities to store.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public async Task<bool> InsertManyAsync(List<ConnectorEntity> connectorEntities, CancellationToken ct = default)
         {
             using (var session = _ravenDbAccess.Store.OpenAsyncSession())
             {
                 foreach (var entity in connectorEntities)
                 {
-                    await session.StoreAsync(entity, entity.Key);
+                    ct.ThrowIfCancellationRequested();
+                    await session.StoreAsync(entity, entity.Key, ct).ConfigureAwait(false);
                 }
-                await session.SaveChangesAsync();
+                await session.SaveChangesAsync(ct).ConfigureAwait(false);
             }
             return true;
         }
 
         /// <summary>
-        /// Removes the specified Key.
+        /// Remove the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
         public bool Delete(string key)
         {
             using (var session = _ravenDbAccess.Store.OpenSession())
@@ -161,19 +165,19 @@ namespace SharpConnector.Connectors.RavenDb
         }
 
         /// <summary>
-        /// Removes the specified Key.
+        /// Asynchronously remove the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public async Task<bool> DeleteAsync(string key)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public async Task<bool> DeleteAsync(string key, CancellationToken ct = default)
         {
             using (var session = _ravenDbAccess.Store.OpenAsyncSession())
             {
-                var entity = await session.LoadAsync<ConnectorEntity>(key);
+                var entity = await session.LoadAsync<ConnectorEntity>(key, ct).ConfigureAwait(false);
                 if (entity != null)
                 {
                     session.Delete(key);
-                    await session.SaveChangesAsync();
+                    await session.SaveChangesAsync(ct).ConfigureAwait(false);
                     return true;
                 }
                 return false;
@@ -181,10 +185,9 @@ namespace SharpConnector.Connectors.RavenDb
         }
 
         /// <summary>
-        /// Updates the specified Key.
+        /// Update the specified key.
         /// </summary>
-        /// <param name="connectorEntity">The ConnectorEntity to store.</param>
-        /// <returns></returns>
+        /// <param name="connectorEntity">The entity to store.</param>
         public bool Update(ConnectorEntity connectorEntity)
         {
             using (var session = _ravenDbAccess.Store.OpenSession())
@@ -199,28 +202,28 @@ namespace SharpConnector.Connectors.RavenDb
         }
 
         /// <summary>
-        /// Updates the specified Key.
+        /// Asynchronously update the specified key.
         /// </summary>
-        /// <param name="connectorEntity">The ConnectorEntity to store.</param>
-        /// <returns></returns>
-        public async Task<bool> UpdateAsync(ConnectorEntity connectorEntity)
+        /// <param name="connectorEntity">The entity to store.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public async Task<bool> UpdateAsync(ConnectorEntity connectorEntity, CancellationToken ct = default)
         {
             using (var session = _ravenDbAccess.Store.OpenAsyncSession())
             {
-                var entity = await session.LoadAsync<ConnectorEntity>(connectorEntity.Key);
+                var entity = await session.LoadAsync<ConnectorEntity>(connectorEntity.Key, ct).ConfigureAwait(false);
                 if (entity == null) return false;
                 entity.Payload = connectorEntity.Payload;
                 entity.Expiration = connectorEntity.Expiration;
-                await session.SaveChangesAsync();
+                await session.SaveChangesAsync(ct).ConfigureAwait(false);
             }
             return true;
         }
 
         /// <summary>
-        /// Checks if an item exists by its key.
+        /// Check whether an item exists by its key.
         /// </summary>
         /// <param name="key">The unique key of the item.</param>
-        /// <returns>True if the item exists, false otherwise.</returns>
+        /// <returns>True if the item exists; otherwise, false.</returns>
         public bool Exists(string key)
         {
             using (var session = _ravenDbAccess.Store.OpenSession())
@@ -231,24 +234,25 @@ namespace SharpConnector.Connectors.RavenDb
         }
 
         /// <summary>
-        /// Asynchronously checks if an item exists by its key.
+        /// Asynchronously check whether an item exists by its key.
         /// </summary>
         /// <param name="key">The unique key of the item.</param>
-        /// <returns>A task containing true if the item exists, false otherwise.</returns>
-        public async Task<bool> ExistsAsync(string key)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>True if the item exists; otherwise, false.</returns>
+        public async Task<bool> ExistsAsync(string key, CancellationToken ct = default)
         {
             using (var session = _ravenDbAccess.Store.OpenAsyncSession())
             {
-                var entity = await session.LoadAsync<ConnectorEntity>(key);
+                var entity = await session.LoadAsync<ConnectorEntity>(key, ct).ConfigureAwait(false);
                 return entity != null;
             }
         }
 
         /// <summary>
-        /// Queries RavenDB database with a filter function.
+        /// Query the RavenDB database with a filter function.
         /// </summary>
         /// <param name="filter">A function to filter the results.</param>
-        /// <returns>A collection of filtered ConnectorEntity instances.</returns>
+        /// <returns>A collection of filtered <see cref="ConnectorEntity"/> instances.</returns>
         public IEnumerable<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter)
         {
             using (var session = _ravenDbAccess.Store.OpenSession())
@@ -262,18 +266,20 @@ namespace SharpConnector.Connectors.RavenDb
         }
 
         /// <summary>
-        /// Asynchronously queries RavenDB database with a filter function.
+        /// Asynchronously query the RavenDB database with a filter function.
         /// </summary>
         /// <param name="filter">A function to filter the results.</param>
-        /// <returns>A task containing a collection of filtered ConnectorEntity instances.</returns>
-        public async Task<IEnumerable<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>A task whose result is a collection of filtered <see cref="ConnectorEntity"/> instances.</returns>
+        public async Task<IEnumerable<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter, CancellationToken ct = default)
         {
             using (var session = _ravenDbAccess.Store.OpenAsyncSession())
             {
                 var allEntities = await session
                     .Query<ConnectorEntity>()
                     .Customize(cr => cr.WaitForNonStaleResults())
-                    .ToListAsync();
+                    .ToListAsync(ct)
+                    .ConfigureAwait(false);
 
                 return allEntities.Where(filter);
             }

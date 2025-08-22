@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.Redis;
@@ -28,7 +29,6 @@ namespace SharpConnector.Operations
         /// Get the value of Key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
         public override T Get(string key)
         {
             var connectorEntity = _redisWrapper.Get(key);
@@ -38,13 +38,13 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Get the value of Key.
+        /// Get the value of Key asynchronously.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public override async Task<T> GetAsync(string key)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<T> GetAsync(string key, CancellationToken ct = default)
         {
-            var connectorEntity = await _redisWrapper.GetAsync(key);
+            var connectorEntity = await _redisWrapper.GetAsync(key, 0, ct).ConfigureAwait(false);
             if (connectorEntity != null)
                 return connectorEntity.ToPayloadObject<T>();
             return default;
@@ -53,13 +53,10 @@ namespace SharpConnector.Operations
         /// <summary>
         /// Get all values from Redis database.
         /// </summary>
-        /// <returns></returns>
         public override IEnumerable<T> GetAll()
         {
             var connectorEntities = _redisWrapper.GetAll();
-            if (connectorEntities != null)
-                return connectorEntities.ToPayloadList<T>();
-            return default;
+            return connectorEntities?.ToPayloadList<T>() ?? [];
         }
 
         /// <summary>
@@ -67,7 +64,6 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
         public override bool Insert(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
@@ -80,7 +76,6 @@ namespace SharpConnector.Operations
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
         /// <param name="expiration">The expiration of the key.</param>
-        /// <returns></returns>
         public override bool Insert(string key, T value, TimeSpan expiration)
         {
             var connectorEntity = new ConnectorEntity(key, value, expiration);
@@ -88,35 +83,38 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Set the Key to hold the value asynchronously.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
-        public override async Task<bool> InsertAsync(string key, T value)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> InsertAsync(string key, T value, CancellationToken ct = default)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return await _redisWrapper.InsertAsync(connectorEntity);
+            return await _redisWrapper
+                .InsertAsync(connectorEntity, 0, ct)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Set the Key to hold the value asynchronously.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
         /// <param name="expiration">The expiration of the key.</param>
-        /// <returns></returns>
-        public override async Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> InsertAsync(string key, T value, TimeSpan expiration, CancellationToken ct = default)
         {
             var connectorEntity = new ConnectorEntity(key, value, expiration);
-            return await _redisWrapper.InsertAsync(connectorEntity);
+            return await _redisWrapper
+                .InsertAsync(connectorEntity, 0, ct)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
         /// Multiple set operation.
         /// </summary>
         /// <param name="values">The values to store.</param>
-        /// <returns></returns>
         public override bool InsertMany(Dictionary<string, T> values)
         {
             return _redisWrapper.InsertMany(values.ToConnectorEntityList());
@@ -127,30 +125,43 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="values">The values to store.</param>
         /// <param name="expiration">The expiration of the keys.</param>
-        /// <returns></returns>
         public override bool InsertMany(Dictionary<string, T> values, TimeSpan expiration)
         {
             return _redisWrapper.InsertMany(values.ToConnectorEntityList(expiration));
         }
 
         /// <summary>
-        /// Removes the specified Key.
+        /// Insert multiple key-value pairs into Redis asynchronously.
         /// </summary>
-        /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public override bool Delete(string key)
+        /// <param name="values">A collection of values to store.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
         {
-            return _redisWrapper.Delete(key);
+            var list = values.Select(v => new ConnectorEntity(Guid.NewGuid().ToString(), v, null)).ToList();
+            return await _redisWrapper
+                .InsertManyAsync(list, 0, ct)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
         /// Removes the specified Key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public override async Task<bool> DeleteAsync(string key)
+        public override bool Delete(string key)
         {
-            return await _redisWrapper.DeleteAsync(key);
+            return _redisWrapper.Delete(key);
+        }
+
+        /// <summary>
+        /// Removes the specified Key asynchronously.
+        /// </summary>
+        /// <param name="key">The key of the object.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> DeleteAsync(string key, CancellationToken ct = default)
+        {
+            return await _redisWrapper
+                .DeleteAsync(key, 0, ct)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -158,7 +169,6 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
         public override bool Update(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
@@ -166,47 +176,37 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Updates the specified Key.
+        /// Updates the specified Key asynchronously.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
-        public override async Task<bool> UpdateAsync(string key, T value)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> UpdateAsync(string key, T value, CancellationToken ct = default)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return await _redisWrapper.UpdateAsync(connectorEntity);
+            return await _redisWrapper
+                .UpdateAsync(connectorEntity, 0, ct)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
         /// Get all values from Redis asynchronously.
         /// </summary>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task representing the asynchronous operation, with the result being all values stored in Redis.</returns>
-        public override async Task<IEnumerable<T>> GetAllAsync()
+        public override async Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)
         {
-            var connectorEntities = await _redisWrapper.GetAllAsync();
-            return connectorEntities
-                .Cast<T>()
-                .ToList();
-        }
+            var connectorEntities = await _redisWrapper
+                .GetAllAsync(0, ct)
+                .ConfigureAwait(false);
 
-        /// <summary>
-        /// Insert multiple key-value pairs into Redis asynchronously.
-        /// </summary>
-        /// <param name="values">A collection of values to store.</param>
-        /// <returns>A task representing the asynchronous operation, with the result being true if all insertions are successful.</returns>
-        public override async Task<bool> InsertManyAsync(IEnumerable<T> values)
-        {
-            var connectorEntityList = values
-                .Cast<ConnectorEntity>()
-                .ToList();
-            return await _redisWrapper.InsertManyAsync(connectorEntityList);
+            return connectorEntities?.ToPayloadList<T>() ?? [];
         }
 
         /// <summary>
         /// Checks if an item exists by its key.
         /// </summary>
         /// <param name="key">The unique key of the item.</param>
-        /// <returns>True if the item exists, false otherwise.</returns>
         public override bool Exists(string key)
         {
             return _redisWrapper.Exists(key);
@@ -216,39 +216,37 @@ namespace SharpConnector.Operations
         /// Asynchronously checks if an item exists by its key.
         /// </summary>
         /// <param name="key">The unique key of the item.</param>
-        /// <returns>A task containing true if the item exists, false otherwise.</returns>
-        public override async Task<bool> ExistsAsync(string key)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> ExistsAsync(string key, CancellationToken ct = default)
         {
-            return await _redisWrapper.ExistsAsync(key);
+            return await _redisWrapper
+                .ExistsAsync(key, 0, ct)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Esegue una query filtrata sugli elementi nel database.
+        /// Executes a filtered query over the items in the database.
         /// </summary>
-        /// <param name="filter">Funzione di filtro che seleziona gli elementi di tipo T.</param>
-        /// <returns>Un IEnumerable di elementi di tipo T che soddisfano il filtro.</returns>
+        /// <param name="filter">Predicate that selects items of type T.</param>
         public override IEnumerable<T> Query(Func<T, bool> filter)
         {
-            bool castedFilter(ConnectorEntity entity) =>
-                entity is T tItem && filter(tItem);
-
             return _redisWrapper
-                .Query(castedFilter)
-                .Cast<T>();
+                .Query(e => filter(e.ToPayloadObject<T>()))
+                .Select(e => e.ToPayloadObject<T>());
         }
 
         /// <summary>
-        /// Esegue una query asincrona filtrata sugli elementi nel database.
+        /// Executes an asynchronous filtered query over the items in the database.
         /// </summary>
-        /// <param name="filter">Funzione di filtro che seleziona gli elementi di tipo T.</param>
-        /// <returns>Un Task contenente un IEnumerable di elementi di tipo T che soddisfano il filtro.</returns>
-        public override async Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter)
+        /// <param name="filter">Predicate that selects items of type T.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter, CancellationToken ct = default)
         {
-            bool castedFilter(ConnectorEntity entity) =>
-                entity is T tItem && filter(tItem);
+            var result = await _redisWrapper
+                .QueryAsync(e => filter(e.ToPayloadObject<T>()), 0, ct)
+                .ConfigureAwait(false);
 
-            var result = await _redisWrapper.QueryAsync(castedFilter);
-            return result.Cast<T>();
+            return result.Select(e => e.ToPayloadObject<T>());
         }
     }
 }

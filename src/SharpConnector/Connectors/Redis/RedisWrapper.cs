@@ -7,6 +7,7 @@ using SharpConnector.Entities;
 using StackExchange.Redis;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Threading;
 using System;
 
 namespace SharpConnector.Connectors.Redis
@@ -47,7 +48,6 @@ namespace SharpConnector.Connectors.Redis
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="databaseNumber">The Redis database.</param>
-        /// <returns></returns>
         public ConnectorEntity Get(string key, int databaseNumber = 0)
         {
             var value = GetDatabase(databaseNumber).StringGet(key);
@@ -55,14 +55,19 @@ namespace SharpConnector.Connectors.Redis
         }
 
         /// <summary>
-        /// Get the value of Key.
+        /// Get the value of Key asynchronously.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="databaseNumber">The Redis database.</param>
-        /// <returns></returns>
-        public async Task<ConnectorEntity> GetAsync(string key, int databaseNumber = 0)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public async Task<ConnectorEntity> GetAsync(string key, int databaseNumber = 0, CancellationToken ct = default)
         {
-            var value = await GetDatabase(databaseNumber).StringGetAsync(key).ConfigureAwait(false);
+            ct.ThrowIfCancellationRequested();
+
+            var value = await GetDatabase(databaseNumber)
+                .StringGetAsync(key)
+                .ConfigureAwait(false);
+
             return value.HasValue ? Deserialize<ConnectorEntity>(value) : null;
         }
 
@@ -70,12 +75,6 @@ namespace SharpConnector.Connectors.Redis
         /// Get all values from Redis database.
         /// </summary>
         /// <param name="databaseNumber">The Redis database.</param>
-        /// <returns></returns>
-        /// <summary>
-        /// Get all values from Redis database.
-        /// </summary>
-        /// <param name="databaseNumber">The Redis database.</param>
-        /// <returns></returns>
         public IEnumerable<ConnectorEntity> GetAll(int databaseNumber = 0)
         {
             var connection = _redisAccess.Connection;
@@ -103,8 +102,9 @@ namespace SharpConnector.Connectors.Redis
         /// Asynchronously get all values from Redis database.
         /// </summary>
         /// <param name="databaseNumber">The Redis database.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation, containing a list of all ConnectorEntity instances in the specified database.</returns>
-        public async Task<IEnumerable<ConnectorEntity>> GetAllAsync(int databaseNumber = 0)
+        public async Task<IEnumerable<ConnectorEntity>> GetAllAsync(int databaseNumber = 0, CancellationToken ct = default)
         {
             var connection = _redisAccess.Connection;
             var database = GetDatabase(databaseNumber);
@@ -112,19 +112,30 @@ namespace SharpConnector.Connectors.Redis
 
             foreach (var endpoint in connection.GetEndPoints())
             {
+                ct.ThrowIfCancellationRequested();
+
                 var server = connection.GetServer(endpoint);
                 var keys = server.Keys(databaseNumber);
+                var tasks = new List<Task<ConnectorEntity>>();
 
-                var tasks = keys.Select(async key =>
+                foreach (var key in keys)
                 {
-                    var value = await database.StringGetAsync(key);
-                    return value.HasValue ? Deserialize<ConnectorEntity>(value) : null;
-                });
+                    ct.ThrowIfCancellationRequested();
+                    tasks.Add(GetEntityAsync(database, key, ct));
+                }
 
                 var results = await Task.WhenAll(tasks).ConfigureAwait(false);
                 entities.AddRange(results.Where(e => e != null));
             }
+
             return entities;
+        }
+
+        private static async Task<ConnectorEntity> GetEntityAsync(IDatabase database, RedisKey key, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            var value = await database.StringGetAsync(key).ConfigureAwait(false);
+            return value.HasValue ? Deserialize<ConnectorEntity>(value) : null;
         }
 
         /// <summary>
@@ -132,7 +143,6 @@ namespace SharpConnector.Connectors.Redis
         /// </summary>
         /// <param name="connectorEntity">The ConnectorEntity to store.</param>
         /// <param name="databaseNumber">The Redis database.</param>
-        /// <returns></returns>
         public bool Insert(ConnectorEntity connectorEntity, int databaseNumber = 0)
         {
             return GetDatabase(databaseNumber).StringSet(
@@ -146,26 +156,34 @@ namespace SharpConnector.Connectors.Redis
         /// </summary>
         /// <param name="connectorEntity">The ConnectorEntity to store.</param>
         /// <param name="databaseNumber">The Redis database.</param>
-        /// <returns></returns>
-        public async Task<bool> InsertAsync(ConnectorEntity connectorEntity, int databaseNumber = 0)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public async Task<bool> InsertAsync(ConnectorEntity connectorEntity, int databaseNumber = 0, CancellationToken ct = default)
         {
+            ct.ThrowIfCancellationRequested();
+
             return await GetDatabase(databaseNumber).StringSetAsync(
                 connectorEntity.Key,
                 Serialize(connectorEntity),
-                connectorEntity.Expiration);
+                connectorEntity.Expiration)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Asynchronously sets multiple keys.
         /// </summary>
-        /// <param name="connectorEntity">The ConnectorEntity to store.</param>
+        /// <param name="connectorEntities">The ConnectorEntities to store.</param>
         /// <param name="databaseNumber">The Redis database.</param>
-        /// <returns></returns>
-        public async Task<bool> InsertManyAsync(List<ConnectorEntity> connectorEntities, int databaseNumber = 0)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public async Task<bool> InsertManyAsync(List<ConnectorEntity> connectorEntities, int databaseNumber = 0, CancellationToken ct = default)
         {
             var database = _redisAccess.Connection.GetDatabase(databaseNumber);
-            var tasks = connectorEntities.Select(entity =>
-                database.StringSetAsync(entity.Key, JsonConvert.SerializeObject(entity), entity.Expiration));
+            var tasks = new List<Task<bool>>();
+
+            foreach (var entity in connectorEntities)
+            {
+                ct.ThrowIfCancellationRequested();
+                tasks.Add(database.StringSetAsync(entity.Key, JsonConvert.SerializeObject(entity), entity.Expiration));
+            }
 
             var results = await Task.WhenAll(tasks).ConfigureAwait(false);
             return results.All(result => result);
@@ -174,9 +192,8 @@ namespace SharpConnector.Connectors.Redis
         /// <summary>
         /// Multiple set operation.
         /// </summary>
-        /// <param name="values">The ConnectorEntities to store.</param>
+        /// <param name="connectorEntities">The ConnectorEntities to store.</param>
         /// <param name="databaseNumber">The Redis database.</param>
-        /// <returns></returns>
         public bool InsertMany(List<ConnectorEntity> connectorEntities, int databaseNumber = 0)
         {
             var result = true;
@@ -199,21 +216,21 @@ namespace SharpConnector.Connectors.Redis
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="databaseNumber">The Redis database.</param>
-        /// <returns></returns>
         public bool Delete(string key, int databaseNumber = 0)
         {
             return GetDatabase(databaseNumber).KeyDelete(key);
         }
 
         /// <summary>
-        /// Removes the specified Key.
+        /// Removes the specified Key asynchronously.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="databaseNumber">The Redis database.</param>
-        /// <returns></returns>
-        public async Task<bool> DeleteAsync(string key, int databaseNumber = 0)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public async Task<bool> DeleteAsync(string key, int databaseNumber = 0, CancellationToken ct = default)
         {
-            return await GetDatabase(databaseNumber).KeyDeleteAsync(key);
+            ct.ThrowIfCancellationRequested();
+            return await GetDatabase(databaseNumber).KeyDeleteAsync(key).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -221,7 +238,6 @@ namespace SharpConnector.Connectors.Redis
         /// </summary>
         /// <param name="connectorEntity">The ConnectorEntity to update.</param>
         /// <param name="databaseNumber">The Redis database.</param>
-        /// <returns></returns>
         public bool Update(ConnectorEntity connectorEntity, int databaseNumber = 0) =>
             Insert(connectorEntity, databaseNumber);
 
@@ -230,9 +246,9 @@ namespace SharpConnector.Connectors.Redis
         /// </summary>
         /// <param name="connectorEntity">The ConnectorEntity to update.</param>
         /// <param name="databaseNumber">The Redis database.</param>
-        /// <returns></returns>
-        public Task<bool> UpdateAsync(ConnectorEntity connectorEntity, int databaseNumber = 0) =>
-            InsertAsync(connectorEntity, databaseNumber);
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public Task<bool> UpdateAsync(ConnectorEntity connectorEntity, int databaseNumber = 0, CancellationToken ct = default) =>
+            InsertAsync(connectorEntity, databaseNumber, ct);
 
         /// <summary>
         /// Checks if an item exists by its key.
@@ -242,8 +258,7 @@ namespace SharpConnector.Connectors.Redis
         /// <returns>True if the item exists, false otherwise.</returns>
         public bool Exists(string key, int databaseNumber = 0)
         {
-            return GetDatabase(databaseNumber)
-                .KeyExists(key);
+            return GetDatabase(databaseNumber).KeyExists(key);
         }
 
         /// <summary>
@@ -251,12 +266,12 @@ namespace SharpConnector.Connectors.Redis
         /// </summary>
         /// <param name="key">The unique key of the item.</param>
         /// <param name="databaseNumber">The Redis database.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task containing true if the item exists, false otherwise.</returns>
-        public async Task<bool> ExistsAsync(string key, int databaseNumber = 0)
+        public async Task<bool> ExistsAsync(string key, int databaseNumber = 0, CancellationToken ct = default)
         {
-            return await GetDatabase(databaseNumber)
-                .KeyExistsAsync(key)
-                .ConfigureAwait(false);
+            ct.ThrowIfCancellationRequested();
+            return await GetDatabase(databaseNumber).KeyExistsAsync(key).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -267,8 +282,7 @@ namespace SharpConnector.Connectors.Redis
         /// <returns>A collection of filtered ConnectorEntity instances.</returns>
         public IEnumerable<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter, int databaseNumber = 0)
         {
-            return GetAll(databaseNumber)
-                .Where(filter);
+            return GetAll(databaseNumber).Where(filter);
         }
 
         /// <summary>
@@ -276,10 +290,11 @@ namespace SharpConnector.Connectors.Redis
         /// </summary>
         /// <param name="filter">A function to filter the results.</param>
         /// <param name="databaseNumber">The Redis database.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task containing a collection of filtered ConnectorEntity instances.</returns>
-        public async Task<IEnumerable<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter, int databaseNumber = 0)
+        public async Task<IEnumerable<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter, int databaseNumber = 0, CancellationToken ct = default)
         {
-            var allEntities = await GetAllAsync(databaseNumber);
+            var allEntities = await GetAllAsync(databaseNumber, ct).ConfigureAwait(false);
             return allEntities.Where(filter);
         }
     }
