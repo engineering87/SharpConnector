@@ -6,7 +6,7 @@ using System;
 
 namespace SharpConnector.Connectors.Redis
 {
-    internal class RedisAccess : IDisposable
+    public class RedisAccess : IDisposable
     {
         private readonly Lazy<ConnectionMultiplexer> _connection;
         public ConnectionMultiplexer Connection => _connection.Value;
@@ -27,6 +27,7 @@ namespace SharpConnector.Connectors.Redis
             connOptions.ConnectRetry = 5;
             connOptions.ConnectTimeout = 5000;
             connOptions.KeepAlive = 10;
+            connOptions.AbortOnConnectFail = false;
 
             _connection = new Lazy<ConnectionMultiplexer>(() => ConnectionMultiplexer.Connect(connOptions));
         }

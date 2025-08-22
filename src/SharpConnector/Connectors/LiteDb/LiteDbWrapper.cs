@@ -1,4 +1,4 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+﻿// (c) 2021 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using LiteDB;
 using System.Collections.Generic;
+using System.Threading;
+using System;
 
 namespace SharpConnector.Connectors.LiteDb
 {
@@ -16,63 +18,60 @@ namespace SharpConnector.Connectors.LiteDb
         /// <summary>
         /// Create a new LiteDbWrapper instance.
         /// </summary>
-        /// <param name="liteDbConfig">The LiteDbConfig connector config.</param>
+        /// <param name="liteDbConfig">The LiteDB connector configuration.</param>
         public LiteDbWrapper(LiteDbConfig liteDbConfig)
         {
             _liteDbAccess = new LiteDbAccess(liteDbConfig);
         }
 
         /// <summary>
-        /// Get the value of Key.
+        /// Retrieve the value of the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
         public LiteDbConnectorEntity Get(string key)
         {
             return _liteDbAccess.Collection
-                .Find(Query.EQ("Key", new BsonValue(key)))
+                .Find(LiteDB.Query.EQ("Key", new BsonValue(key)))
                 .FirstOrDefault();
         }
 
         /// <summary>
-        /// Get the value of Key.
+        /// Asynchronously retrieve the value of the specified key.
         /// </summary>
+        /// <remarks>LiteDB is synchronous; this method wraps the sync call.</remarks>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public ValueTask<LiteDbConnectorEntity> GetAsync(string key)
+        /// <param name="ct">A token to cancel the operation.</param>
+        public Task<LiteDbConnectorEntity> GetAsync(string key, CancellationToken ct = default)
         {
-            // LiteDb library does not implement asynchronous operations
-            var entity = _liteDbAccess.Collection
-                .Find(Query.EQ("Key", new BsonValue(key)))
-                .FirstOrDefault();
-            return ValueTask.FromResult(entity);
+            ct.ThrowIfCancellationRequested();
+            var entity = Get(key);
+            return Task.FromResult(entity);
         }
 
         /// <summary>
-        /// Get all the values.
+        /// Retrieve all values.
         /// </summary>
-        /// <returns></returns>
         public IEnumerable<LiteDbConnectorEntity> GetAll()
         {
             return _liteDbAccess.Collection.Find(_ => true).ToList();
         }
 
         /// <summary>
-        /// Get all the values asynchronously.
+        /// Asynchronously retrieve all values.
         /// </summary>
-        /// <returns></returns>
-        public ValueTask<IEnumerable<LiteDbConnectorEntity>> GetAllAsync()
+        /// <remarks>LiteDB is synchronous; this method wraps the sync call.</remarks>
+        /// <param name="ct">A token to cancel the operation.</param>
+        public Task<IEnumerable<LiteDbConnectorEntity>> GetAllAsync(CancellationToken ct = default)
         {
+            ct.ThrowIfCancellationRequested();
             var entities = GetAll();
-            return ValueTask.FromResult(entities);
+            return Task.FromResult(entities);
         }
 
-
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Insert (or upsert if configured) the specified entity.
         /// </summary>
-        /// <param name="connectorEntity">The ConnectorEntity to store.</param>
-        /// <returns></returns>
+        /// <param name="connectorEntity">The entity to store.</param>
         public bool Insert(LiteDbConnectorEntity connectorEntity)
         {
             var result = _liteDbAccess.Collection.Insert(connectorEntity);
@@ -80,22 +79,22 @@ namespace SharpConnector.Connectors.LiteDb
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Asynchronously insert (or upsert if configured) the specified entity.
         /// </summary>
-        /// <param name="connectorEntity">The ConnectorEntity to store.</param>
-        /// <returns></returns>
-        public ValueTask<bool> InsertAsync(LiteDbConnectorEntity connectorEntity)
+        /// <remarks>LiteDB is synchronous; this method wraps the sync call.</remarks>
+        /// <param name="connectorEntity">The entity to store.</param>
+        /// <param name="ct">A token to cancel the operation.</param>
+        public Task<bool> InsertAsync(LiteDbConnectorEntity connectorEntity, CancellationToken ct = default)
         {
-            // LiteDb library does not implement asynchronous operations
+            ct.ThrowIfCancellationRequested();
             var result = Insert(connectorEntity);
-            return ValueTask.FromResult(result);
+            return Task.FromResult(result);
         }
 
         /// <summary>
-        /// Multiple set operation.
+        /// Insert multiple entities in bulk.
         /// </summary>
-        /// <param name="connectorEntities">The ConnectorEntities to store.</param>
-        /// <returns></returns>
+        /// <param name="connectorEntities">Entities to store.</param>
         public bool InsertMany(List<LiteDbConnectorEntity> connectorEntities)
         {
             var insertedCount = _liteDbAccess.Collection.InsertBulk(connectorEntities);
@@ -103,58 +102,106 @@ namespace SharpConnector.Connectors.LiteDb
         }
 
         /// <summary>
-        /// Asynchronously inserts multiple ConnectorEntities.
+        /// Asynchronously insert multiple entities in bulk.
         /// </summary>
-        /// <param name="connectorEntities">The list of ConnectorEntities to store.</param>
-        /// <returns>True if all operations succeeded, false otherwise.</returns>
-        public ValueTask<bool> InsertManyAsync(List<LiteDbConnectorEntity> connectorEntities)
+        /// <remarks>LiteDB is synchronous; this method wraps the sync call.</remarks>
+        /// <param name="connectorEntities">Entities to store.</param>
+        /// <param name="ct">A token to cancel the operation.</param>
+        public Task<bool> InsertManyAsync(List<LiteDbConnectorEntity> connectorEntities, CancellationToken ct = default)
         {
-            InsertMany(connectorEntities);
-            return ValueTask.FromResult(true);
+            ct.ThrowIfCancellationRequested();
+            var ok = InsertMany(connectorEntities);
+            return Task.FromResult(ok);
         }
 
         /// <summary>
-        /// Removes the specified Key.
+        /// Remove the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
         public bool Delete(string key)
         {
-            return _liteDbAccess.Collection.DeleteMany(Query.EQ("Key", new BsonValue(key))) > 0;
+            return _liteDbAccess.Collection.DeleteMany(LiteDB.Query.EQ("Key", new BsonValue(key))) > 0;
         }
 
         /// <summary>
-        /// Removes the specified Key.
+        /// Asynchronously remove the specified key.
         /// </summary>
+        /// <remarks>LiteDB is synchronous; this method wraps the sync call.</remarks>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public ValueTask<bool> DeleteAsync(string key)
+        /// <param name="ct">A token to cancel the operation.</param>
+        public Task<bool> DeleteAsync(string key, CancellationToken ct = default)
         {
-            // LiteDb library does not implement asynchronous operations yet
-            var delete = Delete(key);
-            return ValueTask.FromResult(delete);
+            ct.ThrowIfCancellationRequested();
+            var deleted = Delete(key);
+            return Task.FromResult(deleted);
         }
 
         /// <summary>
-        /// Updates the specified Key.
+        /// Update the specified entity.
         /// </summary>
-        /// <param name="connectorEntity">The ConnectorEntity to update.</param>
-        /// <returns></returns>
+        /// <param name="connectorEntity">The entity to update.</param>
         public bool Update(LiteDbConnectorEntity connectorEntity)
         {
             return _liteDbAccess.Collection.Update(connectorEntity);
         }
 
         /// <summary>
-        /// Updates the specified Key.
+        /// Asynchronously update the specified entity.
         /// </summary>
-        /// <param name="connectorEntity">The ConnectorEntity to update.</param>
-        /// <returns></returns>
-        public ValueTask<bool> UpdateAsync(LiteDbConnectorEntity connectorEntity)
+        /// <remarks>LiteDB is synchronous; this method wraps the sync call.</remarks>
+        /// <param name="connectorEntity">The entity to update.</param>
+        /// <param name="ct">A token to cancel the operation.</param>
+        public Task<bool> UpdateAsync(LiteDbConnectorEntity connectorEntity, CancellationToken ct = default)
         {
-            // LiteDb library does not implement asynchronous operations yet
+            ct.ThrowIfCancellationRequested();
             var result = Update(connectorEntity);
-            return ValueTask.FromResult(result);
+            return Task.FromResult(result);
+        }
+
+        /// <summary>
+        /// Check whether a key exists.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        public bool Exists(string key)
+        {
+            return _liteDbAccess.Collection.Exists(LiteDB.Query.EQ("Key", new BsonValue(key)));
+        }
+
+        /// <summary>
+        /// Asynchronously check whether a key exists.
+        /// </summary>
+        /// <remarks>LiteDB is synchronous; this method wraps the sync call.</remarks>
+        /// <param name="key">The unique key of the item.</param>
+        /// <param name="ct">A token to cancel the operation.</param>
+        public Task<bool> ExistsAsync(string key, CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
+            var exists = Exists(key);
+            return Task.FromResult(exists);
+        }
+
+        /// <summary>
+        /// Execute a filtered query (not supported by this wrapper).
+        /// </summary>
+        public List<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter)
+        {
+            return _liteDbAccess.Collection
+                .FindAll()
+                .Cast<ConnectorEntity>()
+                .Where(filter)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Asynchronously execute a filtered query (not supported by this wrapper).
+        /// </summary>
+        /// <param name="filter">Filter predicate.</param>
+        /// <param name="ct">A token to cancel the operation.</param>
+        public Task<List<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter, CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
+            var list = Query(filter);
+            return Task.FromResult(list);
         }
     }
 }

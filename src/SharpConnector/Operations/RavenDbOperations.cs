@@ -7,6 +7,7 @@ using SharpConnector.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SharpConnector.Operations
@@ -16,19 +17,18 @@ namespace SharpConnector.Operations
         private readonly RavenDbWrapper _ravenDbWrapper;
 
         /// <summary>
-        /// Create a new MongoDbOperations instance.
+        /// Create a new RavenDbOperations instance.
         /// </summary>
-        /// <param name="mongoDbConfig">The MongoDb connector config.</param>
+        /// <param name="ravenDbConfig">The RavenDB connector configuration.</param>
         public RavenDbOperations(RavenDbConfig ravenDbConfig)
         {
             _ravenDbWrapper = new RavenDbWrapper(ravenDbConfig);
         }
 
         /// <summary>
-        /// Get the value of Key.
+        /// Retrieve the value of the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
         public override T Get(string key)
         {
             var connectorEntity = _ravenDbWrapper.Get(key);
@@ -38,36 +38,49 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Get the value of Key.
+        /// Asynchronously retrieve the value of the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public override async Task<T> GetAsync(string key)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<T> GetAsync(string key, CancellationToken ct = default)
         {
-            var connectorEntity = await _ravenDbWrapper.GetAsync(key);
+            var connectorEntity = await _ravenDbWrapper
+                .GetAsync(key, ct)
+                .ConfigureAwait(false);
+
             if (connectorEntity != null)
                 return connectorEntity.ToPayloadObject<T>();
             return default;
         }
 
         /// <summary>
-        /// Get all values from RavenDb..
+        /// Retrieve all values from RavenDB.
         /// </summary>
-        /// <returns></returns>
         public override IEnumerable<T> GetAll()
         {
             var connectorEntities = _ravenDbWrapper.GetAll();
-            if (connectorEntities != null)
-                return connectorEntities.ToPayloadList<T>();
-            return default;
+            return connectorEntities?.ToPayloadList<T>() ?? [];
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Asynchronously retrieve all values from RavenDB.
+        /// </summary>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>A task whose result contains all values stored in RavenDB.</returns>
+        public override async Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)
+        {
+            var connectorEntities = await _ravenDbWrapper
+                .GetAllAsync(ct)
+                .ConfigureAwait(false);
+
+            return connectorEntities?.ToPayloadList<T>() ?? [];
+        }
+
+        /// <summary>
+        /// Set the key to hold the specified value.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
         public override bool Insert(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
@@ -75,12 +88,11 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Set the key to hold the specified value with expiration.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
         /// <param name="expiration">The expiration of the key.</param>
-        /// <returns></returns>
         public override bool Insert(string key, T value, TimeSpan expiration)
         {
             var connectorEntity = new ConnectorEntity(key, value, expiration);
@@ -88,77 +100,93 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Asynchronously set the key to hold the specified value.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
-        public override async Task<bool> InsertAsync(string key, T value)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> InsertAsync(string key, T value, CancellationToken ct = default)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return await _ravenDbWrapper.InsertAsync(connectorEntity);
+            return await _ravenDbWrapper
+                .InsertAsync(connectorEntity, ct)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Asynchronously set the key to hold the specified value with expiration.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
         /// <param name="expiration">The expiration of the key.</param>
-        /// <returns></returns>
-        public override async Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> InsertAsync(string key, T value, TimeSpan expiration, CancellationToken ct = default)
         {
             var connectorEntity = new ConnectorEntity(key, value, expiration);
-            return await _ravenDbWrapper.InsertAsync(connectorEntity);
+            return await _ravenDbWrapper
+                .InsertAsync(connectorEntity, ct)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Multiple set operation.
+        /// Insert multiple values.
         /// </summary>
         /// <param name="values">The values to store.</param>
-        /// <returns></returns>
         public override bool InsertMany(Dictionary<string, T> values)
         {
             return _ravenDbWrapper.InsertMany(values.ToConnectorEntityList());
         }
 
         /// <summary>
-        /// Multiple set operation.
+        /// Insert multiple values with expiration.
         /// </summary>
         /// <param name="values">The values to store.</param>
         /// <param name="expiration">The expiration of the keys.</param>
-        /// <returns></returns>
         public override bool InsertMany(Dictionary<string, T> values, TimeSpan expiration)
         {
             return _ravenDbWrapper.InsertMany(values.ToConnectorEntityList(expiration));
         }
 
         /// <summary>
-        /// Removes the specified Key.
+        /// Asynchronously insert multiple values.
+        /// </summary>
+        /// <param name="values">The values to store.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>True if all insertions were successful; otherwise, false.</returns>
+        public override async Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
+        {
+            var list = values.Select(v => new ConnectorEntity(Guid.NewGuid().ToString(), v, null)).ToList();
+            return await _ravenDbWrapper
+                .InsertManyAsync(list, ct)
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Remove the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
         public override bool Delete(string key)
         {
             return _ravenDbWrapper.Delete(key);
         }
 
         /// <summary>
-        /// Removes the specified Key.
+        /// Asynchronously remove the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public override async Task<bool> DeleteAsync(string key)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> DeleteAsync(string key, CancellationToken ct = default)
         {
-            return await _ravenDbWrapper.DeleteAsync(key);
+            return await _ravenDbWrapper
+                .DeleteAsync(key, ct)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Updates the specified Key.
+        /// Update the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
         public override bool Update(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
@@ -166,40 +194,66 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Updates the specified Key.
+        /// Asynchronously update the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
-        public override async Task<bool> UpdateAsync(string key, T value)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> UpdateAsync(string key, T value, CancellationToken ct = default)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return await _ravenDbWrapper.UpdateAsync(connectorEntity);
+            return await _ravenDbWrapper
+                .UpdateAsync(connectorEntity, ct)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Get all values asynchronously from RavenDb.
+        /// Check whether an item exists by its key.
         /// </summary>
-        /// <returns>A task representing the asynchronous operation, which wraps an enumerable of all objects.</returns>
-        public override async Task<IEnumerable<T>> GetAllAsync()
+        /// <param name="key">The unique key of the item.</param>
+        public override bool Exists(string key)
         {
-            var connectorEntities = await _ravenDbWrapper.GetAllAsync();
-            return connectorEntities
-                .Cast<T>()
-                .ToList();
+            return _ravenDbWrapper.Exists(key);
         }
 
         /// <summary>
-        /// Insert multiple values asynchronously.
+        /// Asynchronously check whether an item exists by its key.
         /// </summary>
-        /// <param name="values">The values to store as an enumerable.</param>
-        /// <returns>A task representing the asynchronous operation, which returns true if the insertion was successful.</returns>
-        public override async Task<bool> InsertManyAsync(IEnumerable<T> values)
+        /// <param name="key">The unique key of the item.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>True if the item exists; otherwise, false.</returns>
+        public override async Task<bool> ExistsAsync(string key, CancellationToken ct = default)
         {
-            var connectorEntityList = values
-                .Cast<ConnectorEntity>()
-                .ToList();
-            return await _ravenDbWrapper.InsertManyAsync(connectorEntityList);
+            return await _ravenDbWrapper
+                .ExistsAsync(key, ct)
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Execute a filtered query over the items in the database.
+        /// </summary>
+        /// <param name="filter">A predicate that selects items of type T.</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> of items of type T matching the filter.</returns>
+        public override IEnumerable<T> Query(Func<T, bool> filter)
+        {
+            return _ravenDbWrapper
+                .Query(e => filter(e.ToPayloadObject<T>()))
+                .Select(e => e.ToPayloadObject<T>());
+        }
+
+        /// <summary>
+        /// Asynchronously execute a filtered query over the items in the database.
+        /// </summary>
+        /// <param name="filter">A predicate that selects items of type T.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>A task whose result is an <see cref="IEnumerable{T}"/> of items of type T matching the filter.</returns>
+        public override async Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter, CancellationToken ct = default)
+        {
+            var result = await _ravenDbWrapper
+                .QueryAsync(e => filter(e.ToPayloadObject<T>()), ct)
+                .ConfigureAwait(false);
+
+            return result.Select(e => e.ToPayloadObject<T>());
         }
     }
 }

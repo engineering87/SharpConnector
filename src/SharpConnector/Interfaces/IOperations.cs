@@ -2,6 +2,7 @@
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SharpConnector.Interfaces
@@ -23,8 +24,9 @@ namespace SharpConnector.Interfaces
         /// Asynchronously retrieves a single item by its key.
         /// </summary>
         /// <param name="key">The key of the item to retrieve.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation, with the result being the payload object.</returns>
-        Task<T> GetAsync(string key);
+        Task<T> GetAsync(string key, CancellationToken ct = default);
 
         /// <summary>
         /// Retrieves all items.
@@ -35,8 +37,9 @@ namespace SharpConnector.Interfaces
         /// <summary>
         /// Asynchronously retrieves all items.
         /// </summary>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation, with the result being a collection of all payload objects.</returns>
-        Task<IEnumerable<T>> GetAllAsync();
+        Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default);
 
         /// <summary>
         /// Inserts a new item with a specified key and value.
@@ -52,6 +55,7 @@ namespace SharpConnector.Interfaces
         /// <param name="key">The key of the item to insert.</param>
         /// <param name="value">The value (payload) of the item to insert.</param>
         /// <param name="expiration">The expiration time for the item.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>True if the insertion was successful, otherwise false.</returns>
         bool Insert(string key, T value, TimeSpan expiration);
 
@@ -60,8 +64,9 @@ namespace SharpConnector.Interfaces
         /// </summary>
         /// <param name="key">The key of the item to insert.</param>
         /// <param name="value">The value (payload) of the item to insert.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation, with the result being true if successful.</returns>
-        Task<bool> InsertAsync(string key, T value);
+        Task<bool> InsertAsync(string key, T value, CancellationToken ct = default);
 
         /// <summary>
         /// Asynchronously inserts a new item with a specified key, value, and expiration time.
@@ -69,8 +74,9 @@ namespace SharpConnector.Interfaces
         /// <param name="key">The key of the item to insert.</param>
         /// <param name="value">The value (payload) of the item to insert.</param>
         /// <param name="expiration">The expiration time for the item.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation, with the result being true if successful.</returns>
-        Task<bool> InsertAsync(string key, T value, TimeSpan expiration);
+        Task<bool> InsertAsync(string key, T value, TimeSpan expiration, CancellationToken ct = default);
 
         /// <summary>
         /// Inserts multiple items at once.
@@ -91,8 +97,9 @@ namespace SharpConnector.Interfaces
         /// Asynchronously inserts multiple items at once.
         /// </summary>
         /// <param name="values">A collection of payload objects to insert.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation, with the result being true if all insertions were successful.</returns>
-        Task<bool> InsertManyAsync(IEnumerable<T> values);
+        Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default);
 
         /// <summary>
         /// Deletes an item by its key.
@@ -105,8 +112,9 @@ namespace SharpConnector.Interfaces
         /// Asynchronously deletes an item by its key.
         /// </summary>
         /// <param name="key">The key of the item to delete.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation, with the result being true if successful.</returns>
-        Task<bool> DeleteAsync(string key);
+        Task<bool> DeleteAsync(string key, CancellationToken ct = default);
 
         /// <summary>
         /// Updates an existing item with a new value.
@@ -121,7 +129,38 @@ namespace SharpConnector.Interfaces
         /// </summary>
         /// <param name="key">The key of the item to update.</param>
         /// <param name="value">The new value to set for the item.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation, with the result being true if successful.</returns>
-        Task<bool> UpdateAsync(string key, T value);
+        Task<bool> UpdateAsync(string key, T value, CancellationToken ct = default);
+
+        /// <summary>
+        /// Checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <returns>True if the item exists, false otherwise.</returns>
+        bool Exists(string key);
+
+        /// <summary>
+        /// Asynchronously checks if an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>A task containing true if the item exists, false otherwise.</returns>
+        Task<bool> ExistsAsync(string key, CancellationToken ct = default);
+
+        /// <summary>
+        /// Finds items that match a given filter expression.
+        /// </summary>
+        /// <param name="filter">A predicate function defining the search criteria.</param>
+        /// <returns>A collection of items that match the filter.</returns>
+        IEnumerable<T> Query(Func<T, bool> filter);
+
+        /// <summary>
+        /// Asynchronously finds items that match a given filter expression.
+        /// </summary>
+        /// <param name="filter">A predicate function defining the search criteria.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>A task containing a collection of items that match the filter.</returns>
+        Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter, CancellationToken ct = default);
     }
 }

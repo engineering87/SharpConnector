@@ -9,7 +9,7 @@
 
 <img src="https://github.com/engineering87/SharpConnector/blob/main/sharpconnector_logo.jpg" width="300">
 
-SharpConnector is a .NET library designed to streamline integration with NoSQL databases. It provides a unified interface that simplifies database operations, eliminating the need to develop custom logic for each specific database connector. Since each NoSQL database has its own unique characteristics—such as being document-oriented or key-value-based—SharpConnector abstracts these differences, providing a consistent and simplified access layer to accelerate development.
+SharpConnector is a .NET library designed to streamline integration with NoSQL databases. It provides a unified interface that simplifies database operations, eliminating the need to develop custom logic for each specific database connector. Since each NoSQL database has its own unique characteristics, such as being document-oriented or key-value-based, SharpConnector abstracts these differences, providing a consistent and simplified access layer to accelerate development.
 
 ## Features
 
@@ -130,17 +130,17 @@ Then, add the specif `ConnectorConfig` node within your *appsettings.json* file:
 	```
 
 - ArangoDB
-```json
-{
-  "ConnectorConfig": {
-    "Instance": "ArangoDb",
-    "ConnectionString": "http://localhost:8529",
-    "Username": "username",
-    "Password": "password",
-    "CollectionName": "test"
-  }
-}
-```
+	```json
+	{
+		"ConnectorConfig": {
+			"Instance": "ArangoDb",
+			"ConnectionString": "http://localhost:8529",
+			"Username": "username",
+			"Password": "password",
+			"CollectionName": "test"
+		}
+	}
+	```
 
 Once configured, create a new SharpConnector client, specifying the payload type (e.g., string):
 
@@ -148,7 +148,7 @@ Once configured, create a new SharpConnector client, specifying the payload type
 SharpConnectorClient<string> client = new SharpConnectorClient<string>()
 ```
 
-Alternatively, you can integrate SharpConnector client using dependency injection. Here’s how to register the SharpConnector service with a simple string payload type:
+Alternatively, you can integrate SharpConnector client using dependency injection. Here how to register the SharpConnector service with a simple string payload type:
 
 ```csharp
 // Register the SharpConnector services with string payload type.
@@ -169,7 +169,7 @@ If you want to add new connectors, please follow these three rules:
  * [Fork the repository](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo)
  * [Open an issue](https://github.com/engineering87/SharpConnector/issues) if you encounter a bug or have a suggestion for improvements/features
 
-### Licensee
+### License
 SharpConnector source code is available under MIT License, see license in the source.
 
 #### External References

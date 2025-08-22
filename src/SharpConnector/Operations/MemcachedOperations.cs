@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.Memcached;
@@ -18,16 +19,16 @@ namespace SharpConnector.Operations
         /// <summary>
         /// Create a new MemcachedOperations instance.
         /// </summary>
+        /// <param name="memcachedConfig">The Memcached connector configuration.</param>
         public MemcachedOperations(MemcachedConfig memcachedConfig)
         {
             _memcachedWrapper = new MemcachedWrapper(memcachedConfig);
         }
 
         /// <summary>
-        /// Get the value of Key.
+        /// Retrieve the value of the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
         public override T Get(string key)
         {
             var connectorEntity = _memcachedWrapper.Get(key);
@@ -37,29 +38,32 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Get the value of Key.
+        /// Asynchronously retrieve the value of the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public override async Task<T> GetAsync(string key)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<T> GetAsync(string key, CancellationToken ct = default)
         {
-            var connectorEntity = await _memcachedWrapper.GetAsync(key);
+            ct.ThrowIfCancellationRequested();
+            var connectorEntity = await _memcachedWrapper.GetAsync(key, ct).ConfigureAwait(false);
             if (connectorEntity != null)
                 return connectorEntity.ToPayloadObject<T>();
             return default;
         }
 
+        /// <summary>
+        /// Retrieve all values. (Not supported for Memcached)
+        /// </summary>
         public override IEnumerable<T> GetAll()
         {
             throw new NotImplementedException();
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Set the key to hold the specified value.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
         public override bool Insert(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
@@ -67,12 +71,11 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Set the key to hold the specified value with expiration.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
         /// <param name="expiration">The expiration of the key.</param>
-        /// <returns></returns>
         public override bool Insert(string key, T value, TimeSpan expiration)
         {
             var connectorEntity = new ConnectorEntity(key, value, expiration);
@@ -80,77 +83,76 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Asynchronously set the key to hold the specified value.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
-        public override async Task<bool> InsertAsync(string key, T value)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> InsertAsync(string key, T value, CancellationToken ct = default)
         {
+            ct.ThrowIfCancellationRequested();
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return await _memcachedWrapper.InsertAsync(connectorEntity);
+            return await _memcachedWrapper.InsertAsync(connectorEntity).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Asynchronously set the key to hold the specified value with expiration.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
         /// <param name="expiration">The expiration of the key.</param>
-        /// <returns></returns>
-        public override async Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> InsertAsync(string key, T value, TimeSpan expiration, CancellationToken ct = default)
         {
+            ct.ThrowIfCancellationRequested();
             var connectorEntity = new ConnectorEntity(key, value, expiration);
-            return await _memcachedWrapper.InsertAsync(connectorEntity);
+            return await _memcachedWrapper.InsertAsync(connectorEntity, ct).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Multiple set operation.
+        /// Insert multiple values.
         /// </summary>
         /// <param name="values">The values to store.</param>
-        /// <returns></returns>
         public override bool InsertMany(Dictionary<string, T> values)
         {
             return _memcachedWrapper.InsertMany(values.ToConnectorEntityList());
         }
 
         /// <summary>
-        /// Multiple set operation.
+        /// Insert multiple values with expiration.
         /// </summary>
         /// <param name="values">The values to store.</param>
         /// <param name="expiration">The expiration of the keys.</param>
-        /// <returns></returns>
         public override bool InsertMany(Dictionary<string, T> values, TimeSpan expiration)
         {
             return _memcachedWrapper.InsertMany(values.ToConnectorEntityList(expiration));
         }
 
         /// <summary>
-        /// Removes the specified Key.
+        /// Remove the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
         public override bool Delete(string key)
         {
             return _memcachedWrapper.Delete(key);
         }
 
         /// <summary>
-        /// Removes the specified Key.
+        /// Asynchronously remove the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public override async Task<bool> DeleteAsync(string key)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> DeleteAsync(string key, CancellationToken ct = default)
         {
-            return await _memcachedWrapper.DeleteAsync(key);
+            ct.ThrowIfCancellationRequested();
+            return await _memcachedWrapper.DeleteAsync(key, ct).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Updates the specified Key.
+        /// Update the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
         public override bool Update(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
@@ -158,31 +160,82 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Updates the specified Key.
+        /// Asynchronously update the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
-        public override async Task<bool> UpdateAsync(string key, T value)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> UpdateAsync(string key, T value, CancellationToken ct = default)
         {
+            ct.ThrowIfCancellationRequested();
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return await _memcachedWrapper.UpdateAsync(connectorEntity);
+            return await _memcachedWrapper.UpdateAsync(connectorEntity, ct).ConfigureAwait(false);
         }
 
-        public override async Task<IEnumerable<T>> GetAllAsync()
+        /// <summary>
+        /// Asynchronously retrieve all objects. (Not supported by Memcached natively; wrapper returns whatever is implemented.)
+        /// </summary>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>A task whose result contains a list of objects.</returns>
+        public override async Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)
         {
-            var connectorEntities = await _memcachedWrapper.GetAllAsync();
-            return connectorEntities
-                .Cast<T>()
-                .ToList();
+            ct.ThrowIfCancellationRequested();
+            var connectorEntities = await _memcachedWrapper.GetAllAsync(ct).ConfigureAwait(false);
+            return connectorEntities?.ToPayloadList<T>() ?? [];
         }
 
-        public override async Task<bool> InsertManyAsync(IEnumerable<T> values)
+        /// <summary>
+        /// Asynchronously insert multiple values.
+        /// </summary>
+        /// <param name="values">The values to store.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>True if all insertions were successful; otherwise, false.</returns>
+        public override async Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
         {
-            var connectorEntityList = values
-                .Cast<ConnectorEntity>()
-                .ToList();
-            return await _memcachedWrapper.InsertManyAsync(connectorEntityList);
+            ct.ThrowIfCancellationRequested();
+            var list = values.Select(v => new ConnectorEntity(Guid.NewGuid().ToString(), v, null)).ToList();
+            return await _memcachedWrapper
+                .InsertManyAsync(list, ct)
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Check whether an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        public override bool Exists(string key)
+        {
+            return _memcachedWrapper.Exists(key);
+        }
+
+        /// <summary>
+        /// Asynchronously check whether an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>True if the item exists; otherwise, false.</returns>
+        public override async Task<bool> ExistsAsync(string key, CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
+            return await _memcachedWrapper.ExistsAsync(key, ct).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Execute a filtered query. (Not supported for Memcached)
+        /// </summary>
+        public override IEnumerable<T> Query(Func<T, bool> filter)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Asynchronously execute a filtered query. (Not supported for Memcached)
+        /// </summary>
+        /// <param name="filter">Predicate that selects items of type T.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter, CancellationToken ct = default)
+        {
+            throw new NotImplementedException();
         }
     }
 }

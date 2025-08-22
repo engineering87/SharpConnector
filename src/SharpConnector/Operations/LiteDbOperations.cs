@@ -3,6 +3,7 @@
 using SharpConnector.Connectors.LiteDb;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
@@ -18,17 +19,16 @@ namespace SharpConnector.Operations
         /// <summary>
         /// Create a new LiteDbOperations instance.
         /// </summary>
-        /// <param name="liteDbConfig">The LiteDb connector config.</param>
+        /// <param name="liteDbConfig">The LiteDB connector configuration.</param>
         public LiteDbOperations(LiteDbConfig liteDbConfig)
         {
             _liteDbWrapper = new LiteDbWrapper(liteDbConfig);
         }
 
         /// <summary>
-        /// Get the value of Key.
+        /// Retrieve the value of the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
         public override T Get(string key)
         {
             var connectorEntity = _liteDbWrapper.Get(key);
@@ -38,36 +38,32 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Get the value of Key.
+        /// Asynchronously retrieve the value of the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public override async Task<T> GetAsync(string key)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<T> GetAsync(string key, CancellationToken ct = default)
         {
-            var connectorEntity = await _liteDbWrapper.GetAsync(key);
+            var connectorEntity = await _liteDbWrapper.GetAsync(key, ct).ConfigureAwait(false);
             if (connectorEntity != null)
                 return connectorEntity.ToPayloadObject<T>();
             return default;
         }
 
         /// <summary>
-        /// Get all values from LiteDb.
+        /// Retrieve all values from LiteDB.
         /// </summary>
-        /// <returns></returns>
         public override IEnumerable<T> GetAll()
         {
             var connectorEntities = _liteDbWrapper.GetAll();
-            if (connectorEntities != null)
-                return connectorEntities.ToPayloadList<T>();
-            return default;
+            return connectorEntities?.ToPayloadList<T>() ?? [];
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Set the key to hold the specified value.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
         public override bool Insert(string key, T value)
         {
             var connectorEntity = new LiteDbConnectorEntity(key, value, null);
@@ -75,12 +71,11 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Set the key to hold the specified value with expiration.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
         /// <param name="expiration">The expiration of the key.</param>
-        /// <returns></returns>
         public override bool Insert(string key, T value, TimeSpan expiration)
         {
             var connectorEntity = new LiteDbConnectorEntity(key, value, expiration);
@@ -88,77 +83,73 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Asynchronously set the key to hold the specified value.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
-        public override async Task<bool> InsertAsync(string key, T value)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> InsertAsync(string key, T value, CancellationToken ct = default)
         {
             var connectorEntity = new LiteDbConnectorEntity(key, value, null);
-            return await _liteDbWrapper.InsertAsync(connectorEntity);
+            return await _liteDbWrapper.InsertAsync(connectorEntity, ct).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Set the Key to hold the value.
+        /// Asynchronously set the key to hold the specified value with expiration.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
         /// <param name="expiration">The expiration of the key.</param>
-        /// <returns></returns>
-        public override async Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> InsertAsync(string key, T value, TimeSpan expiration, CancellationToken ct = default)
         {
             var connectorEntity = new LiteDbConnectorEntity(key, value, expiration);
-            return await _liteDbWrapper.InsertAsync(connectorEntity);
+            return await _liteDbWrapper.InsertAsync(connectorEntity, ct).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Multiple set operation.
+        /// Insert multiple values.
         /// </summary>
         /// <param name="values">The values to store.</param>
-        /// <returns></returns>
         public override bool InsertMany(Dictionary<string, T> values)
         {
             return _liteDbWrapper.InsertMany(values.ToLiteDbConnectorEntityList());
         }
 
         /// <summary>
-        /// Multiple set operation.
+        /// Insert multiple values with expiration.
         /// </summary>
         /// <param name="values">The values to store.</param>
         /// <param name="expiration">The expiration of the keys.</param>
-        /// <returns></returns>
         public override bool InsertMany(Dictionary<string, T> values, TimeSpan expiration)
         {
             return _liteDbWrapper.InsertMany(values.ToLiteDbConnectorEntityList(expiration));
         }
 
         /// <summary>
-        /// Removes the specified Key.
+        /// Remove the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
         public override bool Delete(string key)
         {
             return _liteDbWrapper.Delete(key);
         }
 
         /// <summary>
-        /// Removes the specified Key.
+        /// Asynchronously remove the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public override async Task<bool> DeleteAsync(string key)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> DeleteAsync(string key, CancellationToken ct = default)
         {
-            return await _liteDbWrapper.DeleteAsync(key);
+            return await _liteDbWrapper.DeleteAsync(key, ct).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Updates the specified Key.
+        /// Update the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
         public override bool Update(string key, T value)
         {
             var connectorEntity = new LiteDbConnectorEntity(key, value, null);
@@ -166,31 +157,84 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Updates the specified Key.
+        /// Asynchronously update the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
-        public override async Task<bool> UpdateAsync(string key, T value)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> UpdateAsync(string key, T value, CancellationToken ct = default)
         {
             var connectorEntity = new LiteDbConnectorEntity(key, value, null);
-            return await _liteDbWrapper.UpdateAsync(connectorEntity);
+            return await _liteDbWrapper.UpdateAsync(connectorEntity, ct).ConfigureAwait(false);
         }
 
-        public override async Task<IEnumerable<T>> GetAllAsync()
+        /// <summary>
+        /// Asynchronously retrieve all values.
+        /// </summary>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>A task whose result contains all stored objects.</returns>
+        public override async Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)
         {
-            var connectorEntities = await _liteDbWrapper.GetAllAsync();
-            return connectorEntities
-                .Cast<T>()
-                .ToList();
+            var connectorEntities = await _liteDbWrapper.GetAllAsync(ct).ConfigureAwait(false);
+            return connectorEntities?.ToPayloadList<T>() ?? [];
         }
 
-        public override async Task<bool> InsertManyAsync(IEnumerable<T> values)
+        /// <summary>
+        /// Asynchronously insert multiple values.
+        /// </summary>
+        /// <param name="values">The values to store.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>True if the insertion succeeded; otherwise, false.</returns>
+        public override async Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
         {
-            var connectorEntityList = values
-                .Cast<LiteDbConnectorEntity>()
-                .ToList();
-            return await _liteDbWrapper.InsertManyAsync(connectorEntityList);
+            var list = values.Select(v => new LiteDbConnectorEntity(Guid.NewGuid().ToString(), v, null)).ToList();
+            return await _liteDbWrapper
+                .InsertManyAsync(list, ct)
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Check whether an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        public override bool Exists(string key)
+        {
+            return _liteDbWrapper.Exists(key);
+        }
+
+        /// <summary>
+        /// Asynchronously check whether an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>True if the item exists; otherwise, false.</returns>
+        public override async Task<bool> ExistsAsync(string key, CancellationToken ct = default)
+        {
+            return await _liteDbWrapper.ExistsAsync(key, ct).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Execute a filtered query.
+        /// </summary>
+        public override IEnumerable<T> Query(Func<T, bool> filter)
+        {
+            return _liteDbWrapper
+                .Query(le => filter(le.ToPayloadObject<T>()))
+                .Select(le => le.ToPayloadObject<T>());
+        }
+
+        /// <summary>
+        /// Asynchronously execute a filtered query. (Not supported in this operations class)
+        /// </summary>
+        /// <param name="filter">Predicate that selects items of type T.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter, CancellationToken ct = default)
+        {
+            var result = await _liteDbWrapper
+                .QueryAsync(le => filter(le.ToPayloadObject<T>()), ct)
+                .ConfigureAwait(false);
+
+            return result.Select(le => le.ToPayloadObject<T>());
         }
     }
 }

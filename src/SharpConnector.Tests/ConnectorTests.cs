@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using SharpConnector.Interfaces;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SharpConnector.Tests
@@ -18,17 +19,25 @@ namespace SharpConnector.Tests
         {
             _mockClient = new Mock<ISharpConnectorClient<string>>();
 
+            // Sync setups (nessun token qui)
             _mockClient.Setup(client => client.Insert(It.IsAny<string>(), It.IsAny<string>()))
                        .Returns(true);
-
-            _mockClient.Setup(client => client.InsertAsync(It.IsAny<string>(), It.IsAny<string>()))
-                       .ReturnsAsync(true);
 
             _mockClient.Setup(client => client.Get(It.IsAny<string>()))
                        .Returns((string key) => key == "testKey" ? "payload" : null);
 
-            _mockClient.Setup(client => client.GetAsync(It.IsAny<string>()))
-                       .ReturnsAsync((string key) => key == "testKey" ? "payload" : null);
+            // Async setups: SPECIFICA SEMPRE IL CancellationToken
+            _mockClient.Setup(client => client.InsertAsync(
+                                    It.IsAny<string>(),
+                                    It.IsAny<string>(),
+                                    It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(true);
+
+            _mockClient.Setup(client => client.GetAsync(
+                                    It.IsAny<string>(),
+                                    It.IsAny<CancellationToken>()))
+                       .ReturnsAsync((string key, CancellationToken _) =>
+                                        key == "testKey" ? "payload" : null);
 
             _sharpConnectorClient = _mockClient.Object;
         }
@@ -72,7 +81,7 @@ namespace SharpConnector.Tests
             var insert = _sharpConnectorClient.Insert(key, "payload");
             Assert.IsTrue(insert);
             var obj = _sharpConnectorClient.Get(key);
-            Assert.AreEqual(obj, "payload");
+            Assert.AreEqual("payload", obj);
         }
 
         [TestMethod]
@@ -82,7 +91,7 @@ namespace SharpConnector.Tests
             var insert = _sharpConnectorClient.Insert(key, "payload");
             Assert.IsTrue(insert);
             var obj = await _sharpConnectorClient.GetAsync(key);
-            Assert.AreEqual(obj, "payload");
+            Assert.AreEqual("payload", obj);
         }
 
         [TestMethod]
@@ -92,9 +101,8 @@ namespace SharpConnector.Tests
             var insert = _sharpConnectorClient.Insert(key, "payload");
             Assert.IsTrue(insert);
             var obj = _sharpConnectorClient.Get(key);
-            Assert.AreEqual(obj, "payload");
+            Assert.AreEqual("payload", obj);
 
-            // Set up mock for update method
             _mockClient.Setup(client => client.Update(key, "modPayload")).Returns(true);
             var update = _sharpConnectorClient.Update(key, "modPayload");
             Assert.IsTrue(update);
@@ -107,10 +115,14 @@ namespace SharpConnector.Tests
             var insert = await _sharpConnectorClient.InsertAsync(key, "payload");
             Assert.IsTrue(insert);
             var obj = await _sharpConnectorClient.GetAsync(key);
-            Assert.AreEqual(obj, "payload");
+            Assert.AreEqual("payload", obj);
 
-            // Mock async update behavior
-            _mockClient.Setup(client => client.UpdateAsync(key, "modPayload")).ReturnsAsync(true);
+            _mockClient.Setup(client => client.UpdateAsync(
+                                        key,
+                                        "modPayload",
+                                        It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(true);
+
             var update = await _sharpConnectorClient.UpdateAsync(key, "modPayload");
             Assert.IsTrue(update);
         }
@@ -122,9 +134,8 @@ namespace SharpConnector.Tests
             var insert = _sharpConnectorClient.Insert(key, "payload");
             Assert.IsTrue(insert);
             var obj = _sharpConnectorClient.Get(key);
-            Assert.AreEqual(obj, "payload");
+            Assert.AreEqual("payload", obj);
 
-            // Mock delete behavior
             _mockClient.Setup(client => client.Delete(key)).Returns(true);
             var delete = _sharpConnectorClient.Delete(key);
             Assert.IsTrue(delete);
@@ -137,10 +148,13 @@ namespace SharpConnector.Tests
             var insert = await _sharpConnectorClient.InsertAsync(key, "payload");
             Assert.IsTrue(insert);
             var obj = await _sharpConnectorClient.GetAsync(key);
-            Assert.AreEqual(obj, "payload");
+            Assert.AreEqual("payload", obj);
 
-            // Mock async delete behavior
-            _mockClient.Setup(client => client.DeleteAsync(key)).ReturnsAsync(true);
+            _mockClient.Setup(client => client.DeleteAsync(
+                                        key,
+                                        It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(true);
+
             var delete = await _sharpConnectorClient.DeleteAsync(key);
             Assert.IsTrue(delete);
         }

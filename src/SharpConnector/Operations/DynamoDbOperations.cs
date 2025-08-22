@@ -1,13 +1,14 @@
 ﻿// (c) 2024 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.DynamoDb;
 using SharpConnector.Entities;
 using SharpConnector.Utilities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SharpConnector.Operations
 {
@@ -18,17 +19,16 @@ namespace SharpConnector.Operations
         /// <summary>
         /// Create a new DynamoDbOperations instance.
         /// </summary>
-        /// <param name="dynamoDbConfig">The DynamoDB connector config.</param>
+        /// <param name="dynamoDbConfig">The DynamoDB connector configuration.</param>
         public DynamoDbOperations(DynamoDbConfig dynamoDbConfig)
         {
             _dynamoDbWrapper = new DynamoDbWrapper(dynamoDbConfig);
         }
 
         /// <summary>
-        /// Get the value of a specific Key.
+        /// Retrieve the value of the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
         public override T Get(string key)
         {
             var connectorEntity = _dynamoDbWrapper.Get(key);
@@ -38,38 +38,35 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Get the value of a specific Key asynchronously.
+        /// Asynchronously retrieve the value of the specified key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public override async Task<T> GetAsync(string key)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<T> GetAsync(string key, CancellationToken ct = default)
         {
-            var connectorEntity = await _dynamoDbWrapper.GetAsync(key);
+            var connectorEntity = await _dynamoDbWrapper.GetAsync(key, ct).ConfigureAwait(false);
             if (connectorEntity != null)
                 return connectorEntity.ToPayloadObject<T>();
             return default;
         }
 
         /// <summary>
-        /// Get all values from the DynamoDB table.
+        /// Retrieve all values from the DynamoDB table.
         /// </summary>
-        /// <returns></returns>
         public override IEnumerable<T> GetAll()
         {
             var connectorEntities = _dynamoDbWrapper.GetAll();
-            if (connectorEntities != null)
-                return connectorEntities.ToPayloadList<T>();
-            return default;
+            return connectorEntities?.ToPayloadList<T>() ?? [];
         }
 
         /// <summary>
-        /// Asynchronously get all values from the DynamoDB table.
+        /// Asynchronously retrieve all values from the DynamoDB table.
         /// </summary>
-        /// <returns></returns>
-        public override async Task<IEnumerable<T>> GetAllAsync()
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)
         {
-            var connectorEntities = await _dynamoDbWrapper.GetAllAsync();
-            return connectorEntities?.ToPayloadList<T>() ?? Enumerable.Empty<T>();
+            var connectorEntities = await _dynamoDbWrapper.GetAllAsync(ct).ConfigureAwait(false);
+            return connectorEntities?.ToPayloadList<T>() ?? [];
         }
 
         /// <summary>
@@ -77,7 +74,6 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
         public override bool Insert(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
@@ -90,7 +86,6 @@ namespace SharpConnector.Operations
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
         /// <param name="expiration">The expiration of the key.</param>
-        /// <returns></returns>
         public override bool Insert(string key, T value, TimeSpan expiration)
         {
             var connectorEntity = new ConnectorEntity(key, value, expiration);
@@ -98,51 +93,49 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Insert a value into DynamoDB asynchronously.
+        /// Asynchronously insert a value into DynamoDB.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
-        /// <returns></returns>
-        public override async Task<bool> InsertAsync(string key, T value)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> InsertAsync(string key, T value, CancellationToken ct = default)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return await _dynamoDbWrapper.InsertAsync(connectorEntity);
+            return await _dynamoDbWrapper.InsertAsync(connectorEntity, ct).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Insert a value into DynamoDB asynchronously with an expiration time.
+        /// Asynchronously insert a value into DynamoDB with an expiration time.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to store.</param>
         /// <param name="expiration">The expiration of the key.</param>
-        /// <returns></returns>
-        public override async Task<bool> InsertAsync(string key, T value, TimeSpan expiration)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> InsertAsync(string key, T value, TimeSpan expiration, CancellationToken ct = default)
         {
             var connectorEntity = new ConnectorEntity(key, value, expiration);
-            return await _dynamoDbWrapper.InsertAsync(connectorEntity);
+            return await _dynamoDbWrapper.InsertAsync(connectorEntity, ct).ConfigureAwait(false);
         }
 
         /// <summary>
         /// Insert multiple values into DynamoDB.
         /// </summary>
         /// <param name="values">A dictionary of key-value pairs to store.</param>
-        /// <returns></returns>
         public override bool InsertMany(Dictionary<string, T> values)
         {
             return _dynamoDbWrapper.InsertMany(values.ToConnectorEntityList());
         }
 
         /// <summary>
-        /// Insert multiple items asynchronously.
+        /// Asynchronously insert multiple values.
         /// </summary>
         /// <param name="values">A collection of values to store.</param>
-        /// <returns>A task representing the asynchronous operation, with the result being true if all insertions are successful.</returns>
-        public override Task<bool> InsertManyAsync(IEnumerable<T> values)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>True if all insertions succeeded; otherwise, false.</returns>
+        public override Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
         {
-            var connectorEntityList = values
-                .Cast<ConnectorEntity>()
-                .ToList();
-            return _dynamoDbWrapper.InsertManyAsync(connectorEntityList);
+            var list = values.Select(v => new ConnectorEntity(Guid.NewGuid().ToString(), v, null)).ToList();
+            return _dynamoDbWrapper.InsertManyAsync(list, ct);
         }
 
         /// <summary>
@@ -150,7 +143,6 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="values">A dictionary of key-value pairs to store.</param>
         /// <param name="expiration">The expiration time for the keys.</param>
-        /// <returns></returns>
         public override bool InsertMany(Dictionary<string, T> values, TimeSpan expiration)
         {
             return _dynamoDbWrapper.InsertMany(values.ToConnectorEntityList(expiration));
@@ -160,20 +152,19 @@ namespace SharpConnector.Operations
         /// Delete a value from DynamoDB by key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
         public override bool Delete(string key)
         {
             return _dynamoDbWrapper.Delete(key);
         }
 
         /// <summary>
-        /// Delete a value from DynamoDB asynchronously by key.
+        /// Asynchronously delete a value from DynamoDB by key.
         /// </summary>
         /// <param name="key">The key of the object.</param>
-        /// <returns></returns>
-        public override async Task<bool> DeleteAsync(string key)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> DeleteAsync(string key, CancellationToken ct = default)
         {
-            return await _dynamoDbWrapper.DeleteAsync(key);
+            return await _dynamoDbWrapper.DeleteAsync(key, ct).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -181,7 +172,6 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to update.</param>
-        /// <returns></returns>
         public override bool Update(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
@@ -189,15 +179,65 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Update a value in DynamoDB asynchronously.
+        /// Asynchronously update a value in DynamoDB.
         /// </summary>
         /// <param name="key">The key of the object.</param>
         /// <param name="value">The value to update.</param>
-        /// <returns></returns>
-        public override async Task<bool> UpdateAsync(string key, T value)
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<bool> UpdateAsync(string key, T value, CancellationToken ct = default)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return await _dynamoDbWrapper.UpdateAsync(connectorEntity);
+            return await _dynamoDbWrapper.UpdateAsync(connectorEntity, ct).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Check whether an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        public override bool Exists(string key)
+        {
+            return _dynamoDbWrapper.Exists(key);
+        }
+
+        /// <summary>
+        /// Asynchronously check whether an item exists by its key.
+        /// </summary>
+        /// <param name="key">The unique key of the item.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <returns>True if the item exists; otherwise, false.</returns>
+        public override async Task<bool> ExistsAsync(string key, CancellationToken ct = default)
+        {
+            return await _dynamoDbWrapper.ExistsAsync(key, ct).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Execute a filtered query.
+        /// </summary>
+        public override IEnumerable<T> Query(Func<T, bool> filter)
+        {
+            ArgumentNullException.ThrowIfNull(filter);
+
+            var result = _dynamoDbWrapper
+                .Query(e => filter(e.ToPayloadObject<T>()));
+
+            return result.Select(e => e.ToPayloadObject<T>());
+        }
+
+        /// <summary>
+        /// Asynchronously execute a filtered query.
+        /// </summary>
+        /// <param name="filter">Predicate that selects items of type T.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        public override async Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter, CancellationToken ct = default)
+        {
+            ArgumentNullException.ThrowIfNull(filter);
+            ct.ThrowIfCancellationRequested();
+
+            var result = await _dynamoDbWrapper
+                .QueryAsync(e => filter(e.ToPayloadObject<T>()), ct)
+                .ConfigureAwait(false);
+
+            return result.Select(e => e.ToPayloadObject<T>());
         }
     }
 }
