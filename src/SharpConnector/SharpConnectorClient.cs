@@ -162,6 +162,18 @@ namespace SharpConnector
         }
 
         /// <inheritdoc />
+        public async Task<bool> InsertManyAsync(Dictionary<string, T> values)
+        {
+            return await _operations.InsertManyAsync(values);
+        }
+
+        /// <inheritdoc />
+        public async Task<bool> InsertManyAsync(Dictionary<string, T> values, TimeSpan expiration)
+        {
+            return await _operations.InsertManyAsync(values, expiration);
+        }
+
+        /// <inheritdoc />
         public async Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
         {
             return await _operations.InsertManyAsync(values, ct);

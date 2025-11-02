@@ -45,6 +45,12 @@ namespace SharpConnector.Operations
         public abstract bool InsertMany(Dictionary<string, T> values, TimeSpan expiration);
 
         /// <inheritdoc />
+        public abstract Task<bool> InsertManyAsync(Dictionary<string, T> values, CancellationToken ct = default);
+
+        /// <inheritdoc />
+        public abstract Task<bool> InsertManyAsync(Dictionary<string, T> values, TimeSpan expiration, CancellationToken ct = default);
+
+        /// <inheritdoc />
         public abstract Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default);
 
         /// <inheritdoc />
