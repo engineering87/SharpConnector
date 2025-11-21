@@ -148,7 +148,7 @@ namespace SharpConnector.Connectors.Redis
             return GetDatabase(databaseNumber).StringSet(
                 connectorEntity.Key,
                 Serialize(connectorEntity),
-                connectorEntity.Expiration);
+                ToExpiration(connectorEntity.Expiration));
         }
 
         /// <summary>
@@ -164,7 +164,7 @@ namespace SharpConnector.Connectors.Redis
             return await GetDatabase(databaseNumber).StringSetAsync(
                 connectorEntity.Key,
                 Serialize(connectorEntity),
-                connectorEntity.Expiration)
+                ToExpiration(connectorEntity.Expiration))
                 .ConfigureAwait(false);
         }
 
@@ -182,7 +182,7 @@ namespace SharpConnector.Connectors.Redis
             foreach (var entity in connectorEntities)
             {
                 ct.ThrowIfCancellationRequested();
-                tasks.Add(database.StringSetAsync(entity.Key, JsonConvert.SerializeObject(entity), entity.Expiration));
+                tasks.Add(database.StringSetAsync(entity.Key, JsonConvert.SerializeObject(entity), ToExpiration(entity.Expiration)));
             }
 
             var results = await Task.WhenAll(tasks).ConfigureAwait(false);
@@ -203,7 +203,7 @@ namespace SharpConnector.Connectors.Redis
                 var currentResult = database.StringSet(
                     entity.Key,
                     JsonConvert.SerializeObject(entity),
-                    entity.Expiration);
+                    ToExpiration(entity.Expiration));
 
                 if (currentResult == false)
                     result = false;
@@ -297,5 +297,22 @@ namespace SharpConnector.Connectors.Redis
             var allEntities = await GetAllAsync(databaseNumber, ct).ConfigureAwait(false);
             return allEntities.Where(filter);
         }
+
+        #region Internal Utilities
+
+        /// <summary>
+        /// Converts a nullable <see cref="TimeSpan"/> value to an <see cref="Expiration"/> instance.
+        /// </summary>
+        /// <param name="expiration">The optional expiration interval to convert. If <see langword="null"/>, a default expiration is returned.</param>
+        /// <returns>An <see cref="Expiration"/> representing the specified interval, or the default value if <paramref
+        /// name="expiration"/> is <see langword="null"/>.</returns>
+        private static Expiration ToExpiration(TimeSpan? expiration)
+        {
+            if (!expiration.HasValue)
+                return default;
+            return new Expiration(expiration.Value);
+        }
+
+        #endregion
     }
 }
