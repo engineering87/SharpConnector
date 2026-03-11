@@ -4,6 +4,7 @@ using Couchbase;
 using Couchbase.KeyValue;
 using SharpConnector.Configuration;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SharpConnector.Connectors.Couchbase
@@ -12,6 +13,7 @@ namespace SharpConnector.Connectors.Couchbase
     {
         private readonly Lazy<Task<ICluster>> _cluster;
         private readonly string _bucketName;
+        private readonly SemaphoreSlim _bucketLock = new(1, 1);
         private IBucket _bucket;
 
         public CouchbaseAccess(CouchbaseConfig config)
@@ -39,12 +41,23 @@ namespace SharpConnector.Connectors.Couchbase
 
         public async Task<IBucket> GetBucketAsync()
         {
-            if (_bucket == null)
+            if (_bucket != null)
+                return _bucket;
+
+            await _bucketLock.WaitAsync().ConfigureAwait(false);
+            try
             {
-                var cluster = await GetClusterAsync();
-                _bucket = await cluster.BucketAsync(_bucketName);
+                if (_bucket == null)
+                {
+                    var cluster = await GetClusterAsync();
+                    _bucket = await cluster.BucketAsync(_bucketName);
+                }
+                return _bucket;
             }
-            return _bucket;
+            finally
+            {
+                _bucketLock.Release();
+            }
         }
 
         public async Task<ICouchbaseCollection> GetCollectionAsync(string scopeName, string collectionName)
@@ -54,7 +67,7 @@ namespace SharpConnector.Connectors.Couchbase
             return await scope.CollectionAsync(collectionName);
         }
 
-        public async Task<ICouchbaseCollection> GetCollectionAsync(string collectionName)
+        public async Task<ICouchbaseCollection> GetDefaultCollectionAsync()
             => await (await GetBucketAsync()).DefaultCollectionAsync();
 
         public async ValueTask DisposeAsync()
@@ -70,6 +83,8 @@ namespace SharpConnector.Connectors.Couchbase
                 var cluster = await _cluster.Value;
                 await cluster.DisposeAsync();
             }
+
+            _bucketLock.Dispose();
         }
     }
 }

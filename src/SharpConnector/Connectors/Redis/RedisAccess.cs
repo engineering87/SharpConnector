@@ -44,6 +44,8 @@ namespace SharpConnector.Connectors.Redis
                 _connection.Value.Close();
                 _connection.Value.Dispose();
             }
+
+            GC.SuppressFinalize(this);
         }
     }
 }

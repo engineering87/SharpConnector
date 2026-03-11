@@ -21,10 +21,17 @@ namespace SharpConnector.Connectors.DynamoDb
             var awsCredentials = new BasicAWSCredentials(connectorConfig.AccessKey, connectorConfig.SecretKey);
             var config = new AmazonDynamoDBConfig
             {
-                RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(connectorConfig.Region),
-                ServiceURL = connectorConfig.ServiceUrl,
                 UseHttp = connectorConfig.UseHttp
             };
+
+            if (!string.IsNullOrWhiteSpace(connectorConfig.ServiceUrl))
+            {
+                config.ServiceURL = connectorConfig.ServiceUrl;
+            }
+            else
+            {
+                config.RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(connectorConfig.Region);
+            }
 
             _client = new Lazy<AmazonDynamoDBClient>(() => new AmazonDynamoDBClient(awsCredentials, config));
         }
@@ -35,6 +42,8 @@ namespace SharpConnector.Connectors.DynamoDb
             {
                 _client.Value.Dispose();
             }
+
+            GC.SuppressFinalize(this);
         }
     }
 }

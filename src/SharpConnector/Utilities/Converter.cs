@@ -1,6 +1,8 @@
 ﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using SharpConnector.Entities;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 
@@ -16,7 +18,7 @@ namespace SharpConnector.Utilities
         /// <returns></returns>
         public static T ToPayloadObject<T>(this ConnectorEntity connectorEntity)
         {
-            return (T)Convert.ChangeType(connectorEntity.Payload, typeof(T));
+            return ConvertPayload<T>(connectorEntity.Payload);
         }
 
         /// <summary>
@@ -27,7 +29,7 @@ namespace SharpConnector.Utilities
         /// <returns></returns>
         public static T ToPayloadObject<T>(this LiteDbConnectorEntity liteDbConnectorEntity)
         {
-            return (T)Convert.ChangeType(liteDbConnectorEntity.Payload, typeof(T));
+            return ConvertPayload<T>(liteDbConnectorEntity.Payload);
         }
 
         /// <summary>
@@ -42,7 +44,7 @@ namespace SharpConnector.Utilities
             foreach (var entity in connectorEntities)
             {
                 if (entity.Payload != null)
-                    result.Add((T)Convert.ChangeType(entity.Payload, typeof(T)));
+                    result.Add(ConvertPayload<T>(entity.Payload));
             }
             return result;
         }
@@ -59,9 +61,23 @@ namespace SharpConnector.Utilities
             foreach (var entity in connectorEntities)
             {
                 if (entity.Payload != null)
-                    result.Add((T)Convert.ChangeType(entity.Payload, typeof(T)));
+                    result.Add(ConvertPayload<T>(entity.Payload));
             }
             return result;
+        }
+
+        /// <summary>
+        /// Converts a payload object to the target type, handling JObject/JArray from JSON deserialization.
+        /// </summary>
+        private static T ConvertPayload<T>(object payload)
+        {
+            if (payload is T typed)
+                return typed;
+
+            if (payload is JToken jToken)
+                return jToken.ToObject<T>();
+
+            return (T)Convert.ChangeType(payload, typeof(T));
         }
 
         /// <summary>

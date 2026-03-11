@@ -9,7 +9,7 @@
     <Description>A flexible solution that accelerates integrations with multiple NoSQL databases</Description>
     <PackageProjectUrl>https://github.com/engineering87/SharpConnector</PackageProjectUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>4.0.0</Version>
+    <Version>4.0.1</Version>
     <AssemblyVersion>3.3.0</AssemblyVersion>
     <FileVersion>3.3.0</FileVersion>
     <PackageIcon>logo.png</PackageIcon>

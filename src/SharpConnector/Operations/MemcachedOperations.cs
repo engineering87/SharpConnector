@@ -56,7 +56,7 @@ namespace SharpConnector.Operations
         /// </summary>
         public override IEnumerable<T> GetAll()
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException("Memcached does not support retrieving all keys/values.");
         }
 
         /// <summary>
@@ -92,7 +92,7 @@ namespace SharpConnector.Operations
         {
             ct.ThrowIfCancellationRequested();
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return await _memcachedWrapper.InsertAsync(connectorEntity).ConfigureAwait(false);
+            return await _memcachedWrapper.InsertAsync(connectorEntity, ct).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -173,15 +173,13 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Asynchronously retrieve all objects. (Not supported by Memcached natively; wrapper returns whatever is implemented.)
+        /// Asynchronously retrieve all objects. (Not supported for Memcached)
         /// </summary>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
-        /// <returns>A task whose result contains a list of objects.</returns>
-        public override async Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)
+        /// <returns>Never returns; always throws <see cref="NotSupportedException"/>.</returns>
+        public override Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)
         {
-            ct.ThrowIfCancellationRequested();
-            var connectorEntities = await _memcachedWrapper.GetAllAsync(ct).ConfigureAwait(false);
-            return connectorEntities?.ToPayloadList<T>() ?? [];
+            throw new NotSupportedException("Memcached does not support retrieving all keys/values.");
         }
 
         /// <summary>
@@ -223,9 +221,10 @@ namespace SharpConnector.Operations
         /// <summary>
         /// Execute a filtered query. (Not supported for Memcached)
         /// </summary>
+        /// <exception cref="NotImplementedException">Always thrown — Memcached does not support queries.</exception>
         public override IEnumerable<T> Query(Func<T, bool> filter)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("Memcached does not support server-side queries or key enumeration.");
         }
 
         /// <summary>
@@ -233,9 +232,10 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="filter">Predicate that selects items of type T.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <exception cref="NotImplementedException">Always thrown — Memcached does not support queries.</exception>
         public override Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter, CancellationToken ct = default)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("Memcached does not support server-side queries or key enumeration.");
         }
 
         /// <summary>

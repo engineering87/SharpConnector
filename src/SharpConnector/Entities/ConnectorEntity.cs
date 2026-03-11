@@ -40,22 +40,21 @@ namespace SharpConnector.Entities
         /// <param name="key">The key associated with the payload.</param>
         /// <param name="payload">The payload to be stored with the key.</param>
         /// <param name="expiration">The optional expiration time for the key-value pair.</param>
-        /// <exception cref="ArgumentException">Thrown if the key or payload is null, or if the payload is not serializable.</exception>
+        /// <exception cref="ArgumentException">Thrown if the key is null or empty, or if the payload is not serializable.</exception>
+        /// <exception cref="ArgumentNullException">Thrown if the payload is null.</exception>
         public ConnectorEntity(string key, object payload, TimeSpan? expiration)
         {
-            if (string.IsNullOrEmpty(key) || payload == null)
-                throw new ArgumentException("Key or Payload cannot be null");
+            if (string.IsNullOrEmpty(key))
+                throw new ArgumentException("Key cannot be null or empty.", nameof(key));
 
-            if (payload.IsSerializable())  // Check if the payload is serializable
-            {
-                Key = key;
-                Payload = payload;
-                Expiration = expiration;
-            }
-            else
-            {
-                throw new ArgumentException("Payload cannot be serialized");
-            }
+            ArgumentNullException.ThrowIfNull(payload);
+
+            if (!payload.IsSerializable())
+                throw new ArgumentException("Payload cannot be serialized.", nameof(payload));
+
+            Key = key;
+            Payload = payload;
+            Expiration = expiration;
         }
 
         /// <summary>
@@ -63,22 +62,11 @@ namespace SharpConnector.Entities
         /// </summary>
         /// <param name="key">The key associated with the payload.</param>
         /// <param name="payload">The payload to be stored with the key.</param>
-        /// <exception cref="ArgumentException">Thrown if the key or payload is null, or if the payload is not serializable.</exception>
+        /// <exception cref="ArgumentException">Thrown if the key is null or empty, or if the payload is not serializable.</exception>
+        /// <exception cref="ArgumentNullException">Thrown if the payload is null.</exception>
         public ConnectorEntity(string key, object payload)
+            : this(key, payload, null)
         {
-            if (string.IsNullOrEmpty(key) || payload == null)
-                throw new ArgumentException("Key or Payload cannot be null");
-
-            if (payload.IsSerializable())  // Check if the payload is serializable
-            {
-                Key = key;
-                Payload = payload;
-                Expiration = null;  // No expiration time specified
-            }
-            else
-            {
-                throw new ArgumentException("Payload cannot be serialized");
-            }
         }
 
         /// <summary>
@@ -90,7 +78,7 @@ namespace SharpConnector.Entities
         {
             return obj is ConnectorEntity other &&
                    Key == other.Key &&
-                   Payload.GetHashCode() == other.Payload.GetHashCode() &&
+                   Equals(Payload, other.Payload) &&
                    Expiration == other.Expiration;
         }
 

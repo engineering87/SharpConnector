@@ -86,7 +86,6 @@ namespace SharpConnector.Operations
             var connectorEntity = new ConnectorEntity(key, value, null);
             return _couchbaseWrapper
                 .InsertAsync(connectorEntity, CancellationToken.None)
-                .ConfigureAwait(false)
                 .GetAwaiter()
                 .GetResult();
         }
@@ -103,7 +102,6 @@ namespace SharpConnector.Operations
             var connectorEntity = new ConnectorEntity(key, value, expiration);
             return _couchbaseWrapper
                 .InsertAsync(connectorEntity, CancellationToken.None)
-                .ConfigureAwait(false)
                 .GetAwaiter()
                 .GetResult();
         }

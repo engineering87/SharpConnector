@@ -37,8 +37,16 @@ namespace SharpConnector.Configuration
             }
 
             ConnectionString = configuration[AppConfigParameterEnums.connectionstring.ToString()]?.Trim();
+            if (string.IsNullOrEmpty(ConnectionString))
+                throw new ArgumentException("MongoDB ConnectionString is required but was not found in configuration.");
+
             DatabaseName = configuration[AppConfigParameterEnums.databasename.ToString()]?.Trim();
+            if (string.IsNullOrEmpty(DatabaseName))
+                throw new ArgumentException("MongoDB DatabaseName is required but was not found in configuration.");
+
             CollectionName = configuration[AppConfigParameterEnums.collectionname.ToString()]?.Trim();
+            if (string.IsNullOrEmpty(CollectionName))
+                throw new ArgumentException("MongoDB CollectionName is required but was not found in configuration.");
         }
     }
 }

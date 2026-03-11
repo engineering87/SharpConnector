@@ -8,7 +8,7 @@ namespace SharpConnector.Connectors.RavenDb
 {
     public class RavenDbAccess : IDisposable
     {
-        private static Lazy<IDocumentStore> DocumentStore { get; set; }
+        private readonly Lazy<IDocumentStore> _documentStore;
 
         /// <summary>
         /// Create a new RavenDbAccess instance.
@@ -16,39 +16,33 @@ namespace SharpConnector.Connectors.RavenDb
         /// <param name="ravenDbConfig"></param>
         public RavenDbAccess(RavenDbConfig ravenDbConfig)
         {
-            if (DocumentStore == null)
+            _documentStore = new Lazy<IDocumentStore>(() =>
             {
-                DocumentStore = new Lazy<IDocumentStore>(() =>
+                var documentStore = new DocumentStore
                 {
-                    var documentStore = new DocumentStore
-                    {
-                        Urls = [ravenDbConfig.ConnectionString],
-                        Database = ravenDbConfig.DatabaseName
-                    };
+                    Urls = [ravenDbConfig.ConnectionString],
+                    Database = ravenDbConfig.DatabaseName
+                };
 
-                    documentStore.Initialize();
-                    return documentStore;
-                });
-            }
+                documentStore.Initialize();
+                return documentStore;
+            });
         }
 
         /// <summary>
         /// Return the DocumentStore.
         /// </summary>
-        public IDocumentStore Store => DocumentStore.Value;
+        public IDocumentStore Store => _documentStore.Value;
 
         /// <summary>
         /// Dispose of the DocumentStore.
         /// </summary>
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
-        }
+            if (_documentStore.IsValueCreated)
+                _documentStore.Value.Dispose();
 
-        public static void Shutdown()
-        {
-            if (DocumentStore.IsValueCreated)
-                DocumentStore.Value.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }
