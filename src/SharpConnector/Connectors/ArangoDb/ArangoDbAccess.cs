@@ -62,6 +62,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// </summary>
         public void Dispose()
         {
+            Client?.Dispose();
             GC.SuppressFinalize(this);
         }
     }

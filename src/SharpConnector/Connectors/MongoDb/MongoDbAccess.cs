@@ -33,6 +33,7 @@ namespace SharpConnector.Connectors.MongoDb
         /// </summary>
         public void Dispose()
         {
+            _client?.Dispose();
             GC.SuppressFinalize(this);
         }
     }

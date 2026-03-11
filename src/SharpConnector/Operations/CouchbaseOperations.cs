@@ -86,7 +86,6 @@ namespace SharpConnector.Operations
             var connectorEntity = new ConnectorEntity(key, value, null);
             return _couchbaseWrapper
                 .InsertAsync(connectorEntity, CancellationToken.None)
-                .ConfigureAwait(false)
                 .GetAwaiter()
                 .GetResult();
         }
@@ -103,7 +102,6 @@ namespace SharpConnector.Operations
             var connectorEntity = new ConnectorEntity(key, value, expiration);
             return _couchbaseWrapper
                 .InsertAsync(connectorEntity, CancellationToken.None)
-                .ConfigureAwait(false)
                 .GetAwaiter()
                 .GetResult();
         }
@@ -277,6 +275,59 @@ namespace SharpConnector.Operations
                 .ConfigureAwait(false);
 
             return result.Select(e => e.ToPayloadObject<T>());
+        }
+
+        /// <summary>
+        /// Inserts multiple key–value pairs asynchronously.
+        /// </summary>
+        /// <param name="values">
+        /// A dictionary containing the key/payload pairs to insert. Cannot be null.
+        /// </param>
+        /// <param name="ct">
+        /// A token to observe while waiting for the task to complete.
+        /// </param>
+        /// <returns>
+        /// A task that represents the asynchronous operation. The task result is
+        /// <c>true</c> if all items were inserted successfully; otherwise, <c>false</c>.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is null.</exception>
+        /// <exception cref="OperationCanceledException">Thrown if the operation is canceled.</exception>
+        public override async Task<bool> InsertManyAsync(Dictionary<string, T> values, CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var entities = values.ToConnectorEntityList();
+            return await _couchbaseWrapper
+                .InsertManyAsync(entities, ct)
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Inserts multiple key–value pairs with a common expiration asynchronously.
+        /// </summary>
+        /// <param name="values">
+        /// A dictionary containing the key/payload pairs to insert. Cannot be null.
+        /// </param>
+        /// <param name="expiration">
+        /// The time-to-live to apply to each inserted key.
+        /// </param>
+        /// <param name="ct">
+        /// A token to observe while waiting for the task to complete.
+        /// </param>
+        /// <returns>
+        /// A task that represents the asynchronous operation. The task result is
+        /// <c>true</c> if all items were inserted successfully; otherwise, <c>false</c>.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is null.</exception>
+        /// <exception cref="OperationCanceledException">Thrown if the operation is canceled.</exception>
+        public override async Task<bool> InsertManyAsync(Dictionary<string, T> values, TimeSpan expiration, CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var entities = values.ToConnectorEntityList(expiration);
+            return await _couchbaseWrapper
+                .InsertManyAsync(entities, ct)
+                .ConfigureAwait(false);
         }
     }
 }

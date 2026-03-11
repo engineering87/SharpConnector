@@ -37,6 +37,9 @@ namespace SharpConnector.Configuration
             }
 
             ConnectionString = configuration[AppConfigParameterEnums.connectionstring.ToString()]?.Trim();
+            if (string.IsNullOrEmpty(ConnectionString))
+                throw new ArgumentException("Redis ConnectionString is required but was not found in configuration.");
+
             int.TryParse(configuration[AppConfigParameterEnums.databasenumber.ToString()], out var dbNumber);
             DatabaseNumber = dbNumber;
         }

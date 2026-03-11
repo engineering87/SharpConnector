@@ -95,6 +95,21 @@ namespace SharpConnector.Interfaces
         bool InsertMany(Dictionary<string, T> values, TimeSpan expiration);
 
         /// <summary>
+        /// Inserts multiple items with a specified expiration time.
+        /// </summary>
+        /// <param name="values">A dictionary of items to insert, keyed by their unique keys.</param>
+        /// <returns>True if all items were inserted successfully, false otherwise.</returns>
+        Task<bool> InsertManyAsync(Dictionary<string, T> values);
+
+        /// <summary>
+        /// Inserts multiple items with a specified expiration time.
+        /// </summary>
+        /// <param name="values">A dictionary of items to insert, keyed by their unique keys.</param>
+        /// <param name="expiration">The time after which the items expire.</param>
+        /// <returns>True if all items were inserted successfully, false otherwise.</returns>
+        Task<bool> InsertManyAsync(Dictionary<string, T> values, TimeSpan expiration);
+
+        /// <summary>
         /// Asynchronously inserts multiple items.
         /// </summary>
         /// <param name="values">A collection of items to insert.</param>

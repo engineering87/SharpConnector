@@ -1,5 +1,6 @@
 ﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
+using System;
 using Microsoft.Extensions.Configuration;
 using SharpConnector.Configuration;
 using SharpConnector.Enums;
@@ -30,7 +31,7 @@ namespace SharpConnector.Operations
                 ConnectorTypeEnums.Couchbase => new CouchbaseConfig(section),
                 ConnectorTypeEnums.DynamoDb => new DynamoDbConfig(section),
                 ConnectorTypeEnums.ArangoDb => new ArangoDbConfig(section),
-                _ => section.Get<IConnectorConfig>()
+                _ => throw new ArgumentOutOfRangeException(nameof(connectorTypes), connectorTypes, "Unsupported connector type.")
             };
         }
     }

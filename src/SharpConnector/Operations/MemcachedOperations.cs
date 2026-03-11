@@ -56,7 +56,7 @@ namespace SharpConnector.Operations
         /// </summary>
         public override IEnumerable<T> GetAll()
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException("Memcached does not support retrieving all keys/values.");
         }
 
         /// <summary>
@@ -92,7 +92,7 @@ namespace SharpConnector.Operations
         {
             ct.ThrowIfCancellationRequested();
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return await _memcachedWrapper.InsertAsync(connectorEntity).ConfigureAwait(false);
+            return await _memcachedWrapper.InsertAsync(connectorEntity, ct).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -173,15 +173,13 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Asynchronously retrieve all objects. (Not supported by Memcached natively; wrapper returns whatever is implemented.)
+        /// Asynchronously retrieve all objects. (Not supported for Memcached)
         /// </summary>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
-        /// <returns>A task whose result contains a list of objects.</returns>
-        public override async Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)
+        /// <returns>Never returns; always throws <see cref="NotSupportedException"/>.</returns>
+        public override Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)
         {
-            ct.ThrowIfCancellationRequested();
-            var connectorEntities = await _memcachedWrapper.GetAllAsync(ct).ConfigureAwait(false);
-            return connectorEntities?.ToPayloadList<T>() ?? [];
+            throw new NotSupportedException("Memcached does not support retrieving all keys/values.");
         }
 
         /// <summary>
@@ -223,9 +221,10 @@ namespace SharpConnector.Operations
         /// <summary>
         /// Execute a filtered query. (Not supported for Memcached)
         /// </summary>
+        /// <exception cref="NotImplementedException">Always thrown — Memcached does not support queries.</exception>
         public override IEnumerable<T> Query(Func<T, bool> filter)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("Memcached does not support server-side queries or key enumeration.");
         }
 
         /// <summary>
@@ -233,9 +232,63 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="filter">Predicate that selects items of type T.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
+        /// <exception cref="NotImplementedException">Always thrown — Memcached does not support queries.</exception>
         public override Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter, CancellationToken ct = default)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("Memcached does not support server-side queries or key enumeration.");
+        }
+
+        /// <summary>
+        /// Inserts multiple key–value pairs asynchronously.
+        /// </summary>
+        /// <param name="values">
+        /// A dictionary containing the key/payload pairs to insert. Cannot be null.
+        /// </param>
+        /// <param name="ct">
+        /// A token to observe while waiting for the task to complete.
+        /// </param>
+        /// <returns>
+        /// A task that represents the asynchronous operation. The task result is
+        /// <c>true</c> if all items were inserted successfully; otherwise, <c>false</c>.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is null.</exception>
+        /// <exception cref="OperationCanceledException">Thrown if the operation is canceled.</exception>
+        public override async Task<bool> InsertManyAsync(Dictionary<string, T> values, CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var entities = values.ToConnectorEntityList();
+            return await _memcachedWrapper
+                .InsertManyAsync(entities, ct)
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Inserts multiple key–value pairs with a common expiration asynchronously.
+        /// </summary>
+        /// <param name="values">
+        /// A dictionary containing the key/payload pairs to insert. Cannot be null.
+        /// </param>
+        /// <param name="expiration">
+        /// The time-to-live to apply to each inserted key.
+        /// </param>
+        /// <param name="ct">
+        /// A token to observe while waiting for the task to complete.
+        /// </param>
+        /// <returns>
+        /// A task that represents the asynchronous operation. The task result is
+        /// <c>true</c> if all items were inserted successfully; otherwise, <c>false</c>.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is null.</exception>
+        /// <exception cref="OperationCanceledException">Thrown if the operation is canceled.</exception>
+        public override async Task<bool> InsertManyAsync(Dictionary<string, T> values, TimeSpan expiration, CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var entities = values.ToConnectorEntityList(expiration);
+            return await _memcachedWrapper
+                .InsertManyAsync(entities, ct)
+                .ConfigureAwait(false);
         }
     }
 }

@@ -181,8 +181,10 @@ namespace SharpConnector.Connectors.LiteDb
         }
 
         /// <summary>
-        /// Execute a filtered query (not supported by this wrapper).
+        /// Execute a filtered query over all items in the collection.
         /// </summary>
+        /// <param name="filter">A function to filter the results.</param>
+        /// <returns>A list of filtered ConnectorEntity instances.</returns>
         public List<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter)
         {
             return _liteDbAccess.Collection
@@ -193,9 +195,10 @@ namespace SharpConnector.Connectors.LiteDb
         }
 
         /// <summary>
-        /// Asynchronously execute a filtered query (not supported by this wrapper).
+        /// Asynchronously execute a filtered query over all items in the collection.
         /// </summary>
-        /// <param name="filter">Filter predicate.</param>
+        /// <remarks>LiteDB is synchronous; this method wraps the sync call.</remarks>
+        /// <param name="filter">A function to filter the results.</param>
         /// <param name="ct">A token to cancel the operation.</param>
         public Task<List<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter, CancellationToken ct = default)
         {
