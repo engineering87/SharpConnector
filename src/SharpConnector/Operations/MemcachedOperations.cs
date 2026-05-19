@@ -188,13 +188,17 @@ namespace SharpConnector.Operations
         /// <param name="values">The values to store.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>True if all insertions were successful; otherwise, false.</returns>
-        public override async Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
+        public override async Task<IReadOnlyCollection<string>> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
         {
+            ArgumentNullException.ThrowIfNull(values);
             ct.ThrowIfCancellationRequested();
             var list = values.Select(v => new ConnectorEntity(Guid.NewGuid().ToString(), v, null)).ToList();
-            return await _memcachedWrapper
+            var success = await _memcachedWrapper
                 .InsertManyAsync(list, ct)
                 .ConfigureAwait(false);
+            return success
+                ? list.Select(e => e.Key).ToList().AsReadOnly()
+                : (IReadOnlyCollection<string>)Array.Empty<string>();
         }
 
         /// <summary>
@@ -289,6 +293,13 @@ namespace SharpConnector.Operations
             return await _memcachedWrapper
                 .InsertManyAsync(entities, ct)
                 .ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
+        public override void Dispose()
+        {
+            _memcachedWrapper?.Dispose();
+            base.Dispose();
         }
     }
 }

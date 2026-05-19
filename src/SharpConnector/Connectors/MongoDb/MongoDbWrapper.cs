@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace SharpConnector.Connectors.MongoDb
 {
-    public class MongoDbWrapper
+    public class MongoDbWrapper : IDisposable
     {
         private readonly MongoDbAccess _mongoDbAccess;
 
@@ -22,6 +22,15 @@ namespace SharpConnector.Connectors.MongoDb
         public MongoDbWrapper(MongoDbConfig mongoDbConfig)
         {
             _mongoDbAccess = new MongoDbAccess(mongoDbConfig);
+        }
+
+        /// <summary>
+        /// Disposes the underlying MongoDB client.
+        /// </summary>
+        public void Dispose()
+        {
+            _mongoDbAccess?.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>

@@ -12,7 +12,7 @@ using System;
 
 namespace SharpConnector.Connectors.Redis
 {
-    public class RedisWrapper
+    public class RedisWrapper : IDisposable
     {
         private readonly RedisAccess _redisAccess;
 
@@ -23,6 +23,15 @@ namespace SharpConnector.Connectors.Redis
         public RedisWrapper(RedisConfig redisConfig)
         {
             _redisAccess = new RedisAccess(redisConfig);
+        }
+
+        /// <summary>
+        /// Disposes the underlying Redis connection.
+        /// </summary>
+        public void Dispose()
+        {
+            _redisAccess?.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -84,15 +93,21 @@ namespace SharpConnector.Connectors.Redis
             foreach (var endpoint in connection.GetEndPoints())
             {
                 var server = connection.GetServer(endpoint);
+                // Skip replicas to avoid duplicated entries in clustered/replicated setups.
+                if (server.IsReplica)
+                    continue;
+
                 var keys = server.Keys(databaseNumber);
 
                 foreach (var key in keys)
                 {
                     var value = database.StringGet(key);
-                    if (value.HasValue)
-                    {
-                        entities.Add(Deserialize<ConnectorEntity>(value));
-                    }
+                    if (!value.HasValue)
+                        continue;
+
+                    var entity = TryDeserialize(value);
+                    if (entity != null)
+                        entities.Add(entity);
                 }
             }
             return entities;
@@ -115,6 +130,10 @@ namespace SharpConnector.Connectors.Redis
                 ct.ThrowIfCancellationRequested();
 
                 var server = connection.GetServer(endpoint);
+                // Skip replicas to avoid duplicated entries in clustered/replicated setups.
+                if (server.IsReplica)
+                    continue;
+
                 var keys = server.Keys(databaseNumber);
                 var tasks = new List<Task<ConnectorEntity>>();
 
@@ -135,7 +154,24 @@ namespace SharpConnector.Connectors.Redis
         {
             ct.ThrowIfCancellationRequested();
             var value = await database.StringGetAsync(key).ConfigureAwait(false);
-            return value.HasValue ? Deserialize<ConnectorEntity>(value) : null;
+            return value.HasValue ? TryDeserialize(value) : null;
+        }
+
+        /// <summary>
+        /// Attempts to deserialize a value into a <see cref="ConnectorEntity"/>.
+        /// Returns <c>null</c> when the value is not a valid ConnectorEntity payload.
+        /// </summary>
+        private static ConnectorEntity TryDeserialize(RedisValue value)
+        {
+            try
+            {
+                return Deserialize<ConnectorEntity>(value);
+            }
+            catch (JsonException)
+            {
+                // The value was not produced by SharpConnector (or the schema changed); ignore.
+                return null;
+            }
         }
 
         /// <summary>

@@ -43,8 +43,15 @@ namespace SharpConnector.Operations
                 .GetChildren()
                 .FirstOrDefault(s => s.Key.Equals("instance", StringComparison.OrdinalIgnoreCase))?.Value;
 
-            if (!Enum.TryParse(dbType, true, out ConnectorTypeEnums connectorType))
-                throw new InvalidOperationException("Instance section for SharpConnector was not found.");
+            if (string.IsNullOrWhiteSpace(dbType))
+                throw new InvalidOperationException("Instance section for SharpConnector was not found or is empty.");
+
+            if (!Enum.TryParse(dbType, true, out ConnectorTypeEnums connectorType) ||
+                !Enum.IsDefined(typeof(ConnectorTypeEnums), connectorType))
+            {
+                throw new InvalidOperationException(
+                    $"Unsupported SharpConnector instance type '{dbType}'.");
+            }
 
             var connectorConfig = GetConfigurationStrategy(_section, connectorType);
 

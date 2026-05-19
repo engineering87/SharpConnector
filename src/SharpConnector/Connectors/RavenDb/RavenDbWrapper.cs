@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace SharpConnector.Connectors.RavenDb
 {
-    public class RavenDbWrapper
+    public class RavenDbWrapper : IDisposable
     {
         private readonly RavenDbAccess _ravenDbAccess;
 
@@ -22,6 +22,15 @@ namespace SharpConnector.Connectors.RavenDb
         public RavenDbWrapper(RavenDbConfig ravenDbConfig)
         {
             _ravenDbAccess = new RavenDbAccess(ravenDbConfig);
+        }
+
+        /// <summary>
+        /// Disposes the underlying RavenDB document store.
+        /// </summary>
+        public void Dispose()
+        {
+            _ravenDbAccess?.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>

@@ -11,7 +11,7 @@ namespace SharpConnector.Interfaces
     /// Defines the operations for a SharpConnector client.
     /// </summary>
     /// <typeparam name="T">The payload type.</typeparam>
-    public interface ISharpConnectorClient<T>
+    public interface ISharpConnectorClient<T> : IDisposable
     {
         /// <summary>
         /// Retrieves an item by its key.
@@ -110,11 +110,15 @@ namespace SharpConnector.Interfaces
         Task<bool> InsertManyAsync(Dictionary<string, T> values, TimeSpan expiration);
 
         /// <summary>
-        /// Asynchronously inserts multiple items.
+        /// Asynchronously inserts multiple items, generating a unique key for each value.
         /// </summary>
         /// <param name="values">A collection of items to insert.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
-        Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default);
+        /// <returns>
+        /// A read-only collection containing the keys generated for each inserted value,
+        /// in the same order as the input sequence.
+        /// </returns>
+        Task<IReadOnlyCollection<string>> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default);
 
         /// <summary>
         /// Deletes an item by its key.

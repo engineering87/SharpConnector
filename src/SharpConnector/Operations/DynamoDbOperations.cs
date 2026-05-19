@@ -132,10 +132,14 @@ namespace SharpConnector.Operations
         /// <param name="values">A collection of values to store.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>True if all insertions succeeded; otherwise, false.</returns>
-        public override Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
+        public override async Task<IReadOnlyCollection<string>> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
         {
+            ArgumentNullException.ThrowIfNull(values);
             var list = values.Select(v => new ConnectorEntity(Guid.NewGuid().ToString(), v, null)).ToList();
-            return _dynamoDbWrapper.InsertManyAsync(list, ct);
+            var success = await _dynamoDbWrapper.InsertManyAsync(list, ct).ConfigureAwait(false);
+            return success
+                ? list.Select(e => e.Key).ToList().AsReadOnly()
+                : (IReadOnlyCollection<string>)Array.Empty<string>();
         }
 
         /// <summary>
@@ -285,6 +289,13 @@ namespace SharpConnector.Operations
             return await _dynamoDbWrapper
                 .InsertManyAsync(entities, ct)
                 .ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
+        public override void Dispose()
+        {
+            _dynamoDbWrapper?.Dispose();
+            base.Dispose();
         }
     }
 }

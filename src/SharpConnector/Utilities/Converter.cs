@@ -18,6 +18,8 @@ namespace SharpConnector.Utilities
         /// <returns></returns>
         public static T ToPayloadObject<T>(this ConnectorEntity connectorEntity)
         {
+            if (connectorEntity == null)
+                return default;
             return ConvertPayload<T>(connectorEntity.Payload);
         }
 
@@ -29,6 +31,8 @@ namespace SharpConnector.Utilities
         /// <returns></returns>
         public static T ToPayloadObject<T>(this LiteDbConnectorEntity liteDbConnectorEntity)
         {
+            if (liteDbConnectorEntity == null)
+                return default;
             return ConvertPayload<T>(liteDbConnectorEntity.Payload);
         }
 
@@ -71,13 +75,31 @@ namespace SharpConnector.Utilities
         /// </summary>
         private static T ConvertPayload<T>(object payload)
         {
+            if (payload is null)
+                return default;
+
             if (payload is T typed)
                 return typed;
 
             if (payload is JToken jToken)
                 return jToken.ToObject<T>();
 
-            return (T)Convert.ChangeType(payload, typeof(T));
+            var targetType = typeof(T);
+
+            // Fast path for primitives / IConvertible target types
+            if (payload is IConvertible && typeof(IConvertible).IsAssignableFrom(targetType))
+            {
+                try
+                {
+                    return (T)Convert.ChangeType(payload, targetType);
+                }
+                catch (InvalidCastException) { /* fallback below */ }
+                catch (FormatException) { /* fallback below */ }
+            }
+
+            // Fallback: round-trip via JSON for arbitrary POCOs (e.g. BSON documents from MongoDB)
+            var json = JsonConvert.SerializeObject(payload);
+            return JsonConvert.DeserializeObject<T>(json);
         }
 
         /// <summary>

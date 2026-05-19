@@ -180,17 +180,21 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Asynchronously insert multiple values.
+        /// Asynchronously insert multiple values, generating a unique key for each value.
         /// </summary>
         /// <param name="values">The values to store.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
-        /// <returns>True if the insertion succeeded; otherwise, false.</returns>
-        public override async Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
+        /// <returns>The keys generated for each inserted value.</returns>
+        public override async Task<IReadOnlyCollection<string>> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
         {
+            ArgumentNullException.ThrowIfNull(values);
             var list = values.Select(v => new LiteDbConnectorEntity(Guid.NewGuid().ToString(), v, null)).ToList();
-            return await _liteDbWrapper
+            var success = await _liteDbWrapper
                 .InsertManyAsync(list, ct)
                 .ConfigureAwait(false);
+            return success
+                ? list.Select(e => e.Key).ToList().AsReadOnly()
+                : (IReadOnlyCollection<string>)Array.Empty<string>();
         }
 
         /// <summary>
@@ -282,6 +286,13 @@ namespace SharpConnector.Operations
             return await _liteDbWrapper
                 .InsertManyAsync(entities, ct)
                 .ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
+        public override void Dispose()
+        {
+            _liteDbWrapper?.Dispose();
+            base.Dispose();
         }
     }
 }

@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace SharpConnector.Connectors.Memcached
 {
-    public class MemcachedWrapper
+    public class MemcachedWrapper : IDisposable
     {
         private readonly MemcachedAccess _memcachedAccess;
 
@@ -22,6 +22,15 @@ namespace SharpConnector.Connectors.Memcached
         public MemcachedWrapper(MemcachedConfig memcachedConfig)
         {
             _memcachedAccess = new MemcachedAccess(memcachedConfig);
+        }
+
+        /// <summary>
+        /// Disposes the underlying Memcached client.
+        /// </summary>
+        public void Dispose()
+        {
+            _memcachedAccess?.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>

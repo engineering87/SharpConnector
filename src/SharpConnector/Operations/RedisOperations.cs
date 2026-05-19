@@ -78,6 +78,8 @@ namespace SharpConnector.Operations
         /// <param name="expiration">The expiration of the key.</param>
         public override bool Insert(string key, T value, TimeSpan expiration)
         {
+            if (expiration <= TimeSpan.Zero)
+                throw new ArgumentOutOfRangeException(nameof(expiration), "Expiration must be greater than zero.");
             var connectorEntity = new ConnectorEntity(key, value, expiration);
             return _redisWrapper.Insert(connectorEntity);
         }
@@ -105,6 +107,8 @@ namespace SharpConnector.Operations
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
         public override async Task<bool> InsertAsync(string key, T value, TimeSpan expiration, CancellationToken ct = default)
         {
+            if (expiration <= TimeSpan.Zero)
+                throw new ArgumentOutOfRangeException(nameof(expiration), "Expiration must be greater than zero.");
             var connectorEntity = new ConnectorEntity(key, value, expiration);
             return await _redisWrapper
                 .InsertAsync(connectorEntity, 0, ct)
@@ -131,16 +135,23 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Insert multiple key-value pairs into Redis asynchronously.
+        /// Insert multiple values into Redis asynchronously, generating a unique key for each value.
         /// </summary>
         /// <param name="values">A collection of values to store.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
-        public override async Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
+        /// <returns>
+        /// The keys generated for each inserted value, in the same order as <paramref name="values"/>.
+        /// </returns>
+        public override async Task<IReadOnlyCollection<string>> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
         {
+            ArgumentNullException.ThrowIfNull(values);
             var list = values.Select(v => new ConnectorEntity(Guid.NewGuid().ToString(), v, null)).ToList();
-            return await _redisWrapper
+            var success = await _redisWrapper
                 .InsertManyAsync(list, 0, ct)
                 .ConfigureAwait(false);
+            return success
+                ? list.Select(e => e.Key).ToList().AsReadOnly()
+                : (IReadOnlyCollection<string>)Array.Empty<string>();
         }
 
         /// <summary>
@@ -294,6 +305,13 @@ namespace SharpConnector.Operations
             return await _redisWrapper
                 .InsertManyAsync(entities, 0, ct)
                 .ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
+        public override void Dispose()
+        {
+            _redisWrapper?.Dispose();
+            base.Dispose();
         }
     }
 }
