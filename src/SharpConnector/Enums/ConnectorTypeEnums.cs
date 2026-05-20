@@ -14,6 +14,7 @@ namespace SharpConnector.Enums
         RavenDb,
         Couchbase,
         DynamoDb,
-        ArangoDb
+        ArangoDb,
+        Cassandra
     }
 }

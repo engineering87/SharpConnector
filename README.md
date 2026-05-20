@@ -32,6 +32,7 @@ SharpConnector is a .NET library designed to streamline integration with NoSQL d
 - Supported stores:
 	- Key–value: Redis, EnyimMemcached, DynamoDb
 	- Document: MongoDB, LiteDB, RavenDB, Couchbase
+	- Wide-column: Cassandra
 	- Multi-model: ArangoDB
 - Simple configuration via `appsettings.json` and DI-friendly
 - Sync and async operations (with CancellationToken support)
@@ -57,6 +58,7 @@ Through SharpConnector, you can use a consistent interface to perform Insert, Ge
 * **Couchbase (document-oriented)**
 * **DynamoDb (key-value or document-oriented)**
 * **ArangoDB (multi-model)**
+* **Apache Cassandra (wide-column)**
 
 SharpConnector thus simplifies the development process, providing flexibility and compatibility across diverse NoSQL paradigms without the need to handle specific database implementations.
 
@@ -159,6 +161,20 @@ Then, add the specif `ConnectorConfig` node within your *appsettings.json* file:
 	}
 	```
 
+- Cassandra
+	```json
+	{
+		"ConnectorConfig": {
+			"Instance": "Cassandra",
+			"ConnectionString": "127.0.0.1:9042",
+			"DatabaseName": "sharpconnector",
+			"TableName": "items",
+			"Username": "cassandra",
+			"Password": "cassandra"
+		}
+	}
+	```
+
 Once configured, create a new SharpConnector client, specifying the payload type (e.g., string):
 
 ```csharp
@@ -226,6 +242,7 @@ Each of these libraries operates under a specific license, which governs its usa
 * **Couchbase**, the official Couchbase SDK for .NET Core and Full Frameworks, see **license** [here](https://github.com/couchbase/couchbase-net-client/blob/master/LICENSE)
 * **DynamoDb**, the official AWS SDK for .NET, see **license** [here](https://github.com/aws/aws-sdk-net/blob/main/License.txt)
 * **ArangoDB**, a consistent, comprehensive, minimal driver for ArangoDB, see **license** [here](https://github.com/ArangoDB-Community/arangodb-net-standard/blob/master/LICENSE)
+* **CassandraCSharpDriver**, the DataStax C# driver for Apache Cassandra, see **license** [here](https://github.com/datastax/csharp-driver/blob/master/LICENSE)
 
 Each library is included to enhance the functionality of SharpConnector while adhering to its licensing terms.
 

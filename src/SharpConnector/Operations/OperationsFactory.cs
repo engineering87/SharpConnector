@@ -29,7 +29,8 @@ namespace SharpConnector.Operations
                 { ConnectorTypeEnums.RavenDb, config => new RavenDbOperations<T>((RavenDbConfig)config) },
                 { ConnectorTypeEnums.Couchbase, config => new CouchbaseOperations<T>((CouchbaseConfig)config) },
                 { ConnectorTypeEnums.DynamoDb, config => new DynamoDbOperations<T>((DynamoDbConfig)config) },
-                { ConnectorTypeEnums.ArangoDb, config => new ArangoDbOperations<T>((ArangoDbConfig)config) }
+                { ConnectorTypeEnums.ArangoDb, config => new ArangoDbOperations<T>((ArangoDbConfig)config) },
+                { ConnectorTypeEnums.Cassandra, config => new CassandraOperations<T>((CassandraConfig)config) }
             };
         }
 
