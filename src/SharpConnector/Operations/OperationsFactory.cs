@@ -29,7 +29,8 @@ namespace SharpConnector.Operations
                 { ConnectorTypeEnums.RavenDb, config => new RavenDbOperations<T>((RavenDbConfig)config) },
                 { ConnectorTypeEnums.Couchbase, config => new CouchbaseOperations<T>((CouchbaseConfig)config) },
                 { ConnectorTypeEnums.DynamoDb, config => new DynamoDbOperations<T>((DynamoDbConfig)config) },
-                { ConnectorTypeEnums.ArangoDb, config => new ArangoDbOperations<T>((ArangoDbConfig)config) }
+                { ConnectorTypeEnums.ArangoDb, config => new ArangoDbOperations<T>((ArangoDbConfig)config) },
+                { ConnectorTypeEnums.Cassandra, config => new CassandraOperations<T>((CassandraConfig)config) }
             };
         }
 
@@ -43,8 +44,15 @@ namespace SharpConnector.Operations
                 .GetChildren()
                 .FirstOrDefault(s => s.Key.Equals("instance", StringComparison.OrdinalIgnoreCase))?.Value;
 
-            if (!Enum.TryParse(dbType, true, out ConnectorTypeEnums connectorType))
-                throw new InvalidOperationException("Instance section for SharpConnector was not found.");
+            if (string.IsNullOrWhiteSpace(dbType))
+                throw new InvalidOperationException("Instance section for SharpConnector was not found or is empty.");
+
+            if (!Enum.TryParse(dbType, true, out ConnectorTypeEnums connectorType) ||
+                !Enum.IsDefined(typeof(ConnectorTypeEnums), connectorType))
+            {
+                throw new InvalidOperationException(
+                    $"Unsupported SharpConnector instance type '{dbType}'.");
+            }
 
             var connectorConfig = GetConfigurationStrategy(_section, connectorType);
 

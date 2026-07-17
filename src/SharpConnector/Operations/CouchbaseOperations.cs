@@ -164,8 +164,9 @@ namespace SharpConnector.Operations
         /// <param name="values">The values to store.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>True if all insertions succeeded; otherwise, false.</returns>
-        public override async Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
+        public override async Task<IReadOnlyCollection<string>> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
         {
+            ArgumentNullException.ThrowIfNull(values);
             var entities = values.Select(value =>
             {
                 ct.ThrowIfCancellationRequested();
@@ -173,7 +174,10 @@ namespace SharpConnector.Operations
                 return new ConnectorEntity(key, value, null);
             }).ToList();
 
-            return await _couchbaseWrapper.InsertManyAsync(entities, ct).ConfigureAwait(false);
+            var success = await _couchbaseWrapper.InsertManyAsync(entities, ct).ConfigureAwait(false);
+            return success
+                ? entities.Select(e => e.Key).ToList().AsReadOnly()
+                : (IReadOnlyCollection<string>)Array.Empty<string>();
         }
 
         /// <summary>
@@ -328,6 +332,15 @@ namespace SharpConnector.Operations
             return await _couchbaseWrapper
                 .InsertManyAsync(entities, ct)
                 .ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
+        public override void Dispose()
+        {
+            // CouchbaseWrapper implements IAsyncDisposable; dispose synchronously here.
+            if (_couchbaseWrapper != null)
+                _couchbaseWrapper.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            base.Dispose();
         }
     }
 }

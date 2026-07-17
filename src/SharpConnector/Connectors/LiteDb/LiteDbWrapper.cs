@@ -11,7 +11,7 @@ using System;
 
 namespace SharpConnector.Connectors.LiteDb
 {
-    public class LiteDbWrapper
+    public class LiteDbWrapper : IDisposable
     {
         private readonly LiteDbAccess _liteDbAccess;
 
@@ -22,6 +22,15 @@ namespace SharpConnector.Connectors.LiteDb
         public LiteDbWrapper(LiteDbConfig liteDbConfig)
         {
             _liteDbAccess = new LiteDbAccess(liteDbConfig);
+        }
+
+        /// <summary>
+        /// Disposes the underlying LiteDB connection.
+        /// </summary>
+        public void Dispose()
+        {
+            _liteDbAccess?.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>

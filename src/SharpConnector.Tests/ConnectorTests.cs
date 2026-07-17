@@ -84,7 +84,8 @@ namespace SharpConnector.Tests
             _mockClient.Setup(client => client.InsertManyAsync(
                                     It.IsAny<IEnumerable<string>>(),
                                     It.IsAny<CancellationToken>()))
-                       .ReturnsAsync(true);
+                       .ReturnsAsync((IEnumerable<string> v, CancellationToken _) =>
+                           (IReadOnlyCollection<string>)v.Select(_ => Guid.NewGuid().ToString()).ToList().AsReadOnly());
 
             _sharpConnectorClient = _mockClient.Object;
         }
@@ -183,7 +184,9 @@ namespace SharpConnector.Tests
         {
             var values = new List<string> { "payload1", "payload2", "payload3" };
             var result = await _sharpConnectorClient.InsertManyAsync(values);
-            Assert.IsTrue(result);
+            Assert.IsNotNull(result);
+            Assert.AreEqual(values.Count, result.Count);
+            Assert.IsTrue(result.All(k => !string.IsNullOrEmpty(k)));
         }
 
         [TestMethod]

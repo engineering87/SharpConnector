@@ -31,6 +31,7 @@ namespace SharpConnector.Operations
                 ConnectorTypeEnums.Couchbase => new CouchbaseConfig(section),
                 ConnectorTypeEnums.DynamoDb => new DynamoDbConfig(section),
                 ConnectorTypeEnums.ArangoDb => new ArangoDbConfig(section),
+                ConnectorTypeEnums.Cassandra => new CassandraConfig(section),
                 _ => throw new ArgumentOutOfRangeException(nameof(connectorTypes), connectorTypes, "Unsupported connector type.")
             };
         }

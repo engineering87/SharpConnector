@@ -51,7 +51,7 @@ namespace SharpConnector.Operations
         public abstract Task<bool> InsertManyAsync(Dictionary<string, T> values, TimeSpan expiration, CancellationToken ct = default);
 
         /// <inheritdoc />
-        public abstract Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default);
+        public abstract Task<IReadOnlyCollection<string>> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default);
 
         /// <inheritdoc />
         public abstract bool Delete(string key);
@@ -76,5 +76,14 @@ namespace SharpConnector.Operations
 
         /// <inheritdoc />
         public abstract Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter, CancellationToken ct = default);
+
+        /// <summary>
+        /// Releases resources held by the underlying connector.
+        /// Override in derived classes to dispose connector-specific resources.
+        /// </summary>
+        public virtual void Dispose()
+        {
+            GC.SuppressFinalize(this);
+        }
     }
 }

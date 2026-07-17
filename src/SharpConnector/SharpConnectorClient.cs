@@ -174,7 +174,7 @@ namespace SharpConnector
         }
 
         /// <inheritdoc />
-        public async Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
+        public async Task<IReadOnlyCollection<string>> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
         {
             return await _operations.InsertManyAsync(values, ct);
         }
@@ -201,6 +201,15 @@ namespace SharpConnector
         public async Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter, CancellationToken ct = default)
         {
             return await (_operations.QueryAsync(filter, ct));
+        }
+
+        /// <summary>
+        /// Releases the underlying connector resources (e.g. connections, clients).
+        /// </summary>
+        public void Dispose()
+        {
+            _operations?.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

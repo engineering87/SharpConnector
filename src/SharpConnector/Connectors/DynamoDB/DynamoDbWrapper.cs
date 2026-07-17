@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace SharpConnector.Connectors.DynamoDb
 {
-    public class DynamoDbWrapper
+    public class DynamoDbWrapper : IDisposable
     {
         private readonly DynamoDbAccess _dynamoDbAccess;
         private readonly Table _table;
@@ -260,6 +260,15 @@ namespace SharpConnector.Connectors.DynamoDb
 
             var list = Query(filter);
             return Task.FromResult(list);
+        }
+
+        /// <summary>
+        /// Disposes the underlying DynamoDB client.
+        /// </summary>
+        public void Dispose()
+        {
+            _dynamoDbAccess?.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }
