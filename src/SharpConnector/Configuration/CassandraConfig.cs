@@ -49,7 +49,7 @@ namespace SharpConnector.Configuration
                 throw new ArgumentException("Cassandra TableName is required but was not found in configuration.");
 
             Username = configuration[AppConfigParameterEnums.username.ToString()]?.Trim();
-            Password = configuration[AppConfigParameterEnums.password.ToString()]?.Trim();
+            Password = configuration[AppConfigParameterEnums.password.ToString()];
         }
     }
 }

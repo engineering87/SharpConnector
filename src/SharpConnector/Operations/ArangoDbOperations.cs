@@ -1,4 +1,4 @@
-﻿// (c) 2025 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2025 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using SharpConnector.Configuration;
 using SharpConnector.Connectors.ArangoDb;
@@ -44,7 +44,7 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="key">The key of the object to delete.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result indicates success.</returns>
+        /// <returns>The keys generated for each inserted value, in input order; an empty collection if the insertion failed.</returns>
         public override Task<bool> DeleteAsync(string key, CancellationToken ct = default)
         {
             return _arangoDbWrapper.DeleteAsync(key, ct);
@@ -129,7 +129,7 @@ namespace SharpConnector.Operations
         /// <param name="key">The key of the object to insert.</param>
         /// <param name="value">The value to insert into the object.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result indicates success.</returns>
+        /// <returns>The keys generated for each inserted value, in input order; an empty collection if the insertion failed.</returns>
         public override Task<bool> InsertAsync(string key, T value, CancellationToken ct = default)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
@@ -143,7 +143,7 @@ namespace SharpConnector.Operations
         /// <param name="value">The value to insert into the object.</param>
         /// <param name="expiration">The expiration time for the object.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result indicates success.</returns>
+        /// <returns>The keys generated for each inserted value, in input order; an empty collection if the insertion failed.</returns>
         public override Task<bool> InsertAsync(string key, T value, TimeSpan expiration, CancellationToken ct = default)
         {
             var connectorEntity = new ConnectorEntity(key, value, expiration);
@@ -176,7 +176,7 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="values">A collection of objects to insert.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result indicates success.</returns>
+        /// <returns>The keys generated for each inserted value, in input order; an empty collection if the insertion failed.</returns>
         public override async Task<IReadOnlyCollection<string>> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
         {
             ArgumentNullException.ThrowIfNull(values);
@@ -205,7 +205,7 @@ namespace SharpConnector.Operations
         /// <param name="key">The key of the object to update.</param>
         /// <param name="value">The new value to update in the object.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result indicates success.</returns>
+        /// <returns>The keys generated for each inserted value, in input order; an empty collection if the insertion failed.</returns>
         public override Task<bool> UpdateAsync(string key, T value, CancellationToken ct = default)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
@@ -271,7 +271,7 @@ namespace SharpConnector.Operations
         /// A task that represents the asynchronous operation. The task result is
         /// <c>true</c> if all items were inserted successfully; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when a key is null or empty, or a value is null.</exception>
         public override async Task<bool> InsertManyAsync(Dictionary<string, T> values, CancellationToken ct = default)
         {
             var entities = values.ToConnectorEntityList();
@@ -296,7 +296,7 @@ namespace SharpConnector.Operations
         /// A task that represents the asynchronous operation. The task result is
         /// <c>true</c> if all items were inserted successfully; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when a key is null or empty, or a value is null.</exception>
         public override async Task<bool> InsertManyAsync(Dictionary<string, T> values, TimeSpan expiration, CancellationToken ct = default)
         {
             var entities = values.ToConnectorEntityList(expiration);

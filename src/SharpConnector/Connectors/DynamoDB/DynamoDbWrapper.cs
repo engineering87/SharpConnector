@@ -1,6 +1,7 @@
-﻿// (c) 2024 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2024 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Amazon.DynamoDBv2.DocumentModel;
+using Amazon.DynamoDBv2.Model;
 using Newtonsoft.Json;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
@@ -186,8 +187,7 @@ namespace SharpConnector.Connectors.DynamoDb
         /// <param name="key">The key of the item to delete.</param>
         public bool Delete(string key)
         {
-            _table.DeleteItemAsync(key).GetAwaiter().GetResult();
-            return true;
+            return DeleteAsync(key).GetAwaiter().GetResult();
         }
 
         /// <summary>
@@ -197,9 +197,22 @@ namespace SharpConnector.Connectors.DynamoDb
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
         public async Task<bool> DeleteAsync(string key, CancellationToken ct = default)
         {
-            await _table.DeleteItemAsync(key, ct).ConfigureAwait(false);
-            return true;
+            var config = new DeleteItemOperationConfig { ReturnValues = ReturnValues.AllOldAttributes };
+            var oldDocument = await _table.DeleteItemAsync(key, config, ct).ConfigureAwait(false);
+            return oldDocument != null && oldDocument.Count > 0;
         }
+
+        /// <summary>
+        /// Builds a PutItem configuration that succeeds only if the item already exists.
+        /// </summary>
+        private static PutItemOperationConfig ExistingItemOnlyConfig() => new()
+        {
+            ConditionalExpression = new Expression
+            {
+                ExpressionStatement = "attribute_exists(#k)",
+                ExpressionAttributeNames = new Dictionary<string, string> { ["#k"] = "Key" }
+            }
+        };
 
         /// <summary>
         /// Update an existing item (sync).
@@ -207,8 +220,7 @@ namespace SharpConnector.Connectors.DynamoDb
         /// <param name="connectorEntity">The entity to update.</param>
         public bool Update(ConnectorEntity connectorEntity)
         {
-            // DynamoDB Put is an upsert; reuse Insert.
-            return Insert(connectorEntity);
+            return UpdateAsync(connectorEntity).GetAwaiter().GetResult();
         }
 
         /// <summary>
@@ -216,8 +228,20 @@ namespace SharpConnector.Connectors.DynamoDb
         /// </summary>
         /// <param name="connectorEntity">The entity to update.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
-        public Task<bool> UpdateAsync(ConnectorEntity connectorEntity, CancellationToken ct = default) =>
-            InsertAsync(connectorEntity, ct);
+        /// <returns>True if the item existed and was updated; otherwise, false.</returns>
+        public async Task<bool> UpdateAsync(ConnectorEntity connectorEntity, CancellationToken ct = default)
+        {
+            var document = Document.FromJson(JsonConvert.SerializeObject(connectorEntity));
+            try
+            {
+                await _table.PutItemAsync(document, ExistingItemOnlyConfig(), ct).ConfigureAwait(false);
+                return true;
+            }
+            catch (ConditionalCheckFailedException)
+            {
+                return false;
+            }
+        }
 
         /// <summary>
         /// Check whether a key exists (sync).
@@ -252,7 +276,7 @@ namespace SharpConnector.Connectors.DynamoDb
         }
 
         /// <summary>
-        /// Asynchronously execute a filtered query (not supported in this wrapper).
+        /// Asynchronously execute a filtered query (evaluated in memory after a full table scan).
         /// </summary>
         public Task<List<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter, CancellationToken ct = default)
         {

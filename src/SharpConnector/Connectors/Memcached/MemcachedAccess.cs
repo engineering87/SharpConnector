@@ -21,12 +21,41 @@ namespace SharpConnector.Connectors.Memcached
         /// <param name="memcachedConfig">The Memcached configuration.</param>
         public MemcachedAccess(MemcachedConfig memcachedConfig)
         {
+            ArgumentNullException.ThrowIfNull(memcachedConfig);
+
+            // Validate before allocating disposable resources.
+            var servers = ParseServers(memcachedConfig.ConnectionString);
+
             _loggerFactory = new LoggerFactory();
+            try
+            {
+                var options = new MemcachedClientOptions
+                {
+                    Protocol = MemcachedProtocol.Text,
+                    Servers = servers
+                };
+
+                var config = new MemcachedClientConfiguration(_loggerFactory, options);
+                MemcachedClient = new MemcachedClient(_loggerFactory, config);
+            }
+            catch
+            {
+                _loggerFactory.Dispose();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Parses a connection string in the form "host1:port1,host2:port2".
+        /// </summary>
+        internal static List<Server> ParseServers(string connectionString)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new ArgumentException("Memcached connection string cannot be null or empty.", nameof(connectionString));
 
             var servers = new List<Server>();
-            foreach (var part in memcachedConfig.ConnectionString.Split(',', StringSplitOptions.RemoveEmptyEntries))
+            foreach (var trimmed in connectionString.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             {
-                var trimmed = part.Trim();
                 var idx = trimmed.LastIndexOf(':');
                 if (idx <= 0 || idx == trimmed.Length - 1)
                     throw new FormatException($"Invalid Memcached connection string segment: '{trimmed}' (expected host:port)");
@@ -38,14 +67,10 @@ namespace SharpConnector.Connectors.Memcached
                 servers.Add(new Server { Address = host, Port = port });
             }
 
-            var options = new MemcachedClientOptions
-            {
-                Protocol = MemcachedProtocol.Text,
-                Servers = servers
-            };
+            if (servers.Count == 0)
+                throw new ArgumentException("Memcached connection string contains no servers.", nameof(connectionString));
 
-            var config = new MemcachedClientConfiguration(_loggerFactory, options);
-            MemcachedClient = new MemcachedClient(_loggerFactory, config);
+            return servers;
         }
 
         /// <summary>

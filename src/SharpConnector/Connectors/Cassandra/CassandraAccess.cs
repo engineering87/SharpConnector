@@ -46,48 +46,88 @@ namespace SharpConnector.Connectors.Cassandra
 
             Cluster = builder.Build();
 
-            // Ensure keyspace exists, then connect to it.
-            using (var bootstrapSession = Cluster.Connect())
+            try
             {
-                bootstrapSession.Execute(
-                    $"CREATE KEYSPACE IF NOT EXISTS {Keyspace} " +
-                    "WITH replication = {'class':'SimpleStrategy','replication_factor':1};");
+                // Ensure keyspace exists, then connect to it.
+                using (var bootstrapSession = Cluster.Connect())
+                {
+                    bootstrapSession.Execute(
+                        $"CREATE KEYSPACE IF NOT EXISTS {Keyspace} " +
+                        "WITH replication = {'class':'SimpleStrategy','replication_factor':1};");
+                }
+
+                Session = Cluster.Connect(Keyspace);
+
+                // Ensure the storage table exists.
+                Session.Execute(
+                    $"CREATE TABLE IF NOT EXISTS {TableName} (" +
+                    "key text PRIMARY KEY, " +
+                    "payload text, " +
+                    "expiration bigint);");
             }
-
-            Session = Cluster.Connect(Keyspace);
-
-            // Ensure the storage table exists.
-            Session.Execute(
-                $"CREATE TABLE IF NOT EXISTS {TableName} (" +
-                "key text PRIMARY KEY, " +
-                "payload text, " +
-                "expiration bigint);");
+            catch
+            {
+                Session?.Dispose();
+                Cluster.Dispose();
+                throw;
+            }
         }
 
         /// <summary>
-        /// Parses the contact points string in the form "host1,host2:9042".
+        /// Parses the contact points string in the form "host1,host2:9042,[::1]:9042".
+        /// Bare IPv6 addresses (e.g. "fe80::1") are supported; a port must be specified using brackets.
         /// </summary>
-        private static (string[] hosts, int? port) ParseContactPoints(string connectionString)
+        /// <exception cref="ArgumentException">Thrown when the string is empty, a contact point or port is invalid, or hosts declare different ports.</exception>
+        internal static (string[] hosts, int? port) ParseContactPoints(string connectionString)
         {
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new ArgumentException("Cassandra connection string cannot be null or empty.", nameof(connectionString));
+
             var tokens = connectionString
-                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(t => t.Trim())
-                .Where(t => !string.IsNullOrEmpty(t))
-                .ToArray();
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
             int? parsedPort = null;
-            var hosts = tokens.Select(t =>
+            var hosts = new string[tokens.Length];
+            for (var i = 0; i < tokens.Length; i++)
             {
-                var idx = t.LastIndexOf(':');
-                if (idx > 0 && int.TryParse(t.Substring(idx + 1), out var p))
-                {
-                    parsedPort = p;
-                    return t.Substring(0, idx);
-                }
-                return t;
-            }).ToArray();
+                var (host, port) = ParseHost(tokens[i]);
+                hosts[i] = host;
+                if (!port.HasValue)
+                    continue;
+                if (parsedPort.HasValue && parsedPort.Value != port.Value)
+                    throw new ArgumentException("All Cassandra contact points must use the same port.", nameof(connectionString));
+                parsedPort = port;
+            }
 
             return (hosts, parsedPort);
+        }
+
+        private static (string host, int? port) ParseHost(string token)
+        {
+            // [IPv6]:port or [IPv6]
+            if (token.StartsWith('['))
+            {
+                var end = token.IndexOf(']');
+                if (end < 0)
+                    throw new ArgumentException($"Invalid contact point '{token}'.");
+                var host = token[1..end];
+                var rest = token[(end + 1)..];
+                if (rest.Length == 0)
+                    return (host, null);
+                if (rest[0] == ':' && int.TryParse(rest[1..], out var p6))
+                    return (host, p6);
+                throw new ArgumentException($"Invalid contact point '{token}'.");
+            }
+
+            // More than one ':' without brackets: bare IPv6 address, no port.
+            var first = token.IndexOf(':');
+            if (first < 0 || first != token.LastIndexOf(':'))
+                return (token, null);
+
+            if (int.TryParse(token[(first + 1)..], out var p))
+                return (token[..first], p);
+
+            throw new ArgumentException($"Invalid port in contact point '{token}'.");
         }
 
         /// <summary>

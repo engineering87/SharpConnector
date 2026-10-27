@@ -134,13 +134,28 @@ namespace SharpConnector.Connectors.Couchbase
         }
 
         /// <summary>
-        /// Updates an entity in the Couchbase bucket asynchronously (Upsert).
+        /// Replaces an existing entity in the Couchbase bucket asynchronously.
         /// </summary>
         /// <param name="entity">The entity to update.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
-        /// <returns>A task representing whether the update succeeded.</returns>
-        public Task<bool> UpdateAsync(ConnectorEntity entity, CancellationToken ct = default) =>
-            InsertAsync(entity, ct);
+        /// <returns>True if the entity existed and was replaced; false if the key does not exist.</returns>
+        public async Task<bool> UpdateAsync(ConnectorEntity entity, CancellationToken ct = default)
+        {
+            try
+            {
+                var collection = await GetCollectionAsync(ct).ConfigureAwait(false);
+                var options = new ReplaceOptions().CancellationToken(ct);
+                var ttl = entity.RemainingTimeToLive();
+                if (ttl.HasValue)
+                    options = options.Expiry(ttl.Value);
+                var result = await collection.ReplaceAsync(entity.Key, entity, options).ConfigureAwait(false);
+                return result is not null;
+            }
+            catch (DocumentNotFoundException)
+            {
+                return false;
+            }
+        }
 
         /// <summary>
         /// Disposes the Couchbase connection asynchronously.

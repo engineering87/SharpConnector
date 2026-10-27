@@ -1,4 +1,4 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,9 +9,13 @@ namespace SharpConnector.Middleware
     public static class SharpConnectorServiceExtensions
     {
         /// <summary>
-        /// Registers the ISharpConnectorClient<T> as a scoped service in the dependency injection container.
-        /// This means that a new instance of ISharpConnectorClient<T> will be created for each HTTP request.
+        /// Registers the <see cref="ISharpConnectorClient{T}"/> as a scoped service in the dependency injection container.
+        /// This means that a new instance of <see cref="ISharpConnectorClient{T}"/> will be created for each HTTP request.
         /// Typically used for services that are request-specific and need to be disposed at the end of each request.
+        /// <para>
+        /// Warning: each scope opens a new connection to the underlying store, which is expensive for
+        /// most drivers (Redis, MongoDB, Couchbase, Cassandra). Prefer <see cref="AddSharpConnectorServicesSingleton{T}"/>.
+        /// </para>
         /// </summary>
         /// <typeparam name="T">The type of the payload used by the SharpConnectorClient.</typeparam>
         /// <param name="services">The IServiceCollection where the service will be registered.</param>
@@ -35,8 +39,8 @@ namespace SharpConnector.Middleware
         }
 
         /// <summary>
-        /// Registers the ISharpConnectorClient<T> as a singleton service in the dependency injection container.
-        /// This means that only a single instance of ISharpConnectorClient<T> will be used throughout the entire application's lifetime.
+        /// Registers the <see cref="ISharpConnectorClient{T}"/> as a singleton service in the dependency injection container.
+        /// This means that only a single instance of <see cref="ISharpConnectorClient{T}"/> will be used throughout the entire application's lifetime.
         /// Typically used for services that do not require multiple instances and can share state across the entire application.
         /// </summary>
         /// <typeparam name="T">The type of the payload used by the SharpConnectorClient.</typeparam>
@@ -61,7 +65,7 @@ namespace SharpConnector.Middleware
         }
 
         /// <summary>
-        /// A default registration method for ISharpConnectorClient<T> that registers it as a Singleton.
+        /// A default registration method for <see cref="ISharpConnectorClient{T}"/> that registers it as a Singleton.
         /// This is provided for backward compatibility with existing codebases that may have previously registered services as Singletons.
         /// Developers can still choose to change the lifetime to Scoped by using the AddSharpConnectorServicesScoped method.
         /// </summary>

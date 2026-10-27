@@ -1,4 +1,4 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
@@ -42,7 +42,7 @@ namespace SharpConnector.Interfaces
         Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default);
 
         /// <summary>
-        /// Inserts an item with a specified key.
+        /// Inserts an item with a specified key. Existing keys are overwritten.
         /// </summary>
         /// <param name="key">The unique key for the item.</param>
         /// <param name="value">The item to insert.</param>
@@ -51,7 +51,7 @@ namespace SharpConnector.Interfaces
         bool Insert(string key, T value);
 
         /// <summary>
-        /// Inserts an item with a specified key and expiration time.
+        /// Inserts an item with a specified key and expiration time. Existing keys are overwritten.
         /// </summary>
         /// <param name="key">The unique key for the item.</param>
         /// <param name="value">The item to insert.</param>
@@ -61,7 +61,7 @@ namespace SharpConnector.Interfaces
         bool Insert(string key, T value, TimeSpan expiration);
 
         /// <summary>
-        /// Asynchronously inserts an item with a specified key.
+        /// Asynchronously inserts an item with a specified key. Existing keys are overwritten.
         /// </summary>
         /// <param name="key">The unique key for the item.</param>
         /// <param name="value">The item to insert.</param>
@@ -69,7 +69,7 @@ namespace SharpConnector.Interfaces
         Task<bool> InsertAsync(string key, T value, CancellationToken ct = default);
 
         /// <summary>
-        /// Asynchronously inserts an item with a specified key and expiration time.
+        /// Asynchronously inserts an item with a specified key and expiration time. Existing keys are overwritten.
         /// </summary>
         /// <param name="key">The unique key for the item.</param>
         /// <param name="value">The item to insert.</param>
@@ -78,7 +78,7 @@ namespace SharpConnector.Interfaces
         Task<bool> InsertAsync(string key, T value, TimeSpan expiration, CancellationToken ct = default);
 
         /// <summary>
-        /// Inserts multiple items.
+        /// Inserts multiple items. Existing keys are overwritten.
         /// </summary>
         /// <param name="values">A dictionary of items to insert, keyed by their unique keys.</param>
         /// <returns>True if all items were inserted successfully, false otherwise.</returns>
@@ -86,7 +86,7 @@ namespace SharpConnector.Interfaces
         bool InsertMany(Dictionary<string, T> values);
 
         /// <summary>
-        /// Inserts multiple items with a specified expiration time.
+        /// Inserts multiple items with a specified expiration time. Existing keys are overwritten.
         /// </summary>
         /// <param name="values">A dictionary of items to insert, keyed by their unique keys.</param>
         /// <param name="expiration">The time after which the items expire.</param>
@@ -95,14 +95,14 @@ namespace SharpConnector.Interfaces
         bool InsertMany(Dictionary<string, T> values, TimeSpan expiration);
 
         /// <summary>
-        /// Inserts multiple items with a specified expiration time.
+        /// Asynchronously inserts multiple items. Existing keys are overwritten.
         /// </summary>
         /// <param name="values">A dictionary of items to insert, keyed by their unique keys.</param>
         /// <returns>True if all items were inserted successfully, false otherwise.</returns>
         Task<bool> InsertManyAsync(Dictionary<string, T> values);
 
         /// <summary>
-        /// Inserts multiple items with a specified expiration time.
+        /// Inserts multiple items with a specified expiration time. Existing keys are overwritten.
         /// </summary>
         /// <param name="values">A dictionary of items to insert, keyed by their unique keys.</param>
         /// <param name="expiration">The time after which the items expire.</param>
@@ -124,7 +124,7 @@ namespace SharpConnector.Interfaces
         /// Deletes an item by its key.
         /// </summary>
         /// <param name="key">The unique key of the item to delete.</param>
-        /// <returns>True if deletion was successful, false otherwise.</returns>
+        /// <returns>True if the item existed and was removed; otherwise, false.</returns>
         [Obsolete("Use DeleteAsync instead.")]
         bool Delete(string key);
 
@@ -140,7 +140,7 @@ namespace SharpConnector.Interfaces
         /// </summary>
         /// <param name="key">The unique key of the item to update.</param>
         /// <param name="value">The new item value.</param>
-        /// <returns>True if the update was successful, false otherwise.</returns>
+        /// <returns>True if the item existed and was updated; false if the key does not exist.</returns>
         [Obsolete("Use UpdateAsync instead.")]
         bool Update(string key, T value);
 

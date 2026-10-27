@@ -83,7 +83,7 @@ namespace SharpConnector.Connectors.Memcached
                 ? (int)Math.Ceiling(connectorEntity.Expiration.Value.TotalSeconds)
                 : 0;
 
-            return _memcachedAccess.MemcachedClient.Add(
+            return _memcachedAccess.MemcachedClient.Set(
                 connectorEntity.Key,
                 JsonConvert.SerializeObject(connectorEntity),
                 seconds);
@@ -102,7 +102,7 @@ namespace SharpConnector.Connectors.Memcached
                 ? (int)Math.Ceiling(connectorEntity.Expiration.Value.TotalSeconds)
                 : 0;
 
-            return _memcachedAccess.MemcachedClient.AddAsync(
+            return _memcachedAccess.MemcachedClient.SetAsync(
                 connectorEntity.Key,
                 JsonConvert.SerializeObject(connectorEntity),
                 seconds);
@@ -114,7 +114,15 @@ namespace SharpConnector.Connectors.Memcached
         /// <param name="connectorEntities">The entities to store.</param>
         public bool InsertMany(List<ConnectorEntity> connectorEntities)
         {
-            return connectorEntities.All(Insert);
+            ArgumentNullException.ThrowIfNull(connectorEntities);
+
+            var result = true;
+            foreach (var entity in connectorEntities)
+            {
+                if (!Insert(entity))
+                    result = false;
+            }
+            return result;
         }
 
         /// <summary>

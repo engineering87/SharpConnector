@@ -1,4 +1,4 @@
-﻿// (c) 2021 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2021 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
@@ -80,17 +80,22 @@ namespace SharpConnector.Connectors.LiteDb
         }
 
         /// <summary>
-        /// Insert (or upsert if configured) the specified entity.
+        /// Insert the specified entity, replacing any existing entity with the same key.
         /// </summary>
         /// <param name="connectorEntity">The entity to store.</param>
         public bool Insert(LiteDbConnectorEntity connectorEntity)
         {
+            ArgumentNullException.ThrowIfNull(connectorEntity);
+
+            if (Update(connectorEntity))
+                return true;
+
             var result = _liteDbAccess.Collection.Insert(connectorEntity);
             return !result.IsNull;
         }
 
         /// <summary>
-        /// Asynchronously insert (or upsert if configured) the specified entity.
+        /// Asynchronously insert the specified entity, replacing any existing entity with the same key.
         /// </summary>
         /// <remarks>LiteDB is synchronous; this method wraps the sync call.</remarks>
         /// <param name="connectorEntity">The entity to store.</param>
@@ -103,17 +108,24 @@ namespace SharpConnector.Connectors.LiteDb
         }
 
         /// <summary>
-        /// Insert multiple entities in bulk.
+        /// Insert multiple entities one by one (upsert); continues on failure.
         /// </summary>
         /// <param name="connectorEntities">Entities to store.</param>
         public bool InsertMany(List<LiteDbConnectorEntity> connectorEntities)
         {
-            var insertedCount = _liteDbAccess.Collection.InsertBulk(connectorEntities);
-            return insertedCount == connectorEntities?.Count;
+            ArgumentNullException.ThrowIfNull(connectorEntities);
+
+            var result = true;
+            foreach (var entity in connectorEntities)
+            {
+                if (!Insert(entity))
+                    result = false;
+            }
+            return result;
         }
 
         /// <summary>
-        /// Asynchronously insert multiple entities in bulk.
+        /// Asynchronously insert multiple entities one by one (upsert); continues on failure.
         /// </summary>
         /// <remarks>LiteDB is synchronous; this method wraps the sync call.</remarks>
         /// <param name="connectorEntities">Entities to store.</param>

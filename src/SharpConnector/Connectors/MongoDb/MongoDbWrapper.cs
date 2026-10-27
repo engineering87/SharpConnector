@@ -1,4 +1,4 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using MongoDB.Driver;
 using SharpConnector.Configuration;
@@ -127,10 +127,26 @@ namespace SharpConnector.Connectors.MongoDb
         /// <param name="connectorEntities">The entities to store.</param>
         public bool InsertMany(List<MongoConnectorEntity> connectorEntities)
         {
-            var options = new InsertManyOptions { IsOrdered = false };
+            var requests = BuildUpsertRequests(connectorEntities);
+            if (requests.Count == 0)
+                return true;
 
-            _mongoDbAccess.Collection.InsertMany(connectorEntities, options);
-            return true;
+            var result = _mongoDbAccess.Collection.BulkWrite(requests, new BulkWriteOptions { IsOrdered = false });
+            return result.IsAcknowledged;
+        }
+
+        /// <summary>
+        /// Builds one upsert (replace by Key) request per entity, so repeated keys never create duplicates.
+        /// </summary>
+        internal static List<WriteModel<MongoConnectorEntity>> BuildUpsertRequests(IEnumerable<MongoConnectorEntity> connectorEntities)
+        {
+            ArgumentNullException.ThrowIfNull(connectorEntities);
+
+            return connectorEntities
+                .Select(e => (WriteModel<MongoConnectorEntity>)new ReplaceOneModel<MongoConnectorEntity>(
+                    Builders<MongoConnectorEntity>.Filter.Eq(x => x.Key, e.Key), e)
+                { IsUpsert = true })
+                .ToList();
         }
 
         /// <summary>
@@ -141,13 +157,15 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns>True if the insert completed successfully; otherwise, false.</returns>
         public async Task<bool> InsertManyAsync(List<MongoConnectorEntity> connectorEntities, CancellationToken ct = default)
         {
-            var options = new InsertManyOptions { IsOrdered = false };
+            var requests = BuildUpsertRequests(connectorEntities);
+            if (requests.Count == 0)
+                return true;
 
-            await _mongoDbAccess.Collection
-                .InsertManyAsync(connectorEntities, options, ct)
+            var result = await _mongoDbAccess.Collection
+                .BulkWriteAsync(requests, new BulkWriteOptions { IsOrdered = false }, ct)
                 .ConfigureAwait(false);
 
-            return true;
+            return result.IsAcknowledged;
         }
 
         /// <summary>
@@ -192,7 +210,7 @@ namespace SharpConnector.Connectors.MongoDb
                 .Set(x => x.ExpiresAt, connectorEntity.ExpiresAt);
 
             var result = _mongoDbAccess.Collection.UpdateOne(filter, update);
-            return result.IsAcknowledged && result.ModifiedCount > 0;
+            return result.IsAcknowledged && result.MatchedCount > 0;
         }
 
         /// <summary>
@@ -200,7 +218,7 @@ namespace SharpConnector.Connectors.MongoDb
         /// </summary>
         /// <param name="connectorEntity">The entity to store.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
-        /// <returns>True if the update was acknowledged and modified a document; otherwise, false.</returns>
+        /// <returns>True if the update was acknowledged and matched a document; otherwise, false.</returns>
         public async Task<bool> UpdateAsync(MongoConnectorEntity connectorEntity, CancellationToken ct = default)
         {
             var filter = Builders<MongoConnectorEntity>.Filter.Eq(x => x.Key, connectorEntity.Key);
@@ -213,7 +231,7 @@ namespace SharpConnector.Connectors.MongoDb
                 .UpdateOneAsync(filter, update, options: null, ct)
                 .ConfigureAwait(false);
 
-            return result.IsAcknowledged && result.ModifiedCount > 0;
+            return result.IsAcknowledged && result.MatchedCount > 0;
         }
 
         /// <summary>

@@ -275,7 +275,7 @@ namespace SharpConnector.Operations
         /// A task that represents the asynchronous operation. The task result is
         /// <c>true</c> if all items were inserted successfully; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when a key is null or empty, or a value is null.</exception>
         public override async Task<bool> InsertManyAsync(Dictionary<string, T> values, CancellationToken ct = default)
         {
             var entities = values.ToConnectorEntityList();
@@ -300,7 +300,7 @@ namespace SharpConnector.Operations
         /// A task that represents the asynchronous operation. The task result is
         /// <c>true</c> if all items were inserted successfully; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when a key is null or empty, or a value is null.</exception>
         public override async Task<bool> InsertManyAsync(Dictionary<string, T> values, TimeSpan expiration, CancellationToken ct = default)
         {
             var entities = values.ToConnectorEntityList(expiration);

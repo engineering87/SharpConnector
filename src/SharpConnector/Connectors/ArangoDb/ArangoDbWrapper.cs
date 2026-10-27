@@ -1,4 +1,4 @@
-﻿// (c) 2025 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2025 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using ArangoDBNetStandard;
 using ArangoDBNetStandard.CollectionApi.Models;
@@ -42,7 +42,11 @@ namespace SharpConnector.Connectors.ArangoDb
                 .GetCollectionsAsync()
                 .ConfigureAwait(false);
 
-            if (!collections.Result.Any(c => c.Name == _collectionName))
+            if (collections.Error)
+                throw new InvalidOperationException(
+                    $"Unable to list ArangoDB collections (HTTP {collections.Code}).");
+
+            if (!(collections.Result ?? []).Any(c => c.Name == _collectionName))
             {
                 ct.ThrowIfCancellationRequested();
 
@@ -162,7 +166,7 @@ namespace SharpConnector.Connectors.ArangoDb
             ct.ThrowIfCancellationRequested();
 
             var result = await _arangoDbAccess.Client.Document
-                .PostDocumentAsync(_collectionName, new ArangoConnectorEntity(connectorEntity), token: ct)
+                .PostDocumentAsync(_collectionName, new ArangoConnectorEntity(connectorEntity), new ArangoDBNetStandard.DocumentApi.Models.PostDocumentsQuery { OverwriteMode = ArangoDBNetStandard.DocumentApi.Models.OverwriteModes.Replace }, token: ct)
                 .ConfigureAwait(false);
 
             return !string.IsNullOrEmpty(result._id);
@@ -191,7 +195,7 @@ namespace SharpConnector.Connectors.ArangoDb
             var documents = connectorEntities.Select(e => new ArangoConnectorEntity(e)).ToList();
 
             var result = await _arangoDbAccess.Client.Document
-                .PostDocumentsAsync(_collectionName, documents, token: ct)
+                .PostDocumentsAsync(_collectionName, documents, new ArangoDBNetStandard.DocumentApi.Models.PostDocumentsQuery { OverwriteMode = ArangoDBNetStandard.DocumentApi.Models.OverwriteModes.Replace }, token: ct)
                 .ConfigureAwait(false);
 
             ct.ThrowIfCancellationRequested();

@@ -1,4 +1,4 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Newtonsoft.Json;
 using System;
@@ -86,7 +86,7 @@ namespace SharpConnector.Entities
         /// Determines whether the specified object is equal to the current ConnectorEntity instance.
         /// </summary>
         /// <param name="obj">The object to compare with the current ConnectorEntity instance.</param>
-        /// <returns>True if the specified object is a ConnectorEntity and has the same Payload hash code; otherwise, false.</returns>
+        /// <returns>True if the specified object is a ConnectorEntity and has the same Key, Payload and Expiration; otherwise, false.</returns>
         public override bool Equals(object obj)
         {
             return obj is ConnectorEntity other &&

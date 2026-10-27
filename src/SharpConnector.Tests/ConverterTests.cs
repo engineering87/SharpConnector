@@ -143,8 +143,6 @@ namespace SharpConnector.Tests
             {
                 { "key1", "value1" },
                 { "key2", "value2" },
-                { "", "value3" }, // This should be ignored
-                { "key3", null }  // This should be ignored
             };
 
             // Act
@@ -210,8 +208,6 @@ namespace SharpConnector.Tests
             {
                 { "key1", "value1" },
                 { "key2", "value2" },
-                { "", "value3" }, // This should be ignored
-                { "key3", null }  // This should be ignored
             };
 
             // Act
@@ -259,9 +255,7 @@ namespace SharpConnector.Tests
             var dictionary = new Dictionary<string, string>
             {
                 { "key1", "value1" },
-                { "key2", "value2" },
-                { "", "value3" },
-                { "key3", null }
+                { "key2", "value2" }
             };
 
             var result = dictionary.ToMongoDbConnectorEntityList<string>();

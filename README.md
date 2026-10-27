@@ -128,7 +128,7 @@ Then, add the specif `ConnectorConfig` node within your *appsettings.json* file:
 		"ConnectionString": "couchbase://localhost",
 		"Username": "Administrator",
 		"Password": "password",
-		"BucketName": "example_bucket",
+		"BucketName": "example_bucket"
 	  }
 	}
 	```
@@ -178,7 +178,7 @@ Then, add the specif `ConnectorConfig` node within your *appsettings.json* file:
 Once configured, create a new SharpConnector client, specifying the payload type (e.g., string):
 
 ```csharp
-SharpConnectorClient<string> client = new SharpConnectorClient<string>()
+SharpConnectorClient<string> client = new SharpConnectorClient<string>();
 ```
 
 Alternatively, you can integrate SharpConnector client using dependency injection. Here how to register the SharpConnector service with a simple string payload type:
@@ -187,6 +187,7 @@ Alternatively, you can integrate SharpConnector client using dependency injectio
 // Register the SharpConnector services with string payload type.
 builder.Services.AddSharpConnectorServices<string>();
 ```
+`AddSharpConnectorServices<T>()` registers the client as a singleton (recommended). `AddSharpConnectorServicesScoped<T>()` is also available, but it opens a new database connection for every scope.
 This setup provides flexibility in working with different payload types and makes SharpConnector easy to use within dependency injection configurations.
 
 ## API Overview
@@ -201,7 +202,9 @@ The main entry point is the generic `ISharpConnectorClient<T>`:
 - `Task<bool> InsertAsync(string key, T value, TimeSpan expiration, CancellationToken ct = default)`
 - `bool InsertMany(Dictionary<string,T> values)`
 - `bool InsertMany(Dictionary<string,T> values, TimeSpan expiration)`
-- `Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)`
+- `Task<bool> InsertManyAsync(Dictionary<string,T> values)`
+- `Task<bool> InsertManyAsync(Dictionary<string,T> values, TimeSpan expiration)`
+- `Task<IReadOnlyCollection<string>> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)`
 - `bool Update(string key, T value)`
 - `Task<bool> UpdateAsync(string key, T value, CancellationToken ct = default)`
 - `bool Delete(string key)`
@@ -210,6 +213,16 @@ The main entry point is the generic `ISharpConnectorClient<T>`:
 - `Task<bool> ExistsAsync(string key, CancellationToken ct = default)`
 - `IEnumerable<T> Query(Func<T,bool> filter)`
 - `Task<IEnumerable<T>> QueryAsync(Func<T,bool> filter, CancellationToken ct = default)`
+
+### Operation semantics
+- `Insert` / `InsertMany` behave as an upsert: an existing key is overwritten (MongoDB and LiteDB enforce a unique index on `Key`).
+- `Update` only modifies existing keys and returns `false` when the key does not exist.
+- `Delete` returns `true` only when an item was actually removed.
+- `InsertMany` throws `ArgumentException` when a key is null/empty or a value is null.
+- Expired items are never returned by `Get`, `GetAll`, `Exists` or `Query`, even on backends without native TTL.
+- `Username` is trimmed, `Password` is used verbatim.
+- Cassandra `ConnectionString` accepts a comma-separated list of contact points (`host`, `host:port`, `[IPv6]:port`); all ports must match.
+- Memcached `ConnectionString` accepts a comma-separated list of `host:port` servers.
 
 ## Contributing
 Thanks for considering a contribution! Please fork, branch, and open a PR.

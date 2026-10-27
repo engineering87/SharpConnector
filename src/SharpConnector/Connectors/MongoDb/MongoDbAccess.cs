@@ -26,6 +26,11 @@ namespace SharpConnector.Connectors.MongoDb
             _client = new MongoClient(mongoDbConfig.ConnectionString);
             var database = _client.GetDatabase(mongoDbConfig.DatabaseName);
             Collection = database.GetCollection<MongoConnectorEntity>(mongoDbConfig.CollectionName);
+
+            // Key identifies an entity: enforce uniqueness at the database level.
+            Collection.Indexes.CreateOne(new CreateIndexModel<MongoConnectorEntity>(
+                Builders<MongoConnectorEntity>.IndexKeys.Ascending(x => x.Key),
+                new CreateIndexOptions { Unique = true, Name = "ux_Key" }));
         }
 
         /// <summary>

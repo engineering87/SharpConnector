@@ -14,7 +14,8 @@ namespace SharpConnector.Connectors.Couchbase
         private readonly Lazy<Task<ICluster>> _cluster;
         private readonly string _bucketName;
         private readonly SemaphoreSlim _bucketLock = new(1, 1);
-        private IBucket _bucket;
+        private volatile IBucket _bucket;
+        private int _disposed;
 
         public CouchbaseAccess(CouchbaseConfig config)
         {
@@ -41,8 +42,11 @@ namespace SharpConnector.Connectors.Couchbase
 
         public async Task<IBucket> GetBucketAsync()
         {
-            if (_bucket != null)
-                return _bucket;
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+
+            var bucket = _bucket;
+            if (bucket != null)
+                return bucket;
 
             await _bucketLock.WaitAsync().ConfigureAwait(false);
             try
@@ -72,19 +76,30 @@ namespace SharpConnector.Connectors.Couchbase
 
         public async ValueTask DisposeAsync()
         {
-            if (_bucket != null)
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+                return;
+
+            await _bucketLock.WaitAsync().ConfigureAwait(false);
+            try
             {
-                await _bucket.DisposeAsync();
+                var bucket = _bucket;
                 _bucket = null;
+                if (bucket != null)
+                    await bucket.DisposeAsync().ConfigureAwait(false);
             }
-
-            if (_cluster.IsValueCreated)
+            finally
             {
-                var cluster = await _cluster.Value;
-                await cluster.DisposeAsync();
+                try
+                {
+                    if (_cluster.IsValueCreated && _cluster.Value.IsCompletedSuccessfully)
+                        await _cluster.Value.Result.DisposeAsync().ConfigureAwait(false);
+                }
+                finally
+                {
+                    _bucketLock.Release();
+                    _bucketLock.Dispose();
+                }
             }
-
-            _bucketLock.Dispose();
         }
     }
 }

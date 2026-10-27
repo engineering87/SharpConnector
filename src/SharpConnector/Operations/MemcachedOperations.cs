@@ -1,4 +1,4 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
@@ -187,7 +187,7 @@ namespace SharpConnector.Operations
         /// </summary>
         /// <param name="values">The values to store.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
-        /// <returns>True if all insertions were successful; otherwise, false.</returns>
+        /// <returns>The keys generated for each inserted value, in input order; an empty collection if the insertion failed.</returns>
         public override async Task<IReadOnlyCollection<string>> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)
         {
             ArgumentNullException.ThrowIfNull(values);
@@ -255,7 +255,7 @@ namespace SharpConnector.Operations
         /// A task that represents the asynchronous operation. The task result is
         /// <c>true</c> if all items were inserted successfully; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when a key is null or empty, or a value is null.</exception>
         /// <exception cref="OperationCanceledException">Thrown if the operation is canceled.</exception>
         public override async Task<bool> InsertManyAsync(Dictionary<string, T> values, CancellationToken ct = default)
         {
@@ -283,7 +283,7 @@ namespace SharpConnector.Operations
         /// A task that represents the asynchronous operation. The task result is
         /// <c>true</c> if all items were inserted successfully; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when a key is null or empty, or a value is null.</exception>
         /// <exception cref="OperationCanceledException">Thrown if the operation is canceled.</exception>
         public override async Task<bool> InsertManyAsync(Dictionary<string, T> values, TimeSpan expiration, CancellationToken ct = default)
         {

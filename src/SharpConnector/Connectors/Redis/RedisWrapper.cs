@@ -298,8 +298,14 @@ namespace SharpConnector.Connectors.Redis
         /// </summary>
         /// <param name="connectorEntity">The ConnectorEntity to update.</param>
         /// <param name="databaseNumber">The Redis database.</param>
-        public bool Update(ConnectorEntity connectorEntity, int databaseNumber = 0) =>
-            Insert(connectorEntity, databaseNumber);
+        public bool Update(ConnectorEntity connectorEntity, int databaseNumber = 0)
+        {
+            return GetDatabase(databaseNumber).StringSet(
+                connectorEntity.Key,
+                Serialize(connectorEntity),
+                ToExpiration(connectorEntity.Expiration),
+                When.Exists);
+        }
 
         /// <summary>
         /// Asynchronously updates the specified Key.
@@ -307,8 +313,17 @@ namespace SharpConnector.Connectors.Redis
         /// <param name="connectorEntity">The ConnectorEntity to update.</param>
         /// <param name="databaseNumber">The Redis database.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
-        public Task<bool> UpdateAsync(ConnectorEntity connectorEntity, int databaseNumber = 0, CancellationToken ct = default) =>
-            InsertAsync(connectorEntity, databaseNumber, ct);
+        public async Task<bool> UpdateAsync(ConnectorEntity connectorEntity, int databaseNumber = 0, CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            return await GetDatabase(databaseNumber).StringSetAsync(
+                connectorEntity.Key,
+                Serialize(connectorEntity),
+                ToExpiration(connectorEntity.Expiration),
+                When.Exists)
+                .ConfigureAwait(false);
+        }
 
         /// <summary>
         /// Checks if an item exists by its key.

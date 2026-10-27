@@ -30,6 +30,7 @@ namespace SharpConnector.Connectors.LiteDb
             var collectionName = liteDbConfig.CollectionName;
             Collection = _liteDatabase.GetCollection<LiteDbConnectorEntity>(collectionName);
             RawCollection = _liteDatabase.GetCollection(Collection.Name);
+            Collection.EnsureIndex(x => x.Key, unique: true);
         }
 
         /// <summary>

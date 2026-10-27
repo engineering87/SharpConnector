@@ -1,4 +1,4 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Microsoft.Extensions.Configuration;
 using SharpConnector.Enums;
@@ -39,7 +39,7 @@ namespace SharpConnector.Configuration
             ConnectionString = configuration[AppConfigParameterEnums.connectionstring.ToString()]?.Trim();
             BucketName = configuration[AppConfigParameterEnums.bucketname.ToString()]?.Trim();
             Username = configuration[AppConfigParameterEnums.username.ToString()]?.Trim();
-            Password = configuration[AppConfigParameterEnums.password.ToString()]?.Trim();
+            Password = configuration[AppConfigParameterEnums.password.ToString()];
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
@@ -42,7 +42,7 @@ namespace SharpConnector.Interfaces
         Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default);
 
         /// <summary>
-        /// Inserts a new item with a specified key and value.
+        /// Inserts a new item with a specified key and value. Existing keys are overwritten.
         /// </summary>
         /// <param name="key">The key of the item to insert.</param>
         /// <param name="value">The value (payload) of the item to insert.</param>
@@ -50,17 +50,16 @@ namespace SharpConnector.Interfaces
         bool Insert(string key, T value);
 
         /// <summary>
-        /// Inserts a new item with a specified key, value, and expiration time.
+        /// Inserts a new item with a specified key, value, and expiration time. Existing keys are overwritten.
         /// </summary>
         /// <param name="key">The key of the item to insert.</param>
         /// <param name="value">The value (payload) of the item to insert.</param>
         /// <param name="expiration">The expiration time for the item.</param>
-        /// <param name="ct">A token to cancel the asynchronous operation.</param>
         /// <returns>True if the insertion was successful, otherwise false.</returns>
         bool Insert(string key, T value, TimeSpan expiration);
 
         /// <summary>
-        /// Asynchronously inserts a new item with a specified key and value.
+        /// Asynchronously inserts a new item with a specified key and value. Existing keys are overwritten.
         /// </summary>
         /// <param name="key">The key of the item to insert.</param>
         /// <param name="value">The value (payload) of the item to insert.</param>
@@ -69,7 +68,7 @@ namespace SharpConnector.Interfaces
         Task<bool> InsertAsync(string key, T value, CancellationToken ct = default);
 
         /// <summary>
-        /// Asynchronously inserts a new item with a specified key, value, and expiration time.
+        /// Asynchronously inserts a new item with a specified key, value, and expiration time. Existing keys are overwritten.
         /// </summary>
         /// <param name="key">The key of the item to insert.</param>
         /// <param name="value">The value (payload) of the item to insert.</param>
@@ -79,14 +78,14 @@ namespace SharpConnector.Interfaces
         Task<bool> InsertAsync(string key, T value, TimeSpan expiration, CancellationToken ct = default);
 
         /// <summary>
-        /// Inserts multiple items at once.
+        /// Inserts multiple items at once. Existing keys are overwritten.
         /// </summary>
         /// <param name="values">A dictionary containing keys and their corresponding payloads to insert.</param>
         /// <returns>True if all insertions were successful, otherwise false.</returns>
         bool InsertMany(Dictionary<string, T> values);
 
         /// <summary>
-        /// Inserts multiple items at once with an expiration time.
+        /// Inserts multiple items at once with an expiration time. Existing keys are overwritten.
         /// </summary>
         /// <param name="values">A dictionary containing keys and their corresponding payloads to insert.</param>
         /// <param name="expiration">The expiration time for the items.</param>
@@ -94,7 +93,7 @@ namespace SharpConnector.Interfaces
         bool InsertMany(Dictionary<string, T> values, TimeSpan expiration);
 
         /// <summary>
-        /// Inserts multiple items with a specified expiration time.
+        /// Asynchronously inserts multiple items. Existing keys are overwritten.
         /// </summary>
         /// <param name="values">A dictionary of items to insert, keyed by their unique keys.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
@@ -102,7 +101,7 @@ namespace SharpConnector.Interfaces
         Task<bool> InsertManyAsync(Dictionary<string, T> values, CancellationToken ct = default);
 
         /// <summary>
-        /// Inserts multiple items with a specified expiration time.
+        /// Inserts multiple items with a specified expiration time. Existing keys are overwritten.
         /// </summary>
         /// <param name="values">A dictionary of items to insert, keyed by their unique keys.</param>
         /// <param name="expiration">The time after which the items expire.</param>
@@ -126,7 +125,7 @@ namespace SharpConnector.Interfaces
         /// Deletes an item by its key.
         /// </summary>
         /// <param name="key">The key of the item to delete.</param>
-        /// <returns>True if the deletion was successful, otherwise false.</returns>
+        /// <returns>True if the item existed and was removed; otherwise, false.</returns>
         bool Delete(string key);
 
         /// <summary>
@@ -142,7 +141,7 @@ namespace SharpConnector.Interfaces
         /// </summary>
         /// <param name="key">The key of the item to update.</param>
         /// <param name="value">The new value to set for the item.</param>
-        /// <returns>True if the update was successful, otherwise false.</returns>
+        /// <returns>True if the item existed and was updated; false if the key does not exist.</returns>
         bool Update(string key, T value);
 
         /// <summary>
