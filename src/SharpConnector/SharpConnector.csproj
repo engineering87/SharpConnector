@@ -9,9 +9,10 @@
     <Description>A flexible solution that accelerates integrations with multiple NoSQL databases</Description>
     <PackageProjectUrl>https://github.com/engineering87/SharpConnector</PackageProjectUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>4.0.2</Version>
-    <AssemblyVersion>4.0.2</AssemblyVersion>
-    <FileVersion>4.0.2</FileVersion>
+    <Version>5.0.0</Version>
+    <AssemblyVersion>5.0.0</AssemblyVersion>
+    <FileVersion>5.0.0</FileVersion>
+    <PackageReleaseNotes>5.0.0 - BREAKING: AddSharpConnectorServices no longer registers MVC controllers (call AddControllers() in the host). RavenDB and DynamoDB configurations are now validated and throw ArgumentException when invalid. Update/Delete semantics aligned across connectors. New: Redis keyprefix, RavenDB client certificate authentication (certificatepath, certificatepassword). Fixes: expiration handling, upserts, Cassandra parsing/TTL/paging, Couchbase authentication and disposal, sync-over-async deadlock mitigation.</PackageReleaseNotes>
     <PackageIcon>logo.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Title>SharpConnector</Title>
