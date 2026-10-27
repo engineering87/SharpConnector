@@ -171,12 +171,8 @@ namespace SharpConnector.Connectors.Couchbase
         /// </summary>
         /// <param name="key">The key of the entity to check.</param>
         /// <returns>True if the entity exists; otherwise, false.</returns>
-        public bool Exists(string key)
-        {
-            var collection = GetCollectionAsync(CancellationToken.None).GetAwaiter().GetResult();
-            var result = collection.ExistsAsync(key).GetAwaiter().GetResult();
-            return result.Exists;
-        }
+        public bool Exists(string key) =>
+            AsyncHelper.RunSync(() => ExistsAsync(key));
 
         /// <summary>
         /// Checks whether an entity exists in the Couchbase bucket by its key asynchronously.

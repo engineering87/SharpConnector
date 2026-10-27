@@ -16,6 +16,9 @@ namespace SharpConnector.Enums
         region,
         serviceurl,
         usehttp,
-        tablename
+        tablename,
+        keyprefix,
+        certificatepath,
+        certificatepassword
     }
 }

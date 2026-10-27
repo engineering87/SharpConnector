@@ -3,6 +3,8 @@
 using Raven.Client.Documents;
 using SharpConnector.Configuration;
 using System;
+using System.IO;
+using System.Security.Cryptography.X509Certificates;
 
 namespace SharpConnector.Connectors.RavenDb
 {
@@ -21,12 +23,24 @@ namespace SharpConnector.Connectors.RavenDb
                 var documentStore = new DocumentStore
                 {
                     Urls = [ravenDbConfig.ConnectionString],
-                    Database = ravenDbConfig.DatabaseName
+                    Database = ravenDbConfig.DatabaseName,
+                    Certificate = LoadCertificate(ravenDbConfig)
                 };
 
                 documentStore.Initialize();
                 return documentStore;
             });
+        }
+
+        internal static X509Certificate2 LoadCertificate(RavenDbConfig ravenDbConfig)
+        {
+            if (string.IsNullOrWhiteSpace(ravenDbConfig.CertificatePath))
+                return null;
+
+            if (!File.Exists(ravenDbConfig.CertificatePath))
+                throw new FileNotFoundException("RavenDB client certificate not found.", ravenDbConfig.CertificatePath);
+
+            return X509CertificateLoader.LoadPkcs12FromFile(ravenDbConfig.CertificatePath, ravenDbConfig.CertificatePassword);
         }
 
         /// <summary>

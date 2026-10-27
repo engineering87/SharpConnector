@@ -43,6 +43,13 @@ namespace SharpConnector.Configuration
             bool.TryParse(configuration[AppConfigParameterEnums.usehttp.ToString()], out var useHttp);
             UseHttp = useHttp;
             TableName = configuration[AppConfigParameterEnums.tablename.ToString()]?.Trim();
+
+            if (string.IsNullOrWhiteSpace(TableName))
+                throw new ArgumentException("DynamoDB table name is required.", nameof(configuration));
+            if (string.IsNullOrWhiteSpace(Region) && string.IsNullOrWhiteSpace(ServiceUrl))
+                throw new ArgumentException("DynamoDB requires either a region or a service URL.", nameof(configuration));
+            if (!string.IsNullOrWhiteSpace(ServiceUrl) && !Uri.TryCreate(ServiceUrl, UriKind.Absolute, out _))
+                throw new ArgumentException($"DynamoDB service URL '{ServiceUrl}' is not a valid absolute URL.", nameof(configuration));
         }
     }
 }

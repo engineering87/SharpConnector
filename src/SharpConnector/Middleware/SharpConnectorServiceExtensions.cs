@@ -22,8 +22,6 @@ namespace SharpConnector.Middleware
         /// <returns>The IServiceCollection with the added service.</returns>
         public static IServiceCollection AddSharpConnectorServicesScoped<T>(this IServiceCollection services)
         {
-            // Adds MVC controllers to the service collection, necessary for handling HTTP requests.
-            services.AddControllers();
 
             // Registers the ISharpConnectorClient<T> as Scoped, meaning it will have a different instance for each HTTP request.
             services.AddScoped<ISharpConnectorClient<T>>(sp =>
@@ -48,8 +46,6 @@ namespace SharpConnector.Middleware
         /// <returns>The IServiceCollection with the added service.</returns>
         public static IServiceCollection AddSharpConnectorServicesSingleton<T>(this IServiceCollection services)
         {
-            // Adds MVC controllers to the service collection, necessary for handling HTTP requests.
-            services.AddControllers();
 
             // Registers the ISharpConnectorClient<T> as Singleton, meaning only one instance will exist for the entire application.
             services.AddSingleton<ISharpConnectorClient<T>>(sp =>

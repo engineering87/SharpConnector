@@ -62,9 +62,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// <param name="key">The document key.</param>
         public ConnectorEntity Get(string key)
         {
-            return GetAsync(key, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => GetAsync(key, CancellationToken.None));
         }
 
         /// <summary>
@@ -102,9 +100,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// </summary>
         public List<ConnectorEntity> GetAll()
         {
-            return GetAllAsync(CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => GetAllAsync(CancellationToken.None));
         }
 
         /// <summary>
@@ -151,9 +147,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// <param name="connectorEntity">The document to insert.</param>
         public bool Insert(ConnectorEntity connectorEntity)
         {
-            return InsertAsync(connectorEntity, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => InsertAsync(connectorEntity, CancellationToken.None));
         }
 
         /// <summary>
@@ -178,9 +172,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// <param name="connectorEntities">The documents to insert.</param>
         public bool InsertMany(List<ConnectorEntity> connectorEntities)
         {
-            return InsertManyAsync(connectorEntities, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => InsertManyAsync(connectorEntities, CancellationToken.None));
         }
 
         /// <summary>
@@ -208,9 +200,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// <param name="connectorEntity">The document to update.</param>
         public bool Update(ConnectorEntity connectorEntity)
         {
-            return UpdateAsync(connectorEntity, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => UpdateAsync(connectorEntity, CancellationToken.None));
         }
 
         /// <summary>
@@ -241,9 +231,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// <param name="key">The key of the document to delete.</param>
         public bool Delete(string key)
         {
-            return DeleteAsync(key, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => DeleteAsync(key, CancellationToken.None));
         }
 
         /// <summary>
@@ -282,9 +270,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// <param name="key">The document key.</param>
         public bool Exists(string key)
         {
-            return ExistsAsync(key, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => ExistsAsync(key, CancellationToken.None));
         }
 
         /// <summary>
@@ -303,9 +289,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// <param name="filter">Predicate used to filter items.</param>
         public List<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter)
         {
-            return QueryAsync(filter, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => QueryAsync(filter, CancellationToken.None));
         }
 
         /// <summary>

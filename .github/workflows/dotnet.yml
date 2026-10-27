@@ -17,6 +17,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -24,18 +26,24 @@ jobs:
         node-version: 20
 
     - name: Install Commitlint dependencies
-      run: npm install --save-dev @commitlint/config-conventional
+      run: npm install --no-save @commitlint/cli @commitlint/config-conventional
+
+    - name: Lint commit messages
+      if: github.event_name == 'pull_request'
+      run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 9.0.x
+        dotnet-version: |
+          9.0.x
+          10.0.x
 
     - name: Restore dependencies
-      run: dotnet restore src/SharpConnector/SharpConnector.csproj
+      run: dotnet restore src/SharpConnector/SharpConnector.sln
 
     - name: Build
-      run: dotnet build src/SharpConnector/SharpConnector.csproj --no-restore
+      run: dotnet build src/SharpConnector/SharpConnector.sln --no-restore --configuration Release
 
     - name: Test
-      run: dotnet test src/SharpConnector.Tests/SharpConnector.Tests.csproj --no-build --verbosity normal
+      run: dotnet test src/SharpConnector.Tests/SharpConnector.Tests.csproj --no-build --configuration Release --verbosity normal

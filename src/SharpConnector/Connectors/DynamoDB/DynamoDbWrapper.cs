@@ -38,13 +38,8 @@ namespace SharpConnector.Connectors.DynamoDb
         /// Get an item by key (sync).
         /// </summary>
         /// <param name="key">The key of the item.</param>
-        public ConnectorEntity Get(string key)
-        {
-            var document = _table.GetItemAsync(key).GetAwaiter().GetResult();
-            return document != null
-                ? JsonConvert.DeserializeObject<ConnectorEntity>(document.ToJson()).DiscardIfExpired()
-                : null;
-        }
+        public ConnectorEntity Get(string key) =>
+            AsyncHelper.RunSync(() => GetAsync(key));
 
         /// <summary>
         /// Get an item by key (async).
@@ -62,22 +57,8 @@ namespace SharpConnector.Connectors.DynamoDb
         /// <summary>
         /// Get all items in the table (sync).
         /// </summary>
-        public IEnumerable<ConnectorEntity> GetAll()
-        {
-            var scanConfig = new ScanOperationConfig();
-            var search = _table.Scan(scanConfig);
-
-            var result = new List<ConnectorEntity>();
-            do
-            {
-                var documents = search.GetNextSetAsync().GetAwaiter().GetResult();
-                result.AddRange(documents
-                    .Select(doc => JsonConvert.DeserializeObject<ConnectorEntity>(doc.ToJson()))
-                    .WhereNotExpired());
-            } while (!search.IsDone);
-
-            return result;
-        }
+        public IEnumerable<ConnectorEntity> GetAll() =>
+            AsyncHelper.RunSync(() => GetAllAsync());
 
         /// <summary>
         /// Get all items in the table (async).
@@ -105,12 +86,8 @@ namespace SharpConnector.Connectors.DynamoDb
         /// Insert (Put) an item (sync).
         /// </summary>
         /// <param name="connectorEntity">The entity to insert.</param>
-        public bool Insert(ConnectorEntity connectorEntity)
-        {
-            var document = Document.FromJson(JsonConvert.SerializeObject(connectorEntity));
-            _table.PutItemAsync(document).GetAwaiter().GetResult();
-            return true;
-        }
+        public bool Insert(ConnectorEntity connectorEntity) =>
+            AsyncHelper.RunSync(() => InsertAsync(connectorEntity));
 
         /// <summary>
         /// Insert (Put) an item (async).
@@ -128,18 +105,8 @@ namespace SharpConnector.Connectors.DynamoDb
         /// Insert multiple items (sync).
         /// </summary>
         /// <param name="connectorEntities">The entities to insert.</param>
-        public bool InsertMany(List<ConnectorEntity> connectorEntities)
-        {
-            var batchWrite = _table.CreateBatchWrite();
-            foreach (var entity in connectorEntities)
-            {
-                var document = Document.FromJson(JsonConvert.SerializeObject(entity));
-                batchWrite.AddDocumentToPut(document);
-            }
-
-            batchWrite.ExecuteAsync().GetAwaiter().GetResult();
-            return true;
-        }
+        public bool InsertMany(List<ConnectorEntity> connectorEntities) =>
+            AsyncHelper.RunSync(() => InsertManyAsync(connectorEntities));
 
         /// <summary>
         /// Insert multiple items (async).
@@ -187,7 +154,7 @@ namespace SharpConnector.Connectors.DynamoDb
         /// <param name="key">The key of the item to delete.</param>
         public bool Delete(string key)
         {
-            return DeleteAsync(key).GetAwaiter().GetResult();
+            return AsyncHelper.RunSync(() => DeleteAsync(key));
         }
 
         /// <summary>
@@ -220,7 +187,7 @@ namespace SharpConnector.Connectors.DynamoDb
         /// <param name="connectorEntity">The entity to update.</param>
         public bool Update(ConnectorEntity connectorEntity)
         {
-            return UpdateAsync(connectorEntity).GetAwaiter().GetResult();
+            return AsyncHelper.RunSync(() => UpdateAsync(connectorEntity));
         }
 
         /// <summary>

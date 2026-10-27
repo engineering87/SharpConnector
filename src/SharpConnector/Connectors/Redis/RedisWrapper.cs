@@ -1,10 +1,11 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
 using StackExchange.Redis;
+using StackExchange.Redis.KeyspaceIsolation;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Threading;
@@ -14,7 +15,9 @@ namespace SharpConnector.Connectors.Redis
 {
     public class RedisWrapper : IDisposable
     {
+        private const int ReadBatchSize = 256;
         private readonly RedisAccess _redisAccess;
+        private readonly string _keyPrefix;
 
         /// <summary>
         /// Create a new RedisWrapper instance.
@@ -22,6 +25,7 @@ namespace SharpConnector.Connectors.Redis
         /// <param name="redisConfig">The Redis connector config.</param>
         public RedisWrapper(RedisConfig redisConfig)
         {
+            _keyPrefix = redisConfig.KeyPrefix ?? string.Empty;
             _redisAccess = new RedisAccess(redisConfig);
         }
 
@@ -35,10 +39,27 @@ namespace SharpConnector.Connectors.Redis
         }
 
         /// <summary>
-        /// Get a Redis database.
+        /// Get a Redis database; keys are transparently prefixed when a KeyPrefix is configured.
         /// </summary>
-        private IDatabase GetDatabase(int databaseNumber) =>
+        private IDatabase GetDatabase(int databaseNumber)
+        {
+            var database = _redisAccess.Connection.GetDatabase(databaseNumber);
+            return _keyPrefix.Length == 0
+                ? database
+                : database.WithKeyPrefix(_keyPrefix);
+        }
+
+        /// <summary>
+        /// Get the raw (non-prefixed) database, used with fully-qualified keys returned by SCAN.
+        /// </summary>
+        private IDatabase GetRawDatabase(int databaseNumber) =>
             _redisAccess.Connection.GetDatabase(databaseNumber);
+
+        /// <summary>
+        /// Pattern used to scan keys owned by this connector.
+        /// </summary>
+        internal static RedisValue BuildScanPattern(string keyPrefix) =>
+            string.IsNullOrEmpty(keyPrefix) ? default : keyPrefix + "*";
 
         /// <summary>
         /// Serialize an object to JSON.
@@ -87,7 +108,8 @@ namespace SharpConnector.Connectors.Redis
         public IEnumerable<ConnectorEntity> GetAll(int databaseNumber = 0)
         {
             var connection = _redisAccess.Connection;
-            var database = GetDatabase(databaseNumber);
+            var database = GetRawDatabase(databaseNumber);
+            var pattern = BuildScanPattern(_keyPrefix);
             var entities = new List<ConnectorEntity>();
 
             foreach (var endpoint in connection.GetEndPoints())
@@ -97,7 +119,7 @@ namespace SharpConnector.Connectors.Redis
                 if (server.IsReplica)
                     continue;
 
-                var keys = server.Keys(databaseNumber);
+                var keys = server.Keys(databaseNumber, pattern);
 
                 foreach (var key in keys)
                 {
@@ -132,7 +154,8 @@ namespace SharpConnector.Connectors.Redis
         public async Task<IEnumerable<ConnectorEntity>> GetAllAsync(int databaseNumber = 0, CancellationToken ct = default)
         {
             var connection = _redisAccess.Connection;
-            var database = GetDatabase(databaseNumber);
+            var database = GetRawDatabase(databaseNumber);
+            var pattern = BuildScanPattern(_keyPrefix);
             var entities = new List<ConnectorEntity>();
 
             foreach (var endpoint in connection.GetEndPoints())
@@ -144,20 +167,30 @@ namespace SharpConnector.Connectors.Redis
                 if (server.IsReplica)
                     continue;
 
-                var keys = server.Keys(databaseNumber);
-                var tasks = new List<Task<ConnectorEntity>>();
-
-                foreach (var key in keys)
+                var batch = new List<Task<ConnectorEntity>>(ReadBatchSize);
+                await foreach (var key in server.KeysAsync(databaseNumber, pattern).WithCancellation(ct).ConfigureAwait(false))
                 {
-                    ct.ThrowIfCancellationRequested();
-                    tasks.Add(GetEntityAsync(database, key, ct));
+                    batch.Add(GetEntityAsync(database, key, ct));
+                    if (batch.Count < ReadBatchSize)
+                        continue;
+
+                    await FlushBatchAsync(batch, entities).ConfigureAwait(false);
                 }
 
-                var results = await Task.WhenAll(tasks).ConfigureAwait(false);
-                entities.AddRange(results.Where(e => e != null));
+                await FlushBatchAsync(batch, entities).ConfigureAwait(false);
             }
 
             return entities;
+        }
+
+        private static async Task FlushBatchAsync(List<Task<ConnectorEntity>> batch, List<ConnectorEntity> entities)
+        {
+            if (batch.Count == 0)
+                return;
+
+            var results = await Task.WhenAll(batch).ConfigureAwait(false);
+            entities.AddRange(results.Where(e => e != null));
+            batch.Clear();
         }
 
         private static async Task<ConnectorEntity> GetEntityAsync(IDatabase database, RedisKey key, CancellationToken ct)
@@ -236,7 +269,7 @@ namespace SharpConnector.Connectors.Redis
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
         public async Task<bool> InsertManyAsync(List<ConnectorEntity> connectorEntities, int databaseNumber = 0, CancellationToken ct = default)
         {
-            var database = _redisAccess.Connection.GetDatabase(databaseNumber);
+            var database = GetDatabase(databaseNumber);
             var tasks = new List<Task<bool>>();
 
             foreach (var entity in connectorEntities)
@@ -257,7 +290,7 @@ namespace SharpConnector.Connectors.Redis
         public bool InsertMany(List<ConnectorEntity> connectorEntities, int databaseNumber = 0)
         {
             var result = true;
-            var database = _redisAccess.Connection.GetDatabase(databaseNumber);
+            var database = GetDatabase(databaseNumber);
             foreach (var entity in connectorEntities)
             {
                 var currentResult = database.StringSet(

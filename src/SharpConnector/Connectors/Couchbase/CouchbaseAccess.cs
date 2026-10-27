@@ -27,17 +27,14 @@ namespace SharpConnector.Connectors.Couchbase
 
         private async Task<ICluster> ConnectClusterAsync(CouchbaseConfig config)
         {
-            var clusterOptions = new ClusterOptions
-            {
-                UserName = config.Username,
-                Password = config.Password
-            };
-            return await Cluster.ConnectAsync(config.ConnectionString, clusterOptions);
+            var clusterOptions = new ClusterOptions()
+                .WithPasswordAuthentication(config.Username, config.Password);
+            return await Cluster.ConnectAsync(config.ConnectionString, clusterOptions).ConfigureAwait(false);
         }
 
         public async Task<ICluster> GetClusterAsync()
         {
-            return await _cluster.Value;
+            return await _cluster.Value.ConfigureAwait(false);
         }
 
         public async Task<IBucket> GetBucketAsync()

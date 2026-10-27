@@ -339,7 +339,7 @@ namespace SharpConnector.Operations
         {
             // CouchbaseWrapper implements IAsyncDisposable; dispose synchronously here.
             if (_couchbaseWrapper != null)
-                _couchbaseWrapper.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                AsyncHelper.RunSync(() => _couchbaseWrapper.DisposeAsync().AsTask());
             base.Dispose();
         }
     }
