@@ -4,6 +4,7 @@ using Amazon.DynamoDBv2.DocumentModel;
 using Newtonsoft.Json;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using SharpConnector.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,7 +41,7 @@ namespace SharpConnector.Connectors.DynamoDb
         {
             var document = _table.GetItemAsync(key).GetAwaiter().GetResult();
             return document != null
-                ? JsonConvert.DeserializeObject<ConnectorEntity>(document.ToJson())
+                ? JsonConvert.DeserializeObject<ConnectorEntity>(document.ToJson()).DiscardIfExpired()
                 : null;
         }
 
@@ -53,7 +54,7 @@ namespace SharpConnector.Connectors.DynamoDb
         {
             var document = await _table.GetItemAsync(key, ct).ConfigureAwait(false);
             return document != null
-                ? JsonConvert.DeserializeObject<ConnectorEntity>(document.ToJson())
+                ? JsonConvert.DeserializeObject<ConnectorEntity>(document.ToJson()).DiscardIfExpired()
                 : null;
         }
 
@@ -69,8 +70,9 @@ namespace SharpConnector.Connectors.DynamoDb
             do
             {
                 var documents = search.GetNextSetAsync().GetAwaiter().GetResult();
-                result.AddRange(documents.Select(doc =>
-                    JsonConvert.DeserializeObject<ConnectorEntity>(doc.ToJson())));
+                result.AddRange(documents
+                    .Select(doc => JsonConvert.DeserializeObject<ConnectorEntity>(doc.ToJson()))
+                    .WhereNotExpired());
             } while (!search.IsDone);
 
             return result;
@@ -90,8 +92,9 @@ namespace SharpConnector.Connectors.DynamoDb
             {
                 ct.ThrowIfCancellationRequested();
                 var documents = await search.GetNextSetAsync(ct).ConfigureAwait(false);
-                result.AddRange(documents.Select(doc =>
-                    JsonConvert.DeserializeObject<ConnectorEntity>(doc.ToJson())));
+                result.AddRange(documents
+                    .Select(doc => JsonConvert.DeserializeObject<ConnectorEntity>(doc.ToJson()))
+                    .WhereNotExpired());
             } while (!search.IsDone);
 
             return result;
@@ -222,8 +225,7 @@ namespace SharpConnector.Connectors.DynamoDb
         /// <param name="key">The unique key of the item.</param>
         public bool Exists(string key)
         {
-            var document = _table.GetItemAsync(key).GetAwaiter().GetResult();
-            return document != null;
+            return Get(key) != null;
         }
 
         /// <summary>
@@ -233,8 +235,7 @@ namespace SharpConnector.Connectors.DynamoDb
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
         public async Task<bool> ExistsAsync(string key, CancellationToken ct = default)
         {
-            var document = await _table.GetItemAsync(key, ct).ConfigureAwait(false);
-            return document != null;
+            return await GetAsync(key, ct).ConfigureAwait(false) != null;
         }
 
         /// <summary>

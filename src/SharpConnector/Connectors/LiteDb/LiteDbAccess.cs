@@ -10,6 +10,7 @@ namespace SharpConnector.Connectors.LiteDb
     public class LiteDbAccess : IDisposable
     {
         public ILiteCollection<LiteDbConnectorEntity> Collection { get; }
+        public ILiteCollection<BsonDocument> RawCollection { get; }
         private readonly LiteDatabase _liteDatabase;
 
         private bool _disposed;
@@ -28,6 +29,7 @@ namespace SharpConnector.Connectors.LiteDb
             _liteDatabase = new LiteDatabase(liteDbConfig.ConnectionString);
             var collectionName = liteDbConfig.CollectionName;
             Collection = _liteDatabase.GetCollection<LiteDbConnectorEntity>(collectionName);
+            RawCollection = _liteDatabase.GetCollection(Collection.Name);
         }
 
         /// <summary>

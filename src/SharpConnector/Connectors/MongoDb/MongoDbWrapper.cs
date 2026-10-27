@@ -3,6 +3,7 @@
 using MongoDB.Driver;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using SharpConnector.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,7 +44,8 @@ namespace SharpConnector.Connectors.MongoDb
 
             return _mongoDbAccess.Collection
                 .Find(filter)
-                .FirstOrDefault();
+                .FirstOrDefault()
+                .DiscardIfExpired();
         }
 
         /// <summary>
@@ -55,10 +57,12 @@ namespace SharpConnector.Connectors.MongoDb
         {
             var filter = Builders<MongoConnectorEntity>.Filter.Eq(x => x.Key, key);
 
-            return await _mongoDbAccess.Collection
+            var entity = await _mongoDbAccess.Collection
                 .Find(filter)
                 .FirstOrDefaultAsync(ct)
                 .ConfigureAwait(false);
+
+            return entity.DiscardIfExpired();
         }
 
         /// <summary>
@@ -68,6 +72,8 @@ namespace SharpConnector.Connectors.MongoDb
         {
             return _mongoDbAccess.Collection
                 .Find(FilterDefinition<MongoConnectorEntity>.Empty)
+                .ToList()
+                .WhereNotExpired()
                 .ToList();
         }
 
@@ -77,10 +83,12 @@ namespace SharpConnector.Connectors.MongoDb
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
         public async Task<List<MongoConnectorEntity>> GetAllAsync(CancellationToken ct = default)
         {
-            return await _mongoDbAccess.Collection
+            var entities = await _mongoDbAccess.Collection
                 .Find(FilterDefinition<MongoConnectorEntity>.Empty)
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
+
+            return entities.WhereNotExpired().ToList();
         }
 
         /// <summary>
@@ -180,7 +188,8 @@ namespace SharpConnector.Connectors.MongoDb
             var filter = Builders<MongoConnectorEntity>.Filter.Eq(x => x.Key, connectorEntity.Key);
             var update = Builders<MongoConnectorEntity>.Update
                 .Set(x => x.Payload, connectorEntity.Payload)
-                .Set(x => x.Expiration, connectorEntity.Expiration);
+                .Set(x => x.Expiration, connectorEntity.Expiration)
+                .Set(x => x.ExpiresAt, connectorEntity.ExpiresAt);
 
             var result = _mongoDbAccess.Collection.UpdateOne(filter, update);
             return result.IsAcknowledged && result.ModifiedCount > 0;
@@ -197,7 +206,8 @@ namespace SharpConnector.Connectors.MongoDb
             var filter = Builders<MongoConnectorEntity>.Filter.Eq(x => x.Key, connectorEntity.Key);
             var update = Builders<MongoConnectorEntity>.Update
                 .Set(x => x.Payload, connectorEntity.Payload)
-                .Set(x => x.Expiration, connectorEntity.Expiration);
+                .Set(x => x.Expiration, connectorEntity.Expiration)
+                .Set(x => x.ExpiresAt, connectorEntity.ExpiresAt);
 
             var result = await _mongoDbAccess.Collection
                 .UpdateOneAsync(filter, update, options: null, ct)
@@ -212,10 +222,7 @@ namespace SharpConnector.Connectors.MongoDb
         /// <param name="key">The unique key of the item.</param>
         public bool Exists(string key)
         {
-            var filter = Builders<MongoConnectorEntity>.Filter.Eq(x => x.Key, key);
-            return _mongoDbAccess.Collection
-                .Find(filter)
-                .Any();
+            return Get(key) != null;
         }
 
         /// <summary>
@@ -226,11 +233,7 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns>True if the item exists; otherwise, false.</returns>
         public async Task<bool> ExistsAsync(string key, CancellationToken ct = default)
         {
-            var filter = Builders<MongoConnectorEntity>.Filter.Eq(x => x.Key, key);
-            return await _mongoDbAccess.Collection
-                .Find(filter)
-                .AnyAsync(ct)
-                .ConfigureAwait(false);
+            return await GetAsync(key, ct).ConfigureAwait(false) != null;
         }
 
         /// <summary>
@@ -240,8 +243,7 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns>A collection of filtered <see cref="MongoConnectorEntity"/> instances.</returns>
         public List<MongoConnectorEntity> Query(Func<MongoConnectorEntity, bool> filter)
         {
-            return _mongoDbAccess.Collection
-                .AsQueryable()
+            return GetAll()
                 .Where(filter)
                 .ToList();
         }
@@ -254,10 +256,7 @@ namespace SharpConnector.Connectors.MongoDb
         /// <returns>A task whose result is a collection of filtered <see cref="MongoConnectorEntity"/> instances.</returns>
         public async Task<List<MongoConnectorEntity>> QueryAsync(Func<MongoConnectorEntity, bool> filter, CancellationToken ct = default)
         {
-            var allDocuments = await _mongoDbAccess.Collection
-                .Find(FilterDefinition<MongoConnectorEntity>.Empty)
-                .ToListAsync(ct)
-                .ConfigureAwait(false);
+            var allDocuments = await GetAllAsync(ct).ConfigureAwait(false);
 
             return allDocuments
                 .Where(filter)

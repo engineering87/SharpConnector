@@ -101,7 +101,17 @@ namespace SharpConnector.Connectors.Redis
 
                 foreach (var key in keys)
                 {
-                    var value = database.StringGet(key);
+                    RedisValue value;
+                    try
+                    {
+                        value = database.StringGet(key);
+                    }
+                    catch (RedisServerException ex) when (IsWrongType(ex))
+                    {
+                        // Key holds a non-string value not produced by SharpConnector; skip it.
+                        continue;
+                    }
+
                     if (!value.HasValue)
                         continue;
 
@@ -153,15 +163,29 @@ namespace SharpConnector.Connectors.Redis
         private static async Task<ConnectorEntity> GetEntityAsync(IDatabase database, RedisKey key, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
-            var value = await database.StringGetAsync(key).ConfigureAwait(false);
-            return value.HasValue ? TryDeserialize(value) : null;
+            try
+            {
+                var value = await database.StringGetAsync(key).ConfigureAwait(false);
+                return value.HasValue ? TryDeserialize(value) : null;
+            }
+            catch (RedisServerException ex) when (IsWrongType(ex))
+            {
+                // Key holds a non-string value not produced by SharpConnector; skip it.
+                return null;
+            }
         }
+
+        /// <summary>
+        /// Returns true when the Redis error indicates an operation against a key holding the wrong kind of value.
+        /// </summary>
+        internal static bool IsWrongType(RedisServerException ex) =>
+            ex?.Message != null && ex.Message.StartsWith("WRONGTYPE", StringComparison.Ordinal);
 
         /// <summary>
         /// Attempts to deserialize a value into a <see cref="ConnectorEntity"/>.
         /// Returns <c>null</c> when the value is not a valid ConnectorEntity payload.
         /// </summary>
-        private static ConnectorEntity TryDeserialize(RedisValue value)
+        internal static ConnectorEntity TryDeserialize(RedisValue value)
         {
             try
             {

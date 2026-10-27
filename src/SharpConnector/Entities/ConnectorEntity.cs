@@ -30,6 +30,18 @@ namespace SharpConnector.Entities
         public TimeSpan? Expiration { get; set; }
 
         /// <summary>
+        /// The absolute UTC instant after which the entity is considered expired.
+        /// Computed from <see cref="Expiration"/> when the entity is created.
+        /// </summary>
+        public DateTime? ExpiresAt { get; set; }
+
+        /// <summary>
+        /// Returns true if the entity has an absolute expiration that is already elapsed.
+        /// </summary>
+        public bool IsExpired() =>
+            ExpiresAt.HasValue && ExpiresAt.Value.ToUniversalTime() <= DateTime.UtcNow;
+
+        /// <summary>
         /// Default constructor for serialization purposes.
         /// </summary>
         public ConnectorEntity() { }
@@ -55,6 +67,7 @@ namespace SharpConnector.Entities
             Key = key;
             Payload = payload;
             Expiration = expiration;
+            ExpiresAt = expiration.HasValue ? DateTime.UtcNow.Add(expiration.Value) : null;
         }
 
         /// <summary>

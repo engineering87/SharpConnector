@@ -5,6 +5,7 @@ using Couchbase.KeyValue;
 using Couchbase.Query;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using SharpConnector.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -86,6 +87,9 @@ namespace SharpConnector.Connectors.Couchbase
         {
             var collection = await GetCollectionAsync(ct).ConfigureAwait(false);
             var options = new UpsertOptions().CancellationToken(ct);
+            var ttl = entity.RemainingTimeToLive();
+            if (ttl.HasValue)
+                options = options.Expiry(ttl.Value);
             var result = await collection.UpsertAsync(entity.Key, entity, options).ConfigureAwait(false);
             return result is not null;
         }
