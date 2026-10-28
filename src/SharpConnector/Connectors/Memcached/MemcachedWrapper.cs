@@ -70,7 +70,25 @@ namespace SharpConnector.Connectors.Memcached
         /// <returns>Never returns; always throws <see cref="NotSupportedException"/>.</returns>
         public Task<List<ConnectorEntity>> GetAllAsync(CancellationToken ct = default)
         {
-            throw new NotSupportedException("Memcached does not support retrieving all keys/values.");
+            return Task.FromException<List<ConnectorEntity>>(
+                new NotSupportedException("Memcached does not support retrieving all keys/values."));
+        }
+
+        /// <summary>
+        /// Converts the entity expiration to the Memcached expiration value.
+        /// Memcached interprets values greater than 30 days as absolute Unix timestamps.
+        /// </summary>
+        private static int ToMemcachedExpiration(ConnectorEntity connectorEntity)
+        {
+            if (!connectorEntity.Expiration.HasValue)
+                return 0;
+
+            const int maxRelativeSeconds = 60 * 60 * 24 * 30;
+            var seconds = (long)Math.Ceiling(connectorEntity.Expiration.Value.TotalSeconds);
+            if (seconds <= maxRelativeSeconds)
+                return (int)seconds;
+
+            return (int)Math.Min(int.MaxValue, DateTimeOffset.UtcNow.ToUnixTimeSeconds() + seconds);
         }
 
         /// <summary>
@@ -79,9 +97,7 @@ namespace SharpConnector.Connectors.Memcached
         /// <param name="connectorEntity">The entity to store.</param>
         public bool Insert(ConnectorEntity connectorEntity)
         {
-            var seconds = connectorEntity.Expiration.HasValue
-                ? (int)Math.Ceiling(connectorEntity.Expiration.Value.TotalSeconds)
-                : 0;
+            var seconds = ToMemcachedExpiration(connectorEntity);
 
             return _memcachedAccess.MemcachedClient.Set(
                 connectorEntity.Key,
@@ -98,9 +114,7 @@ namespace SharpConnector.Connectors.Memcached
         {
             ct.ThrowIfCancellationRequested();
 
-            var seconds = connectorEntity.Expiration.HasValue
-                ? (int)Math.Ceiling(connectorEntity.Expiration.Value.TotalSeconds)
-                : 0;
+            var seconds = ToMemcachedExpiration(connectorEntity);
 
             return _memcachedAccess.MemcachedClient.SetAsync(
                 connectorEntity.Key,
@@ -170,9 +184,7 @@ namespace SharpConnector.Connectors.Memcached
         /// <param name="connectorEntity">The entity to store.</param>
         public bool Update(ConnectorEntity connectorEntity)
         {
-            var seconds = connectorEntity.Expiration.HasValue
-                ? (int)Math.Ceiling(connectorEntity.Expiration.Value.TotalSeconds)
-                : 0;
+            var seconds = ToMemcachedExpiration(connectorEntity);
 
             return _memcachedAccess.MemcachedClient.Replace(
                 connectorEntity.Key,
@@ -189,9 +201,7 @@ namespace SharpConnector.Connectors.Memcached
         {
             ct.ThrowIfCancellationRequested();
 
-            var seconds = connectorEntity.Expiration.HasValue
-                ? (int)Math.Ceiling(connectorEntity.Expiration.Value.TotalSeconds)
-                : 0;
+            var seconds = ToMemcachedExpiration(connectorEntity);
 
             return _memcachedAccess.MemcachedClient.ReplaceAsync(
                 connectorEntity.Key,

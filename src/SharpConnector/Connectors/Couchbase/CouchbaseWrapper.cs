@@ -195,9 +195,7 @@ namespace SharpConnector.Connectors.Couchbase
         /// <param name="filter">A function to test each element for a condition.</param>
         public List<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter)
         {
-            return QueryAsync(filter, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => QueryAsync(filter, CancellationToken.None));
         }
 
         /// <summary>

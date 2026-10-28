@@ -32,9 +32,7 @@ namespace SharpConnector.Operations
         /// <param name="key">The key of the object.</param>
         public override T Get(string key)
         {
-            var connectorEntity = _couchbaseWrapper.GetAsync(key, CancellationToken.None)
-                                                   .GetAwaiter()
-                                                   .GetResult();
+            var connectorEntity = AsyncHelper.RunSync(() => _couchbaseWrapper.GetAsync(key, CancellationToken.None));
             if (connectorEntity != null)
                 return connectorEntity.ToPayloadObject<T>();
             return default;
@@ -59,9 +57,7 @@ namespace SharpConnector.Operations
         /// </summary>
         public override IEnumerable<T> GetAll()
         {
-            var connectorEntities = _couchbaseWrapper.GetAllAsync(CancellationToken.None)
-                                                     .GetAwaiter()
-                                                     .GetResult();
+            var connectorEntities = AsyncHelper.RunSync(() => _couchbaseWrapper.GetAllAsync(CancellationToken.None));
             return connectorEntities?.ToPayloadList<T>() ?? [];
         }
 
@@ -84,10 +80,7 @@ namespace SharpConnector.Operations
         public override bool Insert(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return _couchbaseWrapper
-                .InsertAsync(connectorEntity, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => _couchbaseWrapper.InsertAsync(connectorEntity, CancellationToken.None));
         }
 
         /// <summary>
@@ -100,10 +93,7 @@ namespace SharpConnector.Operations
         public override bool Insert(string key, T value, TimeSpan expiration)
         {
             var connectorEntity = new ConnectorEntity(key, value, expiration);
-            return _couchbaseWrapper
-                .InsertAsync(connectorEntity, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => _couchbaseWrapper.InsertAsync(connectorEntity, CancellationToken.None));
         }
 
         /// <summary>
@@ -139,9 +129,7 @@ namespace SharpConnector.Operations
         public override bool InsertMany(Dictionary<string, T> values)
         {
             var entities = values.ToConnectorEntityList();
-            return _couchbaseWrapper.InsertManyAsync(entities, CancellationToken.None)
-                                    .GetAwaiter()
-                                    .GetResult();
+            return AsyncHelper.RunSync(() => _couchbaseWrapper.InsertManyAsync(entities, CancellationToken.None));
         }
 
         /// <summary>
@@ -153,9 +141,7 @@ namespace SharpConnector.Operations
         public override bool InsertMany(Dictionary<string, T> values, TimeSpan expiration)
         {
             var entities = values.ToConnectorEntityList(expiration);
-            return _couchbaseWrapper.InsertManyAsync(entities, CancellationToken.None)
-                                    .GetAwaiter()
-                                    .GetResult();
+            return AsyncHelper.RunSync(() => _couchbaseWrapper.InsertManyAsync(entities, CancellationToken.None));
         }
 
         /// <summary>
@@ -187,9 +173,7 @@ namespace SharpConnector.Operations
         /// <param name="key">The key of the object.</param>
         public override bool Delete(string key)
         {
-            return _couchbaseWrapper.DeleteAsync(key, CancellationToken.None)
-                                    .GetAwaiter()
-                                    .GetResult();
+            return AsyncHelper.RunSync(() => _couchbaseWrapper.DeleteAsync(key, CancellationToken.None));
         }
 
         /// <summary>
@@ -211,9 +195,7 @@ namespace SharpConnector.Operations
         public override bool Update(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return _couchbaseWrapper.UpdateAsync(connectorEntity, CancellationToken.None)
-                                    .GetAwaiter()
-                                    .GetResult();
+            return AsyncHelper.RunSync(() => _couchbaseWrapper.UpdateAsync(connectorEntity, CancellationToken.None));
         }
 
         /// <summary>
@@ -235,9 +217,7 @@ namespace SharpConnector.Operations
         /// <param name="key">The unique key of the item.</param>
         public override bool Exists(string key)
         {
-            return _couchbaseWrapper.ExistsAsync(key, CancellationToken.None)
-                                    .GetAwaiter()
-                                    .GetResult();
+            return AsyncHelper.RunSync(() => _couchbaseWrapper.ExistsAsync(key, CancellationToken.None));
         }
 
         /// <summary>
