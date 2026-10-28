@@ -59,7 +59,7 @@ namespace SharpConnector.Tests
             Assert.AreEqual("ks", config.DatabaseName);
             Assert.AreEqual("tbl", config.TableName);
             Assert.AreEqual("user", config.Username);
-            Assert.AreEqual("pwd", config.Password);
+            Assert.AreEqual("  pwd  ", config.Password);
         }
 
         [TestMethod]

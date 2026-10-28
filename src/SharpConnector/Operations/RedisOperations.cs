@@ -1,4 +1,4 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using System;
 using System.Collections.Generic;
@@ -15,6 +15,7 @@ namespace SharpConnector.Operations
     public class RedisOperations<T> : Operations<T>
     {
         private readonly RedisWrapper _redisWrapper;
+        private readonly int _databaseNumber;
 
         /// <summary>
         /// Create a new RedisOperations instance.
@@ -23,6 +24,7 @@ namespace SharpConnector.Operations
         public RedisOperations(RedisConfig redisConfig)
         {
             _redisWrapper = new RedisWrapper(redisConfig);
+            _databaseNumber = redisConfig.DatabaseNumber;
         }
 
         /// <summary>
@@ -31,7 +33,7 @@ namespace SharpConnector.Operations
         /// <param name="key">The key of the object.</param>
         public override T Get(string key)
         {
-            var connectorEntity = _redisWrapper.Get(key);
+            var connectorEntity = _redisWrapper.Get(key, _databaseNumber);
             if (connectorEntity != null)
                 return connectorEntity.ToPayloadObject<T>();
             return default;
@@ -44,7 +46,7 @@ namespace SharpConnector.Operations
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
         public override async Task<T> GetAsync(string key, CancellationToken ct = default)
         {
-            var connectorEntity = await _redisWrapper.GetAsync(key, 0, ct).ConfigureAwait(false);
+            var connectorEntity = await _redisWrapper.GetAsync(key, _databaseNumber, ct).ConfigureAwait(false);
             if (connectorEntity != null)
                 return connectorEntity.ToPayloadObject<T>();
             return default;
@@ -55,7 +57,7 @@ namespace SharpConnector.Operations
         /// </summary>
         public override IEnumerable<T> GetAll()
         {
-            var connectorEntities = _redisWrapper.GetAll();
+            var connectorEntities = _redisWrapper.GetAll(_databaseNumber);
             return connectorEntities?.ToPayloadList<T>() ?? [];
         }
 
@@ -67,7 +69,7 @@ namespace SharpConnector.Operations
         public override bool Insert(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return _redisWrapper.Insert(connectorEntity);
+            return _redisWrapper.Insert(connectorEntity, _databaseNumber);
         }
 
         /// <summary>
@@ -81,7 +83,7 @@ namespace SharpConnector.Operations
             if (expiration <= TimeSpan.Zero)
                 throw new ArgumentOutOfRangeException(nameof(expiration), "Expiration must be greater than zero.");
             var connectorEntity = new ConnectorEntity(key, value, expiration);
-            return _redisWrapper.Insert(connectorEntity);
+            return _redisWrapper.Insert(connectorEntity, _databaseNumber);
         }
 
         /// <summary>
@@ -94,7 +96,7 @@ namespace SharpConnector.Operations
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
             return await _redisWrapper
-                .InsertAsync(connectorEntity, 0, ct)
+                .InsertAsync(connectorEntity, _databaseNumber, ct)
                 .ConfigureAwait(false);
         }
 
@@ -111,7 +113,7 @@ namespace SharpConnector.Operations
                 throw new ArgumentOutOfRangeException(nameof(expiration), "Expiration must be greater than zero.");
             var connectorEntity = new ConnectorEntity(key, value, expiration);
             return await _redisWrapper
-                .InsertAsync(connectorEntity, 0, ct)
+                .InsertAsync(connectorEntity, _databaseNumber, ct)
                 .ConfigureAwait(false);
         }
 
@@ -121,7 +123,7 @@ namespace SharpConnector.Operations
         /// <param name="values">The values to store.</param>
         public override bool InsertMany(Dictionary<string, T> values)
         {
-            return _redisWrapper.InsertMany(values.ToConnectorEntityList());
+            return _redisWrapper.InsertMany(values.ToConnectorEntityList(), _databaseNumber);
         }
 
         /// <summary>
@@ -131,7 +133,7 @@ namespace SharpConnector.Operations
         /// <param name="expiration">The expiration of the keys.</param>
         public override bool InsertMany(Dictionary<string, T> values, TimeSpan expiration)
         {
-            return _redisWrapper.InsertMany(values.ToConnectorEntityList(expiration));
+            return _redisWrapper.InsertMany(values.ToConnectorEntityList(expiration), _databaseNumber);
         }
 
         /// <summary>
@@ -147,7 +149,7 @@ namespace SharpConnector.Operations
             ArgumentNullException.ThrowIfNull(values);
             var list = values.Select(v => new ConnectorEntity(Guid.NewGuid().ToString(), v, null)).ToList();
             var success = await _redisWrapper
-                .InsertManyAsync(list, 0, ct)
+                .InsertManyAsync(list, _databaseNumber, ct)
                 .ConfigureAwait(false);
             return success
                 ? list.Select(e => e.Key).ToList().AsReadOnly()
@@ -160,7 +162,7 @@ namespace SharpConnector.Operations
         /// <param name="key">The key of the object.</param>
         public override bool Delete(string key)
         {
-            return _redisWrapper.Delete(key);
+            return _redisWrapper.Delete(key, _databaseNumber);
         }
 
         /// <summary>
@@ -171,7 +173,7 @@ namespace SharpConnector.Operations
         public override async Task<bool> DeleteAsync(string key, CancellationToken ct = default)
         {
             return await _redisWrapper
-                .DeleteAsync(key, 0, ct)
+                .DeleteAsync(key, _databaseNumber, ct)
                 .ConfigureAwait(false);
         }
 
@@ -183,7 +185,7 @@ namespace SharpConnector.Operations
         public override bool Update(string key, T value)
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
-            return _redisWrapper.Update(connectorEntity);
+            return _redisWrapper.Update(connectorEntity, _databaseNumber);
         }
 
         /// <summary>
@@ -196,7 +198,7 @@ namespace SharpConnector.Operations
         {
             var connectorEntity = new ConnectorEntity(key, value, null);
             return await _redisWrapper
-                .UpdateAsync(connectorEntity, 0, ct)
+                .UpdateAsync(connectorEntity, _databaseNumber, ct)
                 .ConfigureAwait(false);
         }
 
@@ -208,7 +210,7 @@ namespace SharpConnector.Operations
         public override async Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)
         {
             var connectorEntities = await _redisWrapper
-                .GetAllAsync(0, ct)
+                .GetAllAsync(_databaseNumber, ct)
                 .ConfigureAwait(false);
 
             return connectorEntities?.ToPayloadList<T>() ?? [];
@@ -220,7 +222,7 @@ namespace SharpConnector.Operations
         /// <param name="key">The unique key of the item.</param>
         public override bool Exists(string key)
         {
-            return _redisWrapper.Exists(key);
+            return _redisWrapper.Exists(key, _databaseNumber);
         }
 
         /// <summary>
@@ -231,7 +233,7 @@ namespace SharpConnector.Operations
         public override async Task<bool> ExistsAsync(string key, CancellationToken ct = default)
         {
             return await _redisWrapper
-                .ExistsAsync(key, 0, ct)
+                .ExistsAsync(key, _databaseNumber, ct)
                 .ConfigureAwait(false);
         }
 
@@ -242,7 +244,7 @@ namespace SharpConnector.Operations
         public override IEnumerable<T> Query(Func<T, bool> filter)
         {
             return _redisWrapper
-                .Query(e => filter(e.ToPayloadObject<T>()))
+                .Query(e => filter(e.ToPayloadObject<T>()), _databaseNumber)
                 .Select(e => e.ToPayloadObject<T>());
         }
 
@@ -254,7 +256,7 @@ namespace SharpConnector.Operations
         public override async Task<IEnumerable<T>> QueryAsync(Func<T, bool> filter, CancellationToken ct = default)
         {
             var result = await _redisWrapper
-                .QueryAsync(e => filter(e.ToPayloadObject<T>()), 0, ct)
+                .QueryAsync(e => filter(e.ToPayloadObject<T>()), _databaseNumber, ct)
                 .ConfigureAwait(false);
 
             return result.Select(e => e.ToPayloadObject<T>());
@@ -273,12 +275,12 @@ namespace SharpConnector.Operations
         /// A task that represents the asynchronous operation. The task result is
         /// <c>true</c> if all items were inserted successfully; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when a key is null or empty, or a value is null.</exception>
         public override async Task<bool> InsertManyAsync(Dictionary<string, T> values, CancellationToken ct = default)
         {
             var entities = values.ToConnectorEntityList();
             return await _redisWrapper
-                .InsertManyAsync(entities, 0, ct)
+                .InsertManyAsync(entities, _databaseNumber, ct)
                 .ConfigureAwait(false);
         }
 
@@ -298,12 +300,12 @@ namespace SharpConnector.Operations
         /// A task that represents the asynchronous operation. The task result is
         /// <c>true</c> if all items were inserted successfully; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when a key is null or empty, or a value is null.</exception>
         public override async Task<bool> InsertManyAsync(Dictionary<string, T> values, TimeSpan expiration, CancellationToken ct = default)
         {
             var entities = values.ToConnectorEntityList(expiration);
             return await _redisWrapper
-                .InsertManyAsync(entities, 0, ct)
+                .InsertManyAsync(entities, _databaseNumber, ct)
                 .ConfigureAwait(false);
         }
 

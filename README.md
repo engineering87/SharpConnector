@@ -1,250 +1,373 @@
+<div align="center">
+
+<img src="https://github.com/engineering87/SharpConnector/blob/main/sharpconnector_logo.jpg" width="260" alt="SharpConnector logo">
+
 # SharpConnector
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Nuget](https://img.shields.io/nuget/v/SharpConnector?style=plastic)](https://www.nuget.org/packages/SharpConnector)
-![NuGet Downloads](https://img.shields.io/nuget/dt/SharpConnector)
-[![issues - dotnet-design-patterns](https://img.shields.io/github/issues/engineering87/SharpConnector)](https://github.com/engineering87/SharpConnector/issues)
+**One API, nine NoSQL databases.**
+A unified, DI-friendly .NET client for key-based CRUD across Redis, MongoDB, LiteDB, Memcached, RavenDB, Couchbase, DynamoDB, ArangoDB and Cassandra.
+
+[![NuGet](https://img.shields.io/nuget/v/SharpConnector?logo=nuget)](https://www.nuget.org/packages/SharpConnector)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/SharpConnector)](https://www.nuget.org/packages/SharpConnector)
 [![Build](https://github.com/engineering87/SharpConnector/actions/workflows/dotnet.yml/badge.svg)](https://github.com/engineering87/SharpConnector/actions/workflows/dotnet.yml)
-[![stars - dotnet-design-patterns](https://img.shields.io/github/stars/engineering87/SharpConnector?style=social)](https://github.com/engineering87/SharpConnector)
+![.NET](https://img.shields.io/badge/.NET-10.0%20%7C%209.0-512BD4?logo=dotnet)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Issues](https://img.shields.io/github/issues/engineering87/SharpConnector)](https://github.com/engineering87/SharpConnector/issues)
+[![Stars](https://img.shields.io/github/stars/engineering87/SharpConnector?style=social)](https://github.com/engineering87/SharpConnector)
 
-<img src="https://github.com/engineering87/SharpConnector/blob/main/sharpconnector_logo.jpg" width="300">
+</div>
 
-SharpConnector is a .NET library designed to streamline integration with NoSQL databases. It provides a unified interface that simplifies database operations, eliminating the need to develop custom logic for each specific database connector. Since each NoSQL database has its own unique characteristics, such as being document-oriented or key-value-based, SharpConnector abstracts these differences, providing a consistent and simplified access layer to accelerate development.
-
-✅ Now targeting .NET 9.
+---
 
 ## Table of Contents
 
-- [Features](#features)
+- [Why SharpConnector](#why-sharpconnector)
+- [Supported databases](#supported-databases)
+- [Requirements](#requirements)
 - [Installation](#installation)
-  - [How it works](#how-it-works)
-  - [How to use it](#how-to-use-it)
-- [API Overview](#api-overview)
-- [Contributing](#contributing)
+- [Quick start](#quick-start)
+- [Configuration](#configuration)
+- [API overview](#api-overview)
+- [Operation semantics](#operation-semantics)
+- [Upgrading from 4.x to 5.0](#upgrading-from-4x-to-50)
+- [Building from source](#building-from-source)
 - [Extending](#extending)
+- [Contributing](#contributing)
+- [Third-party licenses](#third-party-licenses)
 - [License](#license)
-- [External References](#external-references)
 - [Contact](#contact)
 
-## Features
+## Why SharpConnector
 
-- A single, generic client API for CRUD across multiple NoSQL engines
-- Supported stores:
-	- Key–value: Redis, EnyimMemcached, DynamoDb
-	- Document: MongoDB, LiteDB, RavenDB, Couchbase
-	- Wide-column: Cassandra
-	- Multi-model: ArangoDB
-- Simple configuration via `appsettings.json` and DI-friendly
-- Sync and async operations (with CancellationToken support)
-- Easy to extend: implement `IOperations<T>` for new connectors
+Every NoSQL engine has its own driver, data model and quirks. SharpConnector hides those differences behind a single generic interface, `ISharpConnectorClient<T>`, so that you can:
+
+- switch database by changing **one line of configuration**;
+- use the **same CRUD code** (sync and async, with `CancellationToken`) everywhere;
+- get **consistent semantics** for upserts, updates, deletes and expiration on every backend;
+- plug it into ASP.NET Core with a **single DI call**.
+
+## Supported databases
+
+| Database   | `Instance`  | Model        | Driver                  |
+|------------|-------------|--------------|-------------------------|
+| Redis      | `Redis`     | Key-value    | StackExchange.Redis     |
+| MongoDB    | `MongoDb`   | Document     | MongoDB.Driver          |
+| LiteDB     | `LiteDb`    | Embedded doc | LiteDB                  |
+| Memcached  | `Memcached` | Key-value    | EnyimMemcachedCore      |
+| RavenDB    | `RavenDb`   | Document     | RavenDB.Client          |
+| Couchbase  | `Couchbase` | Document     | CouchbaseNetClient      |
+| DynamoDB   | `DynamoDb`  | Key-value    | AWSSDK.DynamoDBv2       |
+| ArangoDB   | `ArangoDb`  | Multi-model  | ArangoDBNetStandard     |
+| Cassandra  | `Cassandra` | Wide-column  | CassandraCSharpDriver   |
+
+## Requirements
+
+- **.NET 10** or **.NET 9**: the package ships `net10.0` and `net9.0` assemblies, and NuGet automatically picks the best match for your project.
 
 ## Installation
-
-You can install the library via the NuGet package manager with the following command:
 
 ```bash
 dotnet add package SharpConnector
 ```
 
-### How it works
-SharpConnector offers a unified interface for performing CRUD operations on various types of NoSQL databases. While NoSQL databases often differ in their internal structures (e.g., key-value stores, document databases), this library abstracts these distinctions, enabling streamlined key-value-based CRUD operations.
-Through SharpConnector, you can use a consistent interface to perform Insert, Get, Delete, and Update operations across multiple NoSQL systems, currently supporting:
+## Quick start
 
-* **Redis (key-value)**
-* **MongoDB (key-value or document-oriented)**
-* **LiteDB (embedded document database)**
-* **EnyimMemcached (key-value)**
-* **RavenDB (document-oriented)**
-* **Couchbase (document-oriented)**
-* **DynamoDb (key-value or document-oriented)**
-* **ArangoDB (multi-model)**
-* **Apache Cassandra (wide-column)**
+**1. Add a `ConnectorConfig` section to `appsettings.json`**
 
-SharpConnector thus simplifies the development process, providing flexibility and compatibility across diverse NoSQL paradigms without the need to handle specific database implementations.
-
-### How to use it
-To get started with SharpConnector, configure the connector *instance* type. 
-Then, add the specif `ConnectorConfig` node within your *appsettings.json* file:
-
-- Redis
-	```json
-	{
-	  "ConnectorConfig": {
-		"Instance": "Redis",
-		"DatabaseNumber": 0,
-		"ConnectionString": "redisServer:6380,password=password,ssl=True,abortConnect=False"
-	  }
-	}
-	```
-- MongoDb
-	```json
-	{
-	  "ConnectorConfig": {
-		"Instance": "MongoDb",
-		"DatabaseName": "test",
-		"CollectionName": "test",
-		"ConnectionString": "mongodb_connectionstring_here"
-	  }
-	}
-	```
-	
-- LiteDB
-	```json
-	{
-	  "ConnectorConfig": {
-		"Instance": "LiteDb",
-		"CollectionName": "test",
-		"ConnectionString": "LiteDbTest.db"
-	  }
-	}
-	```
-
-- Memcached
-	```json
-	{
-	  "ConnectorConfig": {
-		"Instance": "Memcached",
-		"ConnectionString": "127.0.0.1:11211"
-	  }
-	}
-	```
-	
-- RavenDB
-	```json
-	{
-	  "ConnectorConfig": {
-		"Instance": "RavenDb",
-		"DatabaseName": "test",
-		"ConnectionString": "http://live-test.ravendb.net"
-	  }
-	}
-	```
-
-- Couchbase
-	```json
-	{
-	  "ConnectorConfig": {
-		"Instance": "Couchbase",
-		"ConnectionString": "couchbase://localhost",
-		"Username": "Administrator",
-		"Password": "password",
-		"BucketName": "example_bucket",
-	  }
-	}
-	```
-
-- DynamoDb
-	```json
-	{
-	  "ConnectorConfig": {
-		"Instance": "DynamoDb",
-		"AccessKey": "your-access-key-here",
-		"SecretKey": "your-secret-key-here",
-		"Region": "us-west-2",
-		"ServiceUrl": "https://dynamodb.us-west-2.amazonaws.com",
-		"UseHttp": false,
-		"TableName": "MyTableName"
-	  }
-	}
-	```
-
-- ArangoDB
-	```json
-	{
-		"ConnectorConfig": {
-			"Instance": "ArangoDb",
-			"ConnectionString": "http://localhost:8529",
-			"Username": "username",
-			"Password": "password",
-			"CollectionName": "test"
-		}
-	}
-	```
-
-- Cassandra
-	```json
-	{
-		"ConnectorConfig": {
-			"Instance": "Cassandra",
-			"ConnectionString": "127.0.0.1:9042",
-			"DatabaseName": "sharpconnector",
-			"TableName": "items",
-			"Username": "cassandra",
-			"Password": "cassandra"
-		}
-	}
-	```
-
-Once configured, create a new SharpConnector client, specifying the payload type (e.g., string):
-
-```csharp
-SharpConnectorClient<string> client = new SharpConnectorClient<string>()
+```json
+{
+  "ConnectorConfig": {
+	"Instance": "Redis",
+	"DatabaseNumber": 0,
+	"ConnectionString": "localhost:6379"
+  }
+}
 ```
 
-Alternatively, you can integrate SharpConnector client using dependency injection. Here how to register the SharpConnector service with a simple string payload type:
+**2a. Use it with dependency injection (recommended)**
 
 ```csharp
-// Register the SharpConnector services with string payload type.
 builder.Services.AddSharpConnectorServices<string>();
+
+app.MapGet("/items/{key}", async (string key, ISharpConnectorClient<string> client, CancellationToken ct) =>
+	await client.GetAsync(key, ct) is { } value ? Results.Ok(value) : Results.NotFound());
 ```
-This setup provides flexibility in working with different payload types and makes SharpConnector easy to use within dependency injection configurations.
 
-## API Overview
-The main entry point is the generic `ISharpConnectorClient<T>`:
-- `T Get(string key)`
-- `Task<T> GetAsync(string key, CancellationToken ct = default)`
-- `IEnumerable<T> GetAll()`
-- `Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)`
-- `bool Insert(string key, T value)`
-- `bool Insert(string key, T value, TimeSpan expiration)`
-- `Task<bool> InsertAsync(string key, T value, CancellationToken ct = default)`
-- `Task<bool> InsertAsync(string key, T value, TimeSpan expiration, CancellationToken ct = default)`
-- `bool InsertMany(Dictionary<string,T> values)`
-- `bool InsertMany(Dictionary<string,T> values, TimeSpan expiration)`
-- `Task<bool> InsertManyAsync(IEnumerable<T> values, CancellationToken ct = default)`
-- `bool Update(string key, T value)`
-- `Task<bool> UpdateAsync(string key, T value, CancellationToken ct = default)`
-- `bool Delete(string key)`
-- `Task<bool> DeleteAsync(string key, CancellationToken ct = default)`
-- `bool Exists(string key)`
-- `Task<bool> ExistsAsync(string key, CancellationToken ct = default)`
-- `IEnumerable<T> Query(Func<T,bool> filter)`
-- `Task<IEnumerable<T>> QueryAsync(Func<T,bool> filter, CancellationToken ct = default)`
+**2b. Or create the client directly**
 
-## Contributing
-Thanks for considering a contribution! Please fork, branch, and open a PR.
-- Add unit tests for new features or connectors
-- Keep third-party dependencies compatible with MIT and document their licenses
-- Useful links:
-	- [Setting up Git](https://docs.github.com/en/get-started/getting-started-with-git/set-up-git)
-	- [Fork the repository](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo)
-	- [Open an issue](https://github.com/engineering87/SharpConnector/issues) if you encounter a bug or have a suggestion for improvements/features
+```csharp
+var client = new SharpConnectorClient<string>();            // reads appsettings.json
+// new SharpConnectorClient<string>(configuration);          // from an IConfiguration
+// new SharpConnectorClient<string>("connector.json");       // from a custom JSON file
+
+client.Insert("greeting", "hello");
+client.Insert("session", "abc", TimeSpan.FromMinutes(20));  // with expiration
+var value = await client.GetAsync("greeting");
+```
+
+### Registration lifetimes
+
+| Method                                    | Lifetime  | Notes                                             |
+|-------------------------------------------|-----------|---------------------------------------------------|
+| `AddSharpConnectorServices<T>()`          | Singleton | Recommended: one connection shared by the app     |
+| `AddSharpConnectorServicesSingleton<T>()` | Singleton | Same as above, explicit name                      |
+| `AddSharpConnectorServicesScoped<T>()`    | Scoped    | Opens a new database connection for every scope   |
+
+> Starting from 5.0 these methods only register SharpConnector. If you use MVC controllers, call `builder.Services.AddControllers()` yourself.
+
+## Configuration
+
+All settings live under the `ConnectorConfig` section. Key names are case-insensitive.
+
+| Key                       | Used by                                | Description                                             |
+|---------------------------|----------------------------------------|---------------------------------------------------------|
+| `Instance`                | all                                    | Connector type (see table above)                        |
+| `ConnectionString`        | all except DynamoDB                    | Server address / connection string / file path          |
+| `DatabaseNumber`          | Redis                                  | Logical database index                                  |
+| `KeyPrefix`               | Redis                                  | *Optional.* Prefix applied to every key, e.g. `app:`    |
+| `DatabaseName`            | MongoDB, RavenDB, Cassandra (keyspace) | Database name                                           |
+| `CollectionName`          | MongoDB, LiteDB, ArangoDB              | Collection name                                         |
+| `TableName`               | DynamoDB, Cassandra                    | Table name                                              |
+| `BucketName`              | Couchbase                              | Bucket name                                             |
+| `Username` / `Password`   | Couchbase, ArangoDB, Cassandra         | Credentials (username is trimmed, password is verbatim) |
+| `CertificatePath`         | RavenDB                                | *Optional.* Path to a PFX client certificate            |
+| `CertificatePassword`     | RavenDB                                | *Optional.* Password of the PFX certificate             |
+| `AccessKey` / `SecretKey` | DynamoDB                               | AWS credentials                                         |
+| `Region`                  | DynamoDB                               | AWS region (required if `ServiceUrl` is not set)        |
+| `ServiceUrl`              | DynamoDB                               | Custom endpoint, e.g. DynamoDB Local                    |
+| `UseHttp`                 | DynamoDB                               | Use HTTP instead of HTTPS                               |
+
+<details>
+<summary><b>Redis</b></summary>
+
+```json
+{
+  "ConnectorConfig": {
+	"Instance": "Redis",
+	"DatabaseNumber": 0,
+	"KeyPrefix": "myapp:",
+	"ConnectionString": "redisServer:6380,password=password,ssl=True,abortConnect=False"
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>MongoDB</b></summary>
+
+```json
+{
+  "ConnectorConfig": {
+	"Instance": "MongoDb",
+	"DatabaseName": "test",
+	"CollectionName": "test",
+	"ConnectionString": "mongodb://localhost:27017"
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>LiteDB</b></summary>
+
+```json
+{
+  "ConnectorConfig": {
+	"Instance": "LiteDb",
+	"CollectionName": "test",
+	"ConnectionString": "LiteDbTest.db"
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Memcached</b></summary>
+
+`ConnectionString` accepts a comma-separated list of `host:port` servers.
+
+```json
+{
+  "ConnectorConfig": {
+	"Instance": "Memcached",
+	"ConnectionString": "127.0.0.1:11211"
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>RavenDB</b></summary>
+
+`ConnectionString` must be an absolute URL and `DatabaseName` is required. The certificate settings are optional and needed only for secured servers.
+
+```json
+{
+  "ConnectorConfig": {
+	"Instance": "RavenDb",
+	"DatabaseName": "test",
+	"ConnectionString": "https://a.mycluster.ravendb.cloud",
+	"CertificatePath": "certs/client.pfx",
+	"CertificatePassword": "pfx-password"
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Couchbase</b></summary>
+
+```json
+{
+  "ConnectorConfig": {
+	"Instance": "Couchbase",
+	"ConnectionString": "couchbase://localhost",
+	"Username": "Administrator",
+	"Password": "password",
+	"BucketName": "example_bucket"
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>DynamoDB</b></summary>
+
+`TableName` is required, together with either `Region` or `ServiceUrl`. The table must use a string hash key named `Key`.
+
+```json
+{
+  "ConnectorConfig": {
+	"Instance": "DynamoDb",
+	"AccessKey": "your-access-key-here",
+	"SecretKey": "your-secret-key-here",
+	"Region": "us-west-2",
+	"TableName": "MyTableName"
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>ArangoDB</b></summary>
+
+```json
+{
+  "ConnectorConfig": {
+	"Instance": "ArangoDb",
+	"ConnectionString": "http://localhost:8529",
+	"Username": "username",
+	"Password": "password",
+	"CollectionName": "test"
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Cassandra</b></summary>
+
+`ConnectionString` accepts a comma-separated list of contact points (`host`, `host:port`, `[IPv6]:port`); all ports must match. `DatabaseName` is the keyspace.
+
+```json
+{
+  "ConnectorConfig": {
+	"Instance": "Cassandra",
+	"ConnectionString": "127.0.0.1:9042",
+	"DatabaseName": "sharpconnector",
+	"TableName": "items",
+	"Username": "cassandra",
+	"Password": "cassandra"
+  }
+}
+```
+</details>
+
+## API overview
+
+The entry point is `ISharpConnectorClient<T>`. Every operation has a sync and an async version; async methods accept a `CancellationToken`.
+
+| Operation | Methods |
+|-----------|---------|
+| Read      | `Get(key)`, `GetAll()`, `Exists(key)`, `Query(Func<T, bool> filter)` |
+| Insert    | `Insert(key, value)`, `Insert(key, value, TimeSpan expiration)` |
+| Bulk      | `InsertMany(Dictionary<string, T>)`, `InsertMany(Dictionary<string, T>, TimeSpan expiration)` |
+| Update    | `Update(key, value)` |
+| Delete    | `Delete(key)` |
+
+`InsertManyAsync(IEnumerable<T> values, CancellationToken ct)` is available in async form only: it generates the keys and returns them as `IReadOnlyCollection<string>`.
+
+## Operation semantics
+
+The behavior is the same on every backend:
+
+- **Insert / InsertMany** are upserts: an existing key is overwritten.
+- **Update** only changes existing keys and returns `false` when the key does not exist.
+- **Delete** returns `true` only when an item was actually removed.
+- **InsertMany** throws `ArgumentException` when a key is null/empty or a value is null.
+- **Expiration**: expired items are never returned by `Get`, `GetAll`, `Exists` or `Query`, even on backends without native TTL.
+- **Configuration** is validated when the client is created: invalid or incomplete settings throw `ArgumentException`.
+- **Sync vs async**: prefer the async methods. The DynamoDB, ArangoDB and Couchbase drivers are async-only, so their sync methods run the async call on the thread pool.
+
+## Upgrading from 4.x to 5.0
+
+5.0 contains breaking changes:
+
+1. **MVC is no longer registered.** `AddSharpConnectorServices*` no longer calls `AddControllers()`; add it to your host if you need controllers.
+2. **Stricter configuration.** RavenDB (absolute URL + `DatabaseName`) and DynamoDB (`TableName` + `Region` or `ServiceUrl`) now throw `ArgumentException` when settings are missing or invalid.
+3. **Consistent semantics.** `Update` returns `false` for missing keys and `Delete` returns `false` when nothing was removed, on every backend.
+
+New in 5.0: Redis `KeyPrefix` and RavenDB client certificate authentication.
+
+## Building from source
+
+Requires the **.NET 10 SDK**, which builds both the `net10.0` and `net9.0` targets.
+
+```bash
+git clone https://github.com/engineering87/SharpConnector.git
+cd SharpConnector/src/SharpConnector
+dotnet build SharpConnector.sln -c Release
+dotnet test SharpConnector.sln -c Release
+```
 
 ## Extending
+
 To add a new connector:
-- Implement `IOperations<T>` for your backend.
-- Provide a wrapper/access layer (connection management, collection/table handles).
-- Add configuration binding under ConnectorConfig.
-- Include unit tests.
+
+1. Add a value to `ConnectorTypeEnums` and a configuration class implementing `IConnectorConfig`.
+2. Implement an access layer (connection management) and a wrapper (CRUD on the native driver).
+3. Implement `IOperations<T>` on top of the wrapper.
+4. Add unit tests.
+
+## Contributing
+
+Contributions are welcome! Fork the repository, create a branch and open a pull request.
+
+- Add unit tests for new features or connectors.
+- Use [Conventional Commits](https://www.conventionalcommits.org/): commit messages are checked by commitlint in CI.
+- Keep third-party dependencies compatible with MIT.
+- Found a bug or have an idea? [Open an issue](https://github.com/engineering87/SharpConnector/issues).
+
+## Third-party licenses
+
+SharpConnector relies on the following libraries, each under its own license:
+
+| Library               | License |
+|-----------------------|---------|
+| StackExchange.Redis   | [MIT](https://github.com/StackExchange/StackExchange.Redis/blob/main/LICENSE) |
+| MongoDB.Driver        | [Apache 2.0](https://github.com/mongodb/mongo-csharp-driver/blob/main/LICENSE.md) |
+| LiteDB                | [MIT](https://github.com/mbdavid/LiteDB/blob/master/LICENSE) |
+| EnyimMemcachedCore    | [Apache 2.0](https://github.com/cnblogs/EnyimMemcachedCore/blob/main/LICENSE) |
+| RavenDB.Client        | [See license](https://github.com/ravendb/ravendb/blob/v6.2/LICENSE.txt) |
+| CouchbaseNetClient    | [Apache 2.0](https://github.com/couchbase/couchbase-net-client/blob/master/LICENSE) |
+| AWSSDK.DynamoDBv2     | [Apache 2.0](https://github.com/aws/aws-sdk-net/blob/main/License.txt) |
+| ArangoDBNetStandard   | [Apache 2.0](https://github.com/ArangoDB-Community/arangodb-net-standard/blob/master/LICENSE) |
+| CassandraCSharpDriver | [Apache 2.0](https://github.com/datastax/csharp-driver/blob/master/LICENSE) |
 
 ## License
-SharpConnector source code is available under MIT License, see license in the source.
 
-### External References
-The SharpConnector library relies on several third-party libraries to deliver advanced functionality. 
-Each of these libraries operates under a specific license, which governs its usage. To ensure transparency and compliance, the libraries and their licenses are listed in this repository:
-
-* **StackExchange.Redis**, a General purpose redis client, see **license** [here](https://github.com/StackExchange/StackExchange.Redis/blob/main/LICENSE)
-* **MongoDB.Driver**, the Official C# .NET Driver for MongoDB, see **license** [here](https://github.com/mongodb/mongo-csharp-driver/blob/main/LICENSE.md)
-* **LiteDB**, a .NET NoSQL Document Store in a single data file, see **license** [here](https://github.com/mbdavid/LiteDB/blob/master/LICENSE)
-* **EnyimMemcached**, a C# Memcached client, see **license** [here](https://github.com/enyim/EnyimMemcached/blob/develop/LICENSE)
-* **RavenDB**, ACID Document Database, see **license** [here](https://github.com/ravendb/ravendb/blob/v6.2/LICENSE.txt)
-* **Couchbase**, the official Couchbase SDK for .NET Core and Full Frameworks, see **license** [here](https://github.com/couchbase/couchbase-net-client/blob/master/LICENSE)
-* **DynamoDb**, the official AWS SDK for .NET, see **license** [here](https://github.com/aws/aws-sdk-net/blob/main/License.txt)
-* **ArangoDB**, a consistent, comprehensive, minimal driver for ArangoDB, see **license** [here](https://github.com/ArangoDB-Community/arangodb-net-standard/blob/master/LICENSE)
-* **CassandraCSharpDriver**, the DataStax C# driver for Apache Cassandra, see **license** [here](https://github.com/datastax/csharp-driver/blob/master/LICENSE)
-
-Each library is included to enhance the functionality of SharpConnector while adhering to its licensing terms.
+SharpConnector is released under the [MIT License](LICENSE).
 
 ## Contact
-Please contact at francesco.delre[at]protonmail.com for any details.
+
+For any details, contact francesco.delre[at]protonmail.com.

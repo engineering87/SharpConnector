@@ -14,7 +14,8 @@ namespace SharpConnector.Connectors.Couchbase
         private readonly Lazy<Task<ICluster>> _cluster;
         private readonly string _bucketName;
         private readonly SemaphoreSlim _bucketLock = new(1, 1);
-        private IBucket _bucket;
+        private volatile IBucket _bucket;
+        private int _disposed;
 
         public CouchbaseAccess(CouchbaseConfig config)
         {
@@ -26,23 +27,23 @@ namespace SharpConnector.Connectors.Couchbase
 
         private async Task<ICluster> ConnectClusterAsync(CouchbaseConfig config)
         {
-            var clusterOptions = new ClusterOptions
-            {
-                UserName = config.Username,
-                Password = config.Password
-            };
-            return await Cluster.ConnectAsync(config.ConnectionString, clusterOptions);
+            var clusterOptions = new ClusterOptions()
+                .WithPasswordAuthentication(config.Username, config.Password);
+            return await Cluster.ConnectAsync(config.ConnectionString, clusterOptions).ConfigureAwait(false);
         }
 
         public async Task<ICluster> GetClusterAsync()
         {
-            return await _cluster.Value;
+            return await _cluster.Value.ConfigureAwait(false);
         }
 
         public async Task<IBucket> GetBucketAsync()
         {
-            if (_bucket != null)
-                return _bucket;
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+
+            var bucket = _bucket;
+            if (bucket != null)
+                return bucket;
 
             await _bucketLock.WaitAsync().ConfigureAwait(false);
             try
@@ -72,19 +73,30 @@ namespace SharpConnector.Connectors.Couchbase
 
         public async ValueTask DisposeAsync()
         {
-            if (_bucket != null)
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+                return;
+
+            await _bucketLock.WaitAsync().ConfigureAwait(false);
+            try
             {
-                await _bucket.DisposeAsync();
+                var bucket = _bucket;
                 _bucket = null;
+                if (bucket != null)
+                    await bucket.DisposeAsync().ConfigureAwait(false);
             }
-
-            if (_cluster.IsValueCreated)
+            finally
             {
-                var cluster = await _cluster.Value;
-                await cluster.DisposeAsync();
+                try
+                {
+                    if (_cluster.IsValueCreated && _cluster.Value.IsCompletedSuccessfully)
+                        await _cluster.Value.Result.DisposeAsync().ConfigureAwait(false);
+                }
+                finally
+                {
+                    _bucketLock.Release();
+                    _bucketLock.Dispose();
+                }
             }
-
-            _bucketLock.Dispose();
         }
     }
 }

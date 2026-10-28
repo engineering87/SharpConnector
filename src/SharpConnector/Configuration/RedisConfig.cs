@@ -15,6 +15,11 @@ namespace SharpConnector.Configuration
         public string ConnectionString { get; }
         public int DatabaseNumber { get; } // 0 default
 
+        /// <summary>
+        /// Optional prefix applied to every key. When set, GetAll/Query only scan keys with this prefix.
+        /// </summary>
+        public string KeyPrefix { get; }
+
         #region NOT USED
         public string DatabaseName { get; private set; }
         public string CollectionName { get; private set; }
@@ -42,6 +47,7 @@ namespace SharpConnector.Configuration
 
             int.TryParse(configuration[AppConfigParameterEnums.databasenumber.ToString()], out var dbNumber);
             DatabaseNumber = dbNumber;
+            KeyPrefix = configuration[AppConfigParameterEnums.keyprefix.ToString()]?.Trim() ?? string.Empty;
         }
     }
 }

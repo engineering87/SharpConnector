@@ -1,4 +1,4 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using SharpConnector.Entities;
 using Newtonsoft.Json;
@@ -8,6 +8,9 @@ using System.Collections.Generic;
 
 namespace SharpConnector.Utilities
 {
+    /// <summary>
+    /// Conversion helpers between user payloads and the connector entities persisted by each backend.
+    /// </summary>
     public static class Converter
     {
         /// <summary>
@@ -15,7 +18,7 @@ namespace SharpConnector.Utilities
         /// </summary>
         /// <typeparam name="T">The original object stored.</typeparam>
         /// <param name="connectorEntity">The ConnectorEntity object to convert.</param>
-        /// <returns></returns>
+        /// <returns>The payload converted to <typeparamref name="T"/>, or <c>default</c> if the entity is null.</returns>
         public static T ToPayloadObject<T>(this ConnectorEntity connectorEntity)
         {
             if (connectorEntity == null)
@@ -28,7 +31,7 @@ namespace SharpConnector.Utilities
         /// </summary>
         /// <typeparam name="T">The original object stored.</typeparam>
         /// <param name="liteDbConnectorEntity">The LiteDbConnectorEntity object to convert.</param>
-        /// <returns></returns>
+        /// <returns>The payload converted to <typeparamref name="T"/>, or <c>default</c> if the entity is null.</returns>
         public static T ToPayloadObject<T>(this LiteDbConnectorEntity liteDbConnectorEntity)
         {
             if (liteDbConnectorEntity == null)
@@ -41,7 +44,7 @@ namespace SharpConnector.Utilities
         /// </summary>
         /// <typeparam name="T">The original object stored.</typeparam>
         /// <param name="connectorEntities">The ConnectorEntity list to convert.</param>
-        /// <returns></returns>
+        /// <returns>The converted payloads; entities with a null payload are skipped.</returns>
         public static IEnumerable<T> ToPayloadList<T>(this IEnumerable<ConnectorEntity> connectorEntities)
         {
             var result = new List<T>();
@@ -58,7 +61,7 @@ namespace SharpConnector.Utilities
         /// </summary>
         /// <typeparam name="T">The original object stored.</typeparam>
         /// <param name="connectorEntities">The LiteDbConnectorEntity list to convert.</param>
-        /// <returns></returns>
+        /// <returns>The converted payloads; entities with a null payload are skipped.</returns>
         public static IEnumerable<T> ToPayloadList<T>(this IEnumerable<LiteDbConnectorEntity> connectorEntities)
         {
             var result = new List<T>();
@@ -103,11 +106,13 @@ namespace SharpConnector.Utilities
         }
 
         /// <summary>
-        /// Returns a list of ConnectorEntity.
+        /// Converts a dictionary of key/payload pairs into a list of ConnectorEntity.
         /// </summary>
         /// <typeparam name="T">The generic type to store.</typeparam>
-        /// <param name="values">The dictionary with <key, object> elements to store.</param>
-        /// <returns></returns>
+        /// <param name="values">The dictionary of key/payload pairs to store. A null dictionary yields an empty list.</param>
+        /// <param name="expiration">Optional expiration applied to every entity.</param>
+        /// <returns>The list of entities, in dictionary enumeration order.</returns>
+        /// <exception
         public static List<ConnectorEntity> ToConnectorEntityList<T>(this Dictionary<string, T> values, TimeSpan? expiration = null)
         {
             if (values == null) 
@@ -116,8 +121,10 @@ namespace SharpConnector.Utilities
             var connectorEntities = new List<ConnectorEntity>();
             foreach (var entry in values)
             {
-                if (string.IsNullOrEmpty(entry.Key) || entry.Value == null)
-                    continue;
+                if (string.IsNullOrEmpty(entry.Key))
+                    throw new ArgumentException("Keys cannot be null or empty.", nameof(values));
+                if (entry.Value == null)
+                    throw new ArgumentException($"Value for key '{entry.Key}' cannot be null.", nameof(values));
                 connectorEntities.Add(new ConnectorEntity(entry.Key, entry.Value, expiration));
             }
 
@@ -125,11 +132,13 @@ namespace SharpConnector.Utilities
         }
 
         /// <summary>
-        /// Returns a list of LiteDbConnectorEntity.
+        /// Converts a dictionary of key/payload pairs into a list of LiteDbConnectorEntity.
         /// </summary>
         /// <typeparam name="T">The generic type to store.</typeparam>
-        /// <param name="values">The dictionary with <key, object> elements to store.</param>
-        /// <returns></returns>
+        /// <param name="values">The dictionary of key/payload pairs to store. A null dictionary yields an empty list.</param>
+        /// <param name="expiration">Optional expiration applied to every entity.</param>
+        /// <returns>The list of entities, in dictionary enumeration order.</returns>
+        /// <exception
         public static List<LiteDbConnectorEntity> ToLiteDbConnectorEntityList<T>(this Dictionary<string, T> values, TimeSpan? expiration = null)
         {
             if (values == null)
@@ -138,8 +147,10 @@ namespace SharpConnector.Utilities
             var connectorEntities = new List<LiteDbConnectorEntity>();
             foreach (var entry in values)
             {
-                if (string.IsNullOrEmpty(entry.Key) || entry.Value == null)
-                    continue;
+                if (string.IsNullOrEmpty(entry.Key))
+                    throw new ArgumentException("Keys cannot be null or empty.", nameof(values));
+                if (entry.Value == null)
+                    throw new ArgumentException($"Value for key '{entry.Key}' cannot be null.", nameof(values));
                 connectorEntities.Add(new LiteDbConnectorEntity(entry.Key, entry.Value, expiration));
             }
 
@@ -147,11 +158,13 @@ namespace SharpConnector.Utilities
         }
 
         /// <summary>
-        /// Returns a list of MongoConnectorEntity.
+        /// Converts a dictionary of key/payload pairs into a list of MongoConnectorEntity.
         /// </summary>
         /// <typeparam name="T">The generic type to store.</typeparam>
-        /// <param name="values">The dictionary with <key, object> elements to store.</param>
-        /// <returns></returns>
+        /// <param name="values">The dictionary of key/payload pairs to store. A null dictionary yields an empty list.</param>
+        /// <param name="expiration">Optional expiration applied to every entity.</param>
+        /// <returns>The list of entities, in dictionary enumeration order.</returns>
+        /// <exception cref="ArgumentException">Thrown when a key is null or empty, or a value is null.</exception>
         public static List<MongoConnectorEntity> ToMongoDbConnectorEntityList<T>(this Dictionary<string, T> values, TimeSpan? expiration = null)
         {
             if (values == null)
@@ -160,8 +173,10 @@ namespace SharpConnector.Utilities
             var connectorEntities = new List<MongoConnectorEntity>();
             foreach (var entry in values)
             {
-                if (string.IsNullOrEmpty(entry.Key) || entry.Value == null)
-                    continue;
+                if (string.IsNullOrEmpty(entry.Key))
+                    throw new ArgumentException("Keys cannot be null or empty.", nameof(values));
+                if (entry.Value == null)
+                    throw new ArgumentException($"Value for key '{entry.Key}' cannot be null.", nameof(values));
                 connectorEntities.Add(new MongoConnectorEntity(entry.Key, entry.Value, expiration));
             }
 

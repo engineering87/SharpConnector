@@ -1,4 +1,4 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using SharpConnector.Connectors.LiteDb;
 using System;
@@ -228,7 +228,7 @@ namespace SharpConnector.Operations
         }
 
         /// <summary>
-        /// Asynchronously execute a filtered query. (Not supported in this operations class)
+        /// Asynchronously execute a filtered query (evaluated in memory).
         /// </summary>
         /// <param name="filter">Predicate that selects items of type T.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
@@ -254,7 +254,7 @@ namespace SharpConnector.Operations
         /// A task that represents the asynchronous operation. The task result is
         /// <c>true</c> if all items were inserted successfully; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when a key is null or empty, or a value is null.</exception>
         public override async Task<bool> InsertManyAsync(Dictionary<string, T> values, CancellationToken ct = default)
         {
             var entities = values.ToLiteDbConnectorEntityList();
@@ -279,7 +279,7 @@ namespace SharpConnector.Operations
         /// A task that represents the asynchronous operation. The task result is
         /// <c>true</c> if all items were inserted successfully; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="values"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when a key is null or empty, or a value is null.</exception>
         public override async Task<bool> InsertManyAsync(Dictionary<string, T> values, TimeSpan expiration, CancellationToken ct = default)
         {
             var entities = values.ToLiteDbConnectorEntityList(expiration);

@@ -1,9 +1,11 @@
-﻿// (c) 2024 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2024 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Amazon.DynamoDBv2.DocumentModel;
+using Amazon.DynamoDBv2.Model;
 using Newtonsoft.Json;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using SharpConnector.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,13 +38,8 @@ namespace SharpConnector.Connectors.DynamoDb
         /// Get an item by key (sync).
         /// </summary>
         /// <param name="key">The key of the item.</param>
-        public ConnectorEntity Get(string key)
-        {
-            var document = _table.GetItemAsync(key).GetAwaiter().GetResult();
-            return document != null
-                ? JsonConvert.DeserializeObject<ConnectorEntity>(document.ToJson())
-                : null;
-        }
+        public ConnectorEntity Get(string key) =>
+            AsyncHelper.RunSync(() => GetAsync(key));
 
         /// <summary>
         /// Get an item by key (async).
@@ -53,28 +50,15 @@ namespace SharpConnector.Connectors.DynamoDb
         {
             var document = await _table.GetItemAsync(key, ct).ConfigureAwait(false);
             return document != null
-                ? JsonConvert.DeserializeObject<ConnectorEntity>(document.ToJson())
+                ? JsonConvert.DeserializeObject<ConnectorEntity>(document.ToJson()).DiscardIfExpired()
                 : null;
         }
 
         /// <summary>
         /// Get all items in the table (sync).
         /// </summary>
-        public IEnumerable<ConnectorEntity> GetAll()
-        {
-            var scanConfig = new ScanOperationConfig();
-            var search = _table.Scan(scanConfig);
-
-            var result = new List<ConnectorEntity>();
-            do
-            {
-                var documents = search.GetNextSetAsync().GetAwaiter().GetResult();
-                result.AddRange(documents.Select(doc =>
-                    JsonConvert.DeserializeObject<ConnectorEntity>(doc.ToJson())));
-            } while (!search.IsDone);
-
-            return result;
-        }
+        public IEnumerable<ConnectorEntity> GetAll() =>
+            AsyncHelper.RunSync(() => GetAllAsync());
 
         /// <summary>
         /// Get all items in the table (async).
@@ -90,8 +74,9 @@ namespace SharpConnector.Connectors.DynamoDb
             {
                 ct.ThrowIfCancellationRequested();
                 var documents = await search.GetNextSetAsync(ct).ConfigureAwait(false);
-                result.AddRange(documents.Select(doc =>
-                    JsonConvert.DeserializeObject<ConnectorEntity>(doc.ToJson())));
+                result.AddRange(documents
+                    .Select(doc => JsonConvert.DeserializeObject<ConnectorEntity>(doc.ToJson()))
+                    .WhereNotExpired());
             } while (!search.IsDone);
 
             return result;
@@ -101,12 +86,8 @@ namespace SharpConnector.Connectors.DynamoDb
         /// Insert (Put) an item (sync).
         /// </summary>
         /// <param name="connectorEntity">The entity to insert.</param>
-        public bool Insert(ConnectorEntity connectorEntity)
-        {
-            var document = Document.FromJson(JsonConvert.SerializeObject(connectorEntity));
-            _table.PutItemAsync(document).GetAwaiter().GetResult();
-            return true;
-        }
+        public bool Insert(ConnectorEntity connectorEntity) =>
+            AsyncHelper.RunSync(() => InsertAsync(connectorEntity));
 
         /// <summary>
         /// Insert (Put) an item (async).
@@ -124,18 +105,8 @@ namespace SharpConnector.Connectors.DynamoDb
         /// Insert multiple items (sync).
         /// </summary>
         /// <param name="connectorEntities">The entities to insert.</param>
-        public bool InsertMany(List<ConnectorEntity> connectorEntities)
-        {
-            var batchWrite = _table.CreateBatchWrite();
-            foreach (var entity in connectorEntities)
-            {
-                var document = Document.FromJson(JsonConvert.SerializeObject(entity));
-                batchWrite.AddDocumentToPut(document);
-            }
-
-            batchWrite.ExecuteAsync().GetAwaiter().GetResult();
-            return true;
-        }
+        public bool InsertMany(List<ConnectorEntity> connectorEntities) =>
+            AsyncHelper.RunSync(() => InsertManyAsync(connectorEntities));
 
         /// <summary>
         /// Insert multiple items (async).
@@ -183,8 +154,7 @@ namespace SharpConnector.Connectors.DynamoDb
         /// <param name="key">The key of the item to delete.</param>
         public bool Delete(string key)
         {
-            _table.DeleteItemAsync(key).GetAwaiter().GetResult();
-            return true;
+            return AsyncHelper.RunSync(() => DeleteAsync(key));
         }
 
         /// <summary>
@@ -194,9 +164,22 @@ namespace SharpConnector.Connectors.DynamoDb
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
         public async Task<bool> DeleteAsync(string key, CancellationToken ct = default)
         {
-            await _table.DeleteItemAsync(key, ct).ConfigureAwait(false);
-            return true;
+            var config = new DeleteItemOperationConfig { ReturnValues = ReturnValues.AllOldAttributes };
+            var oldDocument = await _table.DeleteItemAsync(key, config, ct).ConfigureAwait(false);
+            return oldDocument != null && oldDocument.Count > 0;
         }
+
+        /// <summary>
+        /// Builds a PutItem configuration that succeeds only if the item already exists.
+        /// </summary>
+        private static PutItemOperationConfig ExistingItemOnlyConfig() => new()
+        {
+            ConditionalExpression = new Expression
+            {
+                ExpressionStatement = "attribute_exists(#k)",
+                ExpressionAttributeNames = new Dictionary<string, string> { ["#k"] = "Key" }
+            }
+        };
 
         /// <summary>
         /// Update an existing item (sync).
@@ -204,8 +187,7 @@ namespace SharpConnector.Connectors.DynamoDb
         /// <param name="connectorEntity">The entity to update.</param>
         public bool Update(ConnectorEntity connectorEntity)
         {
-            // DynamoDB Put is an upsert; reuse Insert.
-            return Insert(connectorEntity);
+            return AsyncHelper.RunSync(() => UpdateAsync(connectorEntity));
         }
 
         /// <summary>
@@ -213,8 +195,20 @@ namespace SharpConnector.Connectors.DynamoDb
         /// </summary>
         /// <param name="connectorEntity">The entity to update.</param>
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
-        public Task<bool> UpdateAsync(ConnectorEntity connectorEntity, CancellationToken ct = default) =>
-            InsertAsync(connectorEntity, ct);
+        /// <returns>True if the item existed and was updated; otherwise, false.</returns>
+        public async Task<bool> UpdateAsync(ConnectorEntity connectorEntity, CancellationToken ct = default)
+        {
+            var document = Document.FromJson(JsonConvert.SerializeObject(connectorEntity));
+            try
+            {
+                await _table.PutItemAsync(document, ExistingItemOnlyConfig(), ct).ConfigureAwait(false);
+                return true;
+            }
+            catch (ConditionalCheckFailedException)
+            {
+                return false;
+            }
+        }
 
         /// <summary>
         /// Check whether a key exists (sync).
@@ -222,8 +216,7 @@ namespace SharpConnector.Connectors.DynamoDb
         /// <param name="key">The unique key of the item.</param>
         public bool Exists(string key)
         {
-            var document = _table.GetItemAsync(key).GetAwaiter().GetResult();
-            return document != null;
+            return Get(key) != null;
         }
 
         /// <summary>
@@ -233,8 +226,7 @@ namespace SharpConnector.Connectors.DynamoDb
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
         public async Task<bool> ExistsAsync(string key, CancellationToken ct = default)
         {
-            var document = await _table.GetItemAsync(key, ct).ConfigureAwait(false);
-            return document != null;
+            return await GetAsync(key, ct).ConfigureAwait(false) != null;
         }
 
         /// <summary>
@@ -251,7 +243,7 @@ namespace SharpConnector.Connectors.DynamoDb
         }
 
         /// <summary>
-        /// Asynchronously execute a filtered query (not supported in this wrapper).
+        /// Asynchronously execute a filtered query (evaluated in memory after a full table scan).
         /// </summary>
         public Task<List<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter, CancellationToken ct = default)
         {

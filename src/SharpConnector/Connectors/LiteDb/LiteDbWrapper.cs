@@ -1,7 +1,8 @@
-﻿// (c) 2021 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2021 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using SharpConnector.Utilities;
 using System.Linq;
 using System.Threading.Tasks;
 using LiteDB;
@@ -41,7 +42,8 @@ namespace SharpConnector.Connectors.LiteDb
         {
             return _liteDbAccess.Collection
                 .Find(LiteDB.Query.EQ("Key", new BsonValue(key)))
-                .FirstOrDefault();
+                .FirstOrDefault()
+                .DiscardIfExpired();
         }
 
         /// <summary>
@@ -62,7 +64,7 @@ namespace SharpConnector.Connectors.LiteDb
         /// </summary>
         public IEnumerable<LiteDbConnectorEntity> GetAll()
         {
-            return _liteDbAccess.Collection.Find(_ => true).ToList();
+            return _liteDbAccess.Collection.Find(_ => true).WhereNotExpired().ToList();
         }
 
         /// <summary>
@@ -78,17 +80,22 @@ namespace SharpConnector.Connectors.LiteDb
         }
 
         /// <summary>
-        /// Insert (or upsert if configured) the specified entity.
+        /// Insert the specified entity, replacing any existing entity with the same key.
         /// </summary>
         /// <param name="connectorEntity">The entity to store.</param>
         public bool Insert(LiteDbConnectorEntity connectorEntity)
         {
+            ArgumentNullException.ThrowIfNull(connectorEntity);
+
+            if (Update(connectorEntity))
+                return true;
+
             var result = _liteDbAccess.Collection.Insert(connectorEntity);
             return !result.IsNull;
         }
 
         /// <summary>
-        /// Asynchronously insert (or upsert if configured) the specified entity.
+        /// Asynchronously insert the specified entity, replacing any existing entity with the same key.
         /// </summary>
         /// <remarks>LiteDB is synchronous; this method wraps the sync call.</remarks>
         /// <param name="connectorEntity">The entity to store.</param>
@@ -101,17 +108,24 @@ namespace SharpConnector.Connectors.LiteDb
         }
 
         /// <summary>
-        /// Insert multiple entities in bulk.
+        /// Insert multiple entities one by one (upsert); continues on failure.
         /// </summary>
         /// <param name="connectorEntities">Entities to store.</param>
         public bool InsertMany(List<LiteDbConnectorEntity> connectorEntities)
         {
-            var insertedCount = _liteDbAccess.Collection.InsertBulk(connectorEntities);
-            return insertedCount == connectorEntities?.Count;
+            ArgumentNullException.ThrowIfNull(connectorEntities);
+
+            var result = true;
+            foreach (var entity in connectorEntities)
+            {
+                if (!Insert(entity))
+                    result = false;
+            }
+            return result;
         }
 
         /// <summary>
-        /// Asynchronously insert multiple entities in bulk.
+        /// Asynchronously insert multiple entities one by one (upsert); continues on failure.
         /// </summary>
         /// <remarks>LiteDB is synchronous; this method wraps the sync call.</remarks>
         /// <param name="connectorEntities">Entities to store.</param>
@@ -151,7 +165,15 @@ namespace SharpConnector.Connectors.LiteDb
         /// <param name="connectorEntity">The entity to update.</param>
         public bool Update(LiteDbConnectorEntity connectorEntity)
         {
-            return _liteDbAccess.Collection.Update(connectorEntity);
+            ArgumentNullException.ThrowIfNull(connectorEntity);
+
+            // Entities are identified by Key, not by the LiteDB _id: resolve the _id from the Key field.
+            var keyExpr = LiteDB.Query.EQ("Key", new BsonValue(connectorEntity.Key));
+            var existing = _liteDbAccess.RawCollection.FindOne(keyExpr);
+            if (existing == null)
+                return false;
+
+            return _liteDbAccess.Collection.Update(existing["_id"], connectorEntity);
         }
 
         /// <summary>
@@ -173,7 +195,7 @@ namespace SharpConnector.Connectors.LiteDb
         /// <param name="key">The unique key of the item.</param>
         public bool Exists(string key)
         {
-            return _liteDbAccess.Collection.Exists(LiteDB.Query.EQ("Key", new BsonValue(key)));
+            return Get(key) != null;
         }
 
         /// <summary>
@@ -196,8 +218,7 @@ namespace SharpConnector.Connectors.LiteDb
         /// <returns>A list of filtered ConnectorEntity instances.</returns>
         public List<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter)
         {
-            return _liteDbAccess.Collection
-                .FindAll()
+            return GetAll()
                 .Cast<ConnectorEntity>()
                 .Where(filter)
                 .ToList();

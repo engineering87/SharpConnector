@@ -3,6 +3,7 @@
 using Raven.Client.Documents;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using SharpConnector.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,7 +42,7 @@ namespace SharpConnector.Connectors.RavenDb
         {
             using (var session = _ravenDbAccess.Store.OpenSession())
             {
-                return session.Load<ConnectorEntity>(key);
+                return session.Load<ConnectorEntity>(key).DiscardIfExpired();
             }
         }
 
@@ -54,7 +55,8 @@ namespace SharpConnector.Connectors.RavenDb
         {
             using (var session = _ravenDbAccess.Store.OpenAsyncSession())
             {
-                return await session.LoadAsync<ConnectorEntity>(key, ct).ConfigureAwait(false);
+                var entity = await session.LoadAsync<ConnectorEntity>(key, ct).ConfigureAwait(false);
+                return entity.DiscardIfExpired();
             }
         }
 
@@ -68,6 +70,8 @@ namespace SharpConnector.Connectors.RavenDb
                 return session
                     .Query<ConnectorEntity>()
                     .Customize(cr => cr.WaitForNonStaleResults())
+                    .ToList()
+                    .WhereNotExpired()
                     .ToList();
             }
         }
@@ -81,11 +85,13 @@ namespace SharpConnector.Connectors.RavenDb
         {
             using (var session = _ravenDbAccess.Store.OpenAsyncSession())
             {
-                return await session
+                var entities = await session
                     .Query<ConnectorEntity>()
                     .Customize(cr => cr.WaitForNonStaleResults())
                     .ToListAsync(ct)
                     .ConfigureAwait(false);
+
+                return entities.WhereNotExpired().ToList();
             }
         }
 
@@ -205,6 +211,7 @@ namespace SharpConnector.Connectors.RavenDb
                 if (entity == null) return false;
                 entity.Payload = connectorEntity.Payload;
                 entity.Expiration = connectorEntity.Expiration;
+                entity.ExpiresAt = connectorEntity.ExpiresAt;
                 session.SaveChanges();
             }
             return true;
@@ -223,6 +230,7 @@ namespace SharpConnector.Connectors.RavenDb
                 if (entity == null) return false;
                 entity.Payload = connectorEntity.Payload;
                 entity.Expiration = connectorEntity.Expiration;
+                entity.ExpiresAt = connectorEntity.ExpiresAt;
                 await session.SaveChangesAsync(ct).ConfigureAwait(false);
             }
             return true;
@@ -238,7 +246,7 @@ namespace SharpConnector.Connectors.RavenDb
             using (var session = _ravenDbAccess.Store.OpenSession())
             {
                 var entity = session.Load<ConnectorEntity>(key);
-                return entity != null;
+                return entity.DiscardIfExpired() != null;
             }
         }
 
@@ -253,7 +261,7 @@ namespace SharpConnector.Connectors.RavenDb
             using (var session = _ravenDbAccess.Store.OpenAsyncSession())
             {
                 var entity = await session.LoadAsync<ConnectorEntity>(key, ct).ConfigureAwait(false);
-                return entity != null;
+                return entity.DiscardIfExpired() != null;
             }
         }
 
@@ -264,14 +272,7 @@ namespace SharpConnector.Connectors.RavenDb
         /// <returns>A collection of filtered <see cref="ConnectorEntity"/> instances.</returns>
         public IEnumerable<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter)
         {
-            using (var session = _ravenDbAccess.Store.OpenSession())
-            {
-                return session
-                    .Query<ConnectorEntity>()
-                    .Customize(cr => cr.WaitForNonStaleResults())
-                    .Where(filter)
-                    .ToList();
-            }
+            return GetAll().Where(filter).ToList();
         }
 
         /// <summary>
@@ -282,16 +283,8 @@ namespace SharpConnector.Connectors.RavenDb
         /// <returns>A task whose result is a collection of filtered <see cref="ConnectorEntity"/> instances.</returns>
         public async Task<IEnumerable<ConnectorEntity>> QueryAsync(Func<ConnectorEntity, bool> filter, CancellationToken ct = default)
         {
-            using (var session = _ravenDbAccess.Store.OpenAsyncSession())
-            {
-                var allEntities = await session
-                    .Query<ConnectorEntity>()
-                    .Customize(cr => cr.WaitForNonStaleResults())
-                    .ToListAsync(ct)
-                    .ConfigureAwait(false);
-
-                return allEntities.Where(filter);
-            }
+            var allEntities = await GetAllAsync(ct).ConfigureAwait(false);
+            return allEntities.Where(filter);
         }
     }
 }

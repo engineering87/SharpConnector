@@ -1,4 +1,4 @@
-﻿// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2020 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Newtonsoft.Json;
 using System;
@@ -30,6 +30,18 @@ namespace SharpConnector.Entities
         public TimeSpan? Expiration { get; set; }
 
         /// <summary>
+        /// The absolute UTC instant after which the entity is considered expired.
+        /// Computed from <see cref="Expiration"/> when the entity is created.
+        /// </summary>
+        public DateTime? ExpiresAt { get; set; }
+
+        /// <summary>
+        /// Returns true if the entity has an absolute expiration that is already elapsed.
+        /// </summary>
+        public bool IsExpired() =>
+            ExpiresAt.HasValue && ExpiresAt.Value.ToUniversalTime() <= DateTime.UtcNow;
+
+        /// <summary>
         /// Default constructor for serialization purposes.
         /// </summary>
         public ConnectorEntity() { }
@@ -55,6 +67,7 @@ namespace SharpConnector.Entities
             Key = key;
             Payload = payload;
             Expiration = expiration;
+            ExpiresAt = expiration.HasValue ? DateTime.UtcNow.Add(expiration.Value) : null;
         }
 
         /// <summary>
@@ -73,7 +86,7 @@ namespace SharpConnector.Entities
         /// Determines whether the specified object is equal to the current ConnectorEntity instance.
         /// </summary>
         /// <param name="obj">The object to compare with the current ConnectorEntity instance.</param>
-        /// <returns>True if the specified object is a ConnectorEntity and has the same Payload hash code; otherwise, false.</returns>
+        /// <returns>True if the specified object is a ConnectorEntity and has the same Key, Payload and Expiration; otherwise, false.</returns>
         public override bool Equals(object obj)
         {
             return obj is ConnectorEntity other &&

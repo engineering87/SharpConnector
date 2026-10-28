@@ -1,9 +1,11 @@
-﻿// (c) 2025 Francesco Del Re <francesco.delre.87@gmail.com>
+// (c) 2025 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
+using ArangoDBNetStandard;
 using ArangoDBNetStandard.CollectionApi.Models;
 using ArangoDBNetStandard.CursorApi.Models;
 using SharpConnector.Configuration;
 using SharpConnector.Entities;
+using SharpConnector.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +18,7 @@ namespace SharpConnector.Connectors.ArangoDb
     {
         private readonly ArangoDbAccess _arangoDbAccess;
         private readonly string _collectionName;
+        private const int DocumentNotFoundErrorNum = 1202;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ArangoDbWrapper"/> class.
@@ -39,7 +42,11 @@ namespace SharpConnector.Connectors.ArangoDb
                 .GetCollectionsAsync()
                 .ConfigureAwait(false);
 
-            if (!collections.Result.Any(c => c.Name == _collectionName))
+            if (collections.Error)
+                throw new InvalidOperationException(
+                    $"Unable to list ArangoDB collections (HTTP {collections.Code}).");
+
+            if (!(collections.Result ?? []).Any(c => c.Name == _collectionName))
             {
                 ct.ThrowIfCancellationRequested();
 
@@ -55,9 +62,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// <param name="key">The document key.</param>
         public ConnectorEntity Get(string key)
         {
-            return GetAsync(key, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => GetAsync(key, CancellationToken.None));
         }
 
         /// <summary>
@@ -69,21 +74,33 @@ namespace SharpConnector.Connectors.ArangoDb
         {
             ct.ThrowIfCancellationRequested();
 
-            var doc = await _arangoDbAccess.Client.Document
-                .GetDocumentAsync<ConnectorEntity>(_collectionName, key, token: ct)
-                .ConfigureAwait(false);
+            try
+            {
+                var doc = await _arangoDbAccess.Client.Document
+                    .GetDocumentAsync<ConnectorEntity>(_collectionName, key, token: ct)
+                    .ConfigureAwait(false);
 
-            return doc;
+                return doc.DiscardIfExpired();
+            }
+            catch (ApiErrorException ex) when (IsNotFound(ex))
+            {
+                return null;
+            }
         }
+
+        /// <summary>
+        /// Returns true when the ArangoDB error indicates a missing document.
+        /// </summary>
+        private static bool IsNotFound(ApiErrorException ex) =>
+            ex.ApiError?.ErrorNum == DocumentNotFoundErrorNum ||
+            ex.ApiError?.Code == System.Net.HttpStatusCode.NotFound;
 
         /// <summary>
         /// Retrieve all documents (sync wrapper).
         /// </summary>
         public List<ConnectorEntity> GetAll()
         {
-            return GetAllAsync(CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => GetAllAsync(CancellationToken.None));
         }
 
         /// <summary>
@@ -121,7 +138,7 @@ namespace SharpConnector.Connectors.ArangoDb
                 hasMore = next.HasMore == true;
             }
 
-            return items;
+            return items.WhereNotExpired().ToList();
         }
 
         /// <summary>
@@ -130,9 +147,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// <param name="connectorEntity">The document to insert.</param>
         public bool Insert(ConnectorEntity connectorEntity)
         {
-            return InsertAsync(connectorEntity, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => InsertAsync(connectorEntity, CancellationToken.None));
         }
 
         /// <summary>
@@ -145,7 +160,7 @@ namespace SharpConnector.Connectors.ArangoDb
             ct.ThrowIfCancellationRequested();
 
             var result = await _arangoDbAccess.Client.Document
-                .PostDocumentAsync(_collectionName, connectorEntity, token: ct)
+                .PostDocumentAsync(_collectionName, new ArangoConnectorEntity(connectorEntity), new ArangoDBNetStandard.DocumentApi.Models.PostDocumentsQuery { OverwriteMode = ArangoDBNetStandard.DocumentApi.Models.OverwriteModes.Replace }, token: ct)
                 .ConfigureAwait(false);
 
             return !string.IsNullOrEmpty(result._id);
@@ -157,9 +172,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// <param name="connectorEntities">The documents to insert.</param>
         public bool InsertMany(List<ConnectorEntity> connectorEntities)
         {
-            return InsertManyAsync(connectorEntities, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => InsertManyAsync(connectorEntities, CancellationToken.None));
         }
 
         /// <summary>
@@ -171,8 +184,10 @@ namespace SharpConnector.Connectors.ArangoDb
         {
             ct.ThrowIfCancellationRequested();
 
+            var documents = connectorEntities.Select(e => new ArangoConnectorEntity(e)).ToList();
+
             var result = await _arangoDbAccess.Client.Document
-                .PostDocumentsAsync(_collectionName, connectorEntities, token: ct)
+                .PostDocumentsAsync(_collectionName, documents, new ArangoDBNetStandard.DocumentApi.Models.PostDocumentsQuery { OverwriteMode = ArangoDBNetStandard.DocumentApi.Models.OverwriteModes.Replace }, token: ct)
                 .ConfigureAwait(false);
 
             ct.ThrowIfCancellationRequested();
@@ -185,9 +200,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// <param name="connectorEntity">The document to update.</param>
         public bool Update(ConnectorEntity connectorEntity)
         {
-            return UpdateAsync(connectorEntity, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => UpdateAsync(connectorEntity, CancellationToken.None));
         }
 
         /// <summary>
@@ -199,11 +212,17 @@ namespace SharpConnector.Connectors.ArangoDb
         {
             ct.ThrowIfCancellationRequested();
 
-            await _arangoDbAccess.Client.Document
-                .PutDocumentAsync(_collectionName, connectorEntity.Key, connectorEntity, token: ct)
-                .ConfigureAwait(false);
-
-            return true;
+            try
+            {
+                await _arangoDbAccess.Client.Document
+                    .PutDocumentAsync(_collectionName, connectorEntity.Key, new ArangoConnectorEntity(connectorEntity), token: ct)
+                    .ConfigureAwait(false);
+                return true;
+            }
+            catch (ApiErrorException ex) when (IsNotFound(ex))
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -212,9 +231,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// <param name="key">The key of the document to delete.</param>
         public bool Delete(string key)
         {
-            return DeleteAsync(key, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => DeleteAsync(key, CancellationToken.None));
         }
 
         /// <summary>
@@ -226,11 +243,17 @@ namespace SharpConnector.Connectors.ArangoDb
         {
             ct.ThrowIfCancellationRequested();
 
-            await _arangoDbAccess.Client.Document
-                .DeleteDocumentAsync<ConnectorEntity>(_collectionName, key, token: ct)
-                .ConfigureAwait(false);
-
-            return true;
+            try
+            {
+                await _arangoDbAccess.Client.Document
+                    .DeleteDocumentAsync<ConnectorEntity>(_collectionName, key, token: ct)
+                    .ConfigureAwait(false);
+                return true;
+            }
+            catch (ApiErrorException ex) when (IsNotFound(ex))
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -247,9 +270,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// <param name="key">The document key.</param>
         public bool Exists(string key)
         {
-            return ExistsAsync(key, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => ExistsAsync(key, CancellationToken.None));
         }
 
         /// <summary>
@@ -259,13 +280,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// <param name="ct">A token to cancel the asynchronous operation.</param>
         public async Task<bool> ExistsAsync(string key, CancellationToken ct = default)
         {
-            ct.ThrowIfCancellationRequested();
-
-            var result = await _arangoDbAccess.Client.Document
-                .GetDocumentAsync<ConnectorEntity>(_collectionName, key, token: ct)
-                .ConfigureAwait(false);
-
-            return result != null;
+            return await GetAsync(key, ct).ConfigureAwait(false) != null;
         }
 
         /// <summary>
@@ -274,9 +289,7 @@ namespace SharpConnector.Connectors.ArangoDb
         /// <param name="filter">Predicate used to filter items.</param>
         public List<ConnectorEntity> Query(Func<ConnectorEntity, bool> filter)
         {
-            return QueryAsync(filter, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            return AsyncHelper.RunSync(() => QueryAsync(filter, CancellationToken.None));
         }
 
         /// <summary>

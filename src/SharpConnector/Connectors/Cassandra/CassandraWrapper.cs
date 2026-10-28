@@ -34,21 +34,29 @@ namespace SharpConnector.Connectors.Cassandra
         {
             _cassandraAccess = new CassandraAccess(cassandraConfig);
 
-            var table = _cassandraAccess.TableName;
-            _getStatement = _cassandraAccess.Session.Prepare(
-                $"SELECT key, payload, expiration FROM {table} WHERE key = ?;");
-            _getAllStatement = _cassandraAccess.Session.Prepare(
-                $"SELECT key, payload, expiration FROM {table};");
-            _insertStatement = _cassandraAccess.Session.Prepare(
-                $"INSERT INTO {table} (key, payload, expiration) VALUES (?, ?, ?);");
-            _insertStatementWithTtl = _cassandraAccess.Session.Prepare(
-                $"INSERT INTO {table} (key, payload, expiration) VALUES (?, ?, ?) USING TTL ?;");
-            _updateStatement = _cassandraAccess.Session.Prepare(
-                $"UPDATE {table} SET payload = ?, expiration = ? WHERE key = ?;");
-            _deleteStatement = _cassandraAccess.Session.Prepare(
-                $"DELETE FROM {table} WHERE key = ?;");
-            _existsStatement = _cassandraAccess.Session.Prepare(
-                $"SELECT key FROM {table} WHERE key = ?;");
+            try
+            {
+                var table = _cassandraAccess.TableName;
+                _getStatement = _cassandraAccess.Session.Prepare(
+                    $"SELECT key, payload, expiration FROM {table} WHERE key = ?;");
+                _getAllStatement = _cassandraAccess.Session.Prepare(
+                    $"SELECT key, payload, expiration FROM {table};");
+                _insertStatement = _cassandraAccess.Session.Prepare(
+                    $"INSERT INTO {table} (key, payload, expiration) VALUES (?, ?, ?);");
+                _insertStatementWithTtl = _cassandraAccess.Session.Prepare(
+                    $"INSERT INTO {table} (key, payload, expiration) VALUES (?, ?, ?) USING TTL ?;");
+                _updateStatement = _cassandraAccess.Session.Prepare(
+                    $"UPDATE {table} USING TTL ? SET payload = ?, expiration = ? WHERE key = ? IF EXISTS;");
+                _deleteStatement = _cassandraAccess.Session.Prepare(
+                    $"DELETE FROM {table} WHERE key = ? IF EXISTS;");
+                _existsStatement = _cassandraAccess.Session.Prepare(
+                    $"SELECT key FROM {table} WHERE key = ?;");
+            }
+            catch
+            {
+                _cassandraAccess.Dispose();
+                throw;
+            }
         }
 
         /// <summary>
@@ -106,12 +114,24 @@ namespace SharpConnector.Connectors.Cassandra
         {
             ct.ThrowIfCancellationRequested();
             var rowSet = await _cassandraAccess.Session
-                .ExecuteAsync(_getAllStatement.Bind())
+                .ExecuteAsync(_getAllStatement.Bind().SetAutoPage(false))
                 .ConfigureAwait(false);
-            return rowSet
-                .Select(MapRow)
-                .Where(e => e != null)
-                .ToList();
+
+            var result = new List<ConnectorEntity>();
+            while (true)
+            {
+                ct.ThrowIfCancellationRequested();
+                var available = rowSet.GetAvailableWithoutFetching();
+                result.AddRange(rowSet.Take(available).Select(MapRow).Where(e => e != null));
+
+                if (rowSet.PagingState == null)
+                    break;
+
+                rowSet = await _cassandraAccess.Session
+                    .ExecuteAsync(_getAllStatement.Bind().SetAutoPage(false).SetPagingState(rowSet.PagingState))
+                    .ConfigureAwait(false);
+            }
+            return result;
         }
 
         /// <summary>
@@ -185,12 +205,8 @@ namespace SharpConnector.Connectors.Cassandra
         /// <param name="connectorEntity">The entity to update.</param>
         public bool Update(ConnectorEntity connectorEntity)
         {
-            var payload = SerializePayload(connectorEntity.Payload);
-            var expirationTicks = connectorEntity.Expiration?.Ticks ?? 0L;
-
-            _cassandraAccess.Session.Execute(
-                _updateStatement.Bind(payload, expirationTicks, connectorEntity.Key));
-            return true;
+            var rowSet = _cassandraAccess.Session.Execute(BuildUpdateStatement(connectorEntity));
+            return IsApplied(rowSet);
         }
 
         /// <summary>
@@ -201,13 +217,10 @@ namespace SharpConnector.Connectors.Cassandra
         public async Task<bool> UpdateAsync(ConnectorEntity connectorEntity, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
-            var payload = SerializePayload(connectorEntity.Payload);
-            var expirationTicks = connectorEntity.Expiration?.Ticks ?? 0L;
-
-            await _cassandraAccess.Session
-                .ExecuteAsync(_updateStatement.Bind(payload, expirationTicks, connectorEntity.Key))
+            var rowSet = await _cassandraAccess.Session
+                .ExecuteAsync(BuildUpdateStatement(connectorEntity))
                 .ConfigureAwait(false);
-            return true;
+            return IsApplied(rowSet);
         }
 
         /// <summary>
@@ -216,8 +229,7 @@ namespace SharpConnector.Connectors.Cassandra
         /// <param name="key">The key of the object.</param>
         public bool Delete(string key)
         {
-            _cassandraAccess.Session.Execute(_deleteStatement.Bind(key));
-            return true;
+            return IsApplied(_cassandraAccess.Session.Execute(_deleteStatement.Bind(key)));
         }
 
         /// <summary>
@@ -228,10 +240,34 @@ namespace SharpConnector.Connectors.Cassandra
         public async Task<bool> DeleteAsync(string key, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
-            await _cassandraAccess.Session
+            var rowSet = await _cassandraAccess.Session
                 .ExecuteAsync(_deleteStatement.Bind(key))
                 .ConfigureAwait(false);
-            return true;
+            return IsApplied(rowSet);
+        }
+
+        private BoundStatement BuildUpdateStatement(ConnectorEntity entity)
+        {
+            var payload = SerializePayload(entity.Payload);
+            var expirationTicks = entity.Expiration?.Ticks ?? 0L;
+            // TTL 0 means "no expiration" in Cassandra.
+            return _updateStatement.Bind(ToTtlSeconds(entity.Expiration), payload, expirationTicks, entity.Key);
+        }
+
+        /// <summary>
+        /// Converts an optional expiration into a Cassandra TTL in seconds (0 = no expiration).
+        /// </summary>
+        internal static int ToTtlSeconds(TimeSpan? expiration)
+        {
+            if (!expiration.HasValue || expiration.Value <= TimeSpan.Zero)
+                return 0;
+            return (int)Math.Max(1, Math.Min(int.MaxValue, Math.Ceiling(expiration.Value.TotalSeconds)));
+        }
+
+        private static bool IsApplied(RowSet rowSet)
+        {
+            var row = rowSet?.FirstOrDefault();
+            return row != null && row.GetValue<bool>("[applied]");
         }
 
         /// <summary>
@@ -256,7 +292,7 @@ namespace SharpConnector.Connectors.Cassandra
             var rowSet = await _cassandraAccess.Session
                 .ExecuteAsync(_existsStatement.Bind(key))
                 .ConfigureAwait(false);
-            return rowSet.Any();
+            return rowSet.FirstOrDefault() != null;
         }
 
         /// <summary>
@@ -287,8 +323,7 @@ namespace SharpConnector.Connectors.Cassandra
 
             if (entity.Expiration.HasValue && entity.Expiration.Value > TimeSpan.Zero)
             {
-                var ttlSeconds = (int)Math.Max(1, Math.Min(int.MaxValue, entity.Expiration.Value.TotalSeconds));
-                return _insertStatementWithTtl.Bind(entity.Key, payload, expirationTicks, ttlSeconds);
+                return _insertStatementWithTtl.Bind(entity.Key, payload, expirationTicks, ToTtlSeconds(entity.Expiration));
             }
 
             return _insertStatement.Bind(entity.Key, payload, expirationTicks);
